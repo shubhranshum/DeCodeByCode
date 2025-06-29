@@ -1,0 +1,79 @@
+// models/Problem.js
+
+const mongoose = require("mongoose");
+
+const testCaseSchema = new mongoose.Schema({
+  input: {
+    type: String,
+    required: true,
+  },
+  visible: {
+    type: Boolean,
+    default: true, // Default to visible
+  },
+  output: {
+    type: String,
+    required: true, // Assuming output is also required for each test case
+  },
+});
+
+const problemSchema = new mongoose.Schema({
+  _id: {
+    type: Number,
+    required: true,
+    unique: true, // to ensure no duplicates
+    // default: () => Problem.countDocuments() + 1 // Automatically set content based on the count
+  },
+  title: {
+    type: String,
+    required: true,
+    unique: true, // to ensure no duplicates
+  },
+  statement: {
+    type: String,
+  },
+  difficulty: {
+    type: String,
+    enum: ["Easy", "Medium", "Hard","Not Specified"],
+    // required: true,
+  },
+  constraints: {
+    type: String,
+  },
+  inputFormat: {
+    type: String,
+  },
+  outputFormat: {
+    type: String,
+  },
+  testCases: {
+    type: [],
+  },
+  timeLimit: {
+    type: Number,
+    default: 1, // in s
+  },
+  memoryLimit: {
+    type: Number,
+    default: 256, // in MB
+  },
+  notes: {
+    type: String,
+  },
+  tags: [String], // e.g. ["math", "dp", "greedy"]
+  codeSolution: {
+    type: String,
+    // required: true, // Assuming every problem has a code solution
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    // required: true, // Assuming every problem is created by a user
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  }
+});
+
+module.exports = mongoose.model("Problem", problemSchema);
