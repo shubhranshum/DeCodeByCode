@@ -1,0 +1,271 @@
+const Blog = require('../models/blogPost');
+const Comment = require('../models/Comments');
+const User = require('../models/user');
+const UserProfile = require('../models/profile/userProfile');
+const { param } = require('../routes/blog');
+// Increment likesCount
+// controllers/blogController.js (or similar)
+
+
+exports.getBlogsByUserId = async (req, res) => {
+  console.log("Hello from getBlogsByUserId");
+  try {
+    const userId = req.user._id;
+
+    const blogs = await Blog.find({ author: userId });
+    return res.json(blogs);
+
+  } catch (err) {
+    console.error('getBlogsByUserId error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
+
+// Create a new blog post
+exports.createBlog = async (req, res) => {
+  try {
+    const { title, content, slug, summary, thumbnailUrl, tags, category, status, allowComments, isFeatured } = req.body;
+    const author = req.user._id;
+
+    // Ensure slug is provided and unique in frontend or DB schema
+    const blog = new Blog({
+      title,
+      content,
+      slug,
+      summary,
+      thumbnailUrl,
+      tags,
+      category,
+      status,
+      allowComments,
+      isFeatured,
+      author,
+    });
+    const user = await User.findOne({ _id: author });
+    
+    username = user.username;
+    const profile = await UserProfile.findOne({ username: username });
+    if(blog.status=="Published")
+    {
+      profile.Blog.push(blog._id);
+    }
+    if(blog.status=="Draft")
+    {
+      profile.DraftBlogs.push(blog._id);
+    }
+    if(blog.status=="Archived")
+    {
+      profile.ArchivedBlogs.push(blog._id);
+    }
+    await profile.save();
+
+    const savedBlog = await blog.save();
+    console.log('Blog Saved:', savedBlog);
+    res.status(201).json(savedBlog);
+  } catch (err) {
+    console.error('Error saving blog:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// Get all blog posts
+exports.getAllBlogs = async (req, res) => {
+    try {
+        const blogs = await Blog.find().populate('author', 'username email');
+        res.json(blogs);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get a single blog post by ID
+exports.getBlogById = async (req, res) => {
+    
+    try {
+        const blog = await Blog.findById(req.params.id).populate('author', 'username email');
+        console.log(blog);
+        if (!blog) return res.status(404).json({ error: 'Blog not found' });
+        res.json(blog);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Update a blog post
+exports.updateBlog = async (req, res) => {
+    try {
+        const { title, content, slug, summary, thumbnailUrl, tags, category, status, allowComments, isFeatured } = req.body;
+        const author = req.user._id;
+
+        const blog = await Blog.findById(req.params.id);
+        if (!blog) return res.status(404).json({ error: 'Blog not found' });
+        if (blog.author.toString() !== author.toString()) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        blog.title = title;
+        blog.content = content;
+        blog.slug = slug;
+        blog.summary = summary;
+        blog.thumbnailUrl = thumbnailUrl;
+        blog.tags = tags;
+        blog.category = category;
+        blog.status = status;
+        blog.allowComments = allowComments;
+        blog.isFeatured = isFeatured;
+        const updatedBlog = await blog.save();
+        res.json(updatedBlog);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Delete a blog post
+exports.deleteBlog = async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.id);
+        if (!blog) return res.status(404).json({ error: 'Blog not found' });
+        if (blog.author.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        await blog.deleteOne();
+        res.json({ message: 'Blog deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}; 
+
+exports.getBlogBySlug = async (req, res) => {
+  
+  const {slug} = req.params;
+  
+  try {
+    const blog = await BlogPost.findOne({ slug })
+      .populate('author', 'username email') // populate author details
+      .exec();
+      console.log(blog);
+
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+
+    res.status(200).json(blog);
+  } catch (err) {
+    console.error('Error fetching blog by slug:', err);
+    res.status(500).json({ error: 'Server error while fetching blog' });
+  }
+};
+// controllers/commentController.js
+
+
+
+
+exports.createComment = async (req, res) => {
+  const { blogId } = req.params; // URL param
+  const { text } = req.body; // Request body
+  const userId = req.user._id; // Authenticated user's ID (assuming you have auth middleware)
+
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: 'Comment text is required' });
+  }
+
+  try {
+    // Check if the blog exists
+    const blog = await Blog.findById(blogId);
+    if (!blog) return res.status(404).json({ error: 'Blog not found' });
+
+    // Create and save the comment
+    const newComment = new Comment({
+      blog: blogId,
+      user: userId,
+      text,
+      parentComment:  null
+    });
+
+    await newComment.save();
+
+    const populatedComment = await newComment.populate('user', 'username');
+
+    res.status(201).json(populatedComment);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create comment' });
+  }
+};
+exports.getCommentsByBlogId = async (req, res) => {
+  const {blogId} = req.params;
+
+  try {
+    const comments = await Comment.find({ blog: blogId })
+      .populate('user', 'username') // fetch username from User
+      .sort({ createdAt: 1 }); // sort oldest to newest
+      console.log(comments)
+
+    const formattedComments = comments.map(comment => ({
+      _id: comment._id,
+      content: comment.text,
+      username: comment.user?.username || 'Anonymous',
+      createdAt: comment.createdAt,
+      parentComment: comment.parentComment
+    }));
+
+    res.json(formattedComments);
+  } catch (err) {
+    console.error('Error fetching comments:', err);
+    res.status(500).json({ error: 'Failed to load comments' });
+  }
+};
+
+
+
+exports.likeBlog = async (req, res) => {
+  try {
+    const blogId = req.params.id;
+    const userId = req.user._id;
+
+    const blog = await Blog.findById(blogId);
+
+    if (!blog) return res.status(404).json({ message: 'Blog not found' });
+
+    // Prevent duplicate likes
+    if (blog.likedBy.includes(userId)) {
+      return res.status(400).json({ message: 'Already liked' });
+    }
+
+    blog.likesCount += 1;
+    blog.likedBy.push(userId);
+
+    await blog.save();
+    return res.status(200).json({ likesCount: blog.likesCount });
+  } catch (error) {
+    res.status(500).json({ message: 'Error liking blog' });
+  }
+};
+
+exports.viewBlog = async (req, res) => {
+  try {
+    const blogId = req.params.id;
+    const userId = req.user._id;
+
+    const blog = await Blog.findById(blogId);
+
+    if (!blog) return res.status(404).json({ message: 'Blog not found' });
+
+    // Prevent duplicate views
+    if (blog.viewedBy.includes(userId)) {
+      return res.status(200).json({ message: 'Already viewed' });
+    }
+
+    blog.viewsCount += 1;
+    blog.viewedBy.push(userId);
+
+    await blog.save();
+    return res.status(200).json({ viewsCount: blog.viewsCount });
+  } catch (error) {
+    res.status(500).json({ message: 'Error counting view' });
+  }
+};
+
+
