@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaStar, FaHeart, FaEye, FaSearch, FaArrowUp, FaSun, FaMoon } from 'react-icons/fa';
+import { FiEdit2, FiTag } from 'react-icons/fi';
 
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);
@@ -11,18 +13,48 @@ const Blog = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(true);
+  const [theme, setTheme] = useState('dark');
   const navigate = useNavigate();
   const isFetching = useRef(false);
   const scrollTimer = useRef(null);
+  const lastScrollPosition = useRef(0);
+  const isLoadingMore = useRef(false);
+
+  // Initialize theme from localStorage or system preference
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else {
+      setTheme(systemPrefersDark ? 'dark' : 'light');
+    }
+  }, []);
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.className = theme;
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     const fetchBlogs = async () => {
-      // Prevent multiple simultaneous requests
       if (isFetching.current) return;
       
       try {
         isFetching.current = true;
-        setLoading(true);
+        if (page === 1) {
+          setLoading(true);
+        } else {
+          isLoadingMore.current = true;
+        }
+        
         const response = await fetch(`http://localhost:3000/blogs?page=${page}&limit=6`, {
           method: "GET",
           credentials: "include",
@@ -31,9 +63,12 @@ const Blog = () => {
         if (!response.ok) throw new Error('Server error while fetching blogs');
 
         const data = await response.json();
-        if (data.length === 0) {
+        
+        if (data.length === 0 || data.length < 6) {
           setHasMore(false);
-        } else {
+        }
+        
+        if (data.length > 0) {
           setBlogs(prev => {
             const seen = new Set(prev.map(b => b._id));
             const uniqueNew = data.filter(b => !seen.has(b._id));
@@ -43,40 +78,65 @@ const Blog = () => {
       } catch (err) {
         console.error(err);
         setError('Failed to fetch blogs. Please try again later.');
+        setHasMore(false);
       } finally {
         setLoading(false);
+        isLoadingMore.current = false;
         isFetching.current = false;
       }
     };
 
     fetchBlogs();
   }, [page]);
-
-  const handleCreateBlog = () => navigate('/create-blog');
+  
+  const checkLogin = async () => {
+    try {
+      const res = await fetch('http://localhost:3000/check/auth', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      setIsUserLoggedIn(data.isAuthenticated);
+    } catch (err) {
+      console.error('Failed to check login status:', err);
+    }
+  }
+  
+  useEffect(() => {
+    checkLogin();
+  }, []);
+  
+  const handleCreateBlog = () => {
+    navigate('/create-blog');
+  }
 
   const handleScroll = () => {
-    // Clear any existing timeout
+    const currentScrollY = window.scrollY;
+    
+    if (Math.abs(currentScrollY - lastScrollPosition.current) < 10) return;
+    lastScrollPosition.current = currentScrollY;
+    
     if (scrollTimer.current) clearTimeout(scrollTimer.current);
     
-    // Throttle scroll events to prevent excessive calls
     scrollTimer.current = setTimeout(() => {
-      // Show/hide scroll to top button
-      setShowScrollTop(window.scrollY > 300);
+      setShowScrollTop(currentScrollY > 300);
       
-      // Check if we should load more blogs
+      const isNearBottom = window.innerHeight + currentScrollY >= document.body.offsetHeight - 1000;
+      
       if (
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 && 
+        isNearBottom &&
         hasMore && 
         !loading && 
-        !isFetching.current
+        !isFetching.current &&
+        !isLoadingMore.current
       ) {
         setPage(prev => prev + 1);
       }
-    }, 100);
+    }, 150);
   };
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       window.removeEventListener('scroll', handleScroll);
       if (scrollTimer.current) clearTimeout(scrollTimer.current);
@@ -121,17 +181,26 @@ const Blog = () => {
     const matchesTag = selectedTag ? blog.tags.includes(selectedTag) : true;
     const isPublished = blog.status !== 'Draft';
     
-    return matchesSearch && matchesTag && isPublished ;
-    
+    return matchesSearch && matchesTag && isPublished;
   });
   
   const allTags = [...new Set(blogs.flatMap(blog => blog.tags || []))];
   
   // Featured blog for hero section
-  const featuresdBlogs = filteredBlogs.filter(blog => blog.isFeatured);
-  const featuredBlog = featuresdBlogs[Math.random() * featuresdBlogs.length-1 | 0];
+  const featuredBlogs = filteredBlogs.filter(blog => blog.isFeatured);
 
-  // Scroll to top function
+  const featuredBlog = featuredBlogs.length > 0
+    ? featuredBlogs.sort((a, b) => {
+        if (b.likesCount !== a.likesCount) {
+          return b.likesCount - a.likesCount;
+        } else if (b.viewsCount !== a.viewsCount) {
+          return b.viewsCount - a.viewsCount;
+        } else {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+      })[0]
+    : null;
+
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -140,40 +209,80 @@ const Blog = () => {
   };
 
   return (
-    <div className="min-h-screen pt-0 bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="min-h-screen pt-0 bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-gray-100 dark:to-gray-200 text-white dark:text-gray-900">
+      {/* Theme Toggle Button */}
+      <motion.button
+        onClick={toggleTheme}
+        className="fixed top-6 right-6 z-50 p-3 rounded-full shadow-lg"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        style={{
+          backgroundColor: theme === 'dark' ? '#f97316' : '#3b82f6',
+          color: 'white'
+        }}
+        aria-label="Toggle theme"
+      >
+        {theme === 'dark' ? <FaSun size={20} /> : <FaMoon size={20} />}
+      </motion.button>
+
       {/* Floating Back to Top Button */}
       {showScrollTop && (
-        <button
+        <motion.button
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 bg-indigo-600 text-white p-3 rounded-full shadow-lg z-50 hover:bg-indigo-700 transition-colors"
+          className="fixed bottom-6 right-6 z-50 p-3 rounded-full shadow-lg hover:bg-orange-600 dark:hover:bg-blue-600 transition-colors"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          style={{
+            backgroundColor: theme === 'dark' ? '#f97316' : '#3b82f6',
+            color: 'white'
+          }}
+          aria-label="Scroll to top"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-          </svg>
-        </button>
+          <FaArrowUp className="w-5 h-5" />
+        </motion.button>
       )}
 
       {/* Hero Section */}
       {featuredBlog && (
-        <div className="bg-slate-900 text-white py-16 px-4">
+        <div className="bg-gradient-to-r from-[#1e293b] to-[#0f172a] dark:from-blue-100 dark:to-blue-200 py-16 px-4 border-b border-white/10 dark:border-gray-300">
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <motion.div 
+              className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
               <div>
-                <div className="inline-block bg-indigo-600 text-xs px-3 py-1 rounded-full mb-4">
+                <div className="inline-block bg-orange-500 dark:bg-blue-500 text-white text-xs px-3 py-1 rounded-full mb-4">
                   Featured Story
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
+                <motion.h1 
+                  className="text-4xl md:text-5xl font-bold mb-4 leading-tight text-white dark:text-gray-900"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
                   {featuredBlog.title}
-                </h1>
-                <p className="text-slate-300 text-lg mb-6 max-w-2xl">
+                </motion.h1>
+                <motion.p 
+                  className="text-gray-300 dark:text-gray-700 text-lg mb-6 max-w-2xl"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
                   {featuredBlog.summary || featuredBlog.content?.slice(0, 200) + '...'}
-                </p>
-                <div className="flex flex-wrap items-center gap-4 mb-6">
+                </motion.p>
+                <motion.div 
+                  className="flex flex-wrap items-center gap-4 mb-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
                   <div className="flex items-center">
-                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10" />
+                    <div className="bg-gray-200 dark:bg-gray-400 border-2 border-dashed rounded-xl w-10 h-10" />
                     <div className="ml-3">
-                      <p className="font-medium">{featuredBlog.author?.username || 'Anonymous'}</p>
-                      <p className="text-sm text-slate-300">
+                      <p className="font-medium text-white dark:text-gray-900">{featuredBlog.author?.username || 'Anonymous'}</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-600">
                         {new Date(featuredBlog.createdAt).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -182,91 +291,118 @@ const Blog = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center text-sm">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
+                  <div className="flex items-center text-sm text-gray-400 dark:text-gray-600">
+                    <FaEye className="w-4 h-4 mr-1" />
                     <span>{featuredBlog.viewsCount || 0} views</span>
                   </div>
-                </div>
-                <button
+                </motion.div>
+                <motion.button
                   onClick={() => {
                     handleViewCount(featuredBlog._id);
                     navigate(`/blog/${featuredBlog._id}`);
                   }}
-                  className="bg-indigo-600 hover:bg-indigo-700 px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+                  className="bg-orange-500 dark:bg-blue-500 hover:bg-orange-600 dark:hover:bg-blue-600 px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-lg shadow-orange-500/20 dark:shadow-blue-500/20 text-white"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Read Full Story
-                </button>
+                </motion.button>
               </div>
-              <div>
+              <motion.div
+                className="rounded-xl overflow-hidden shadow-xl"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 }}
+              >
                 <img
                   src={featuredBlog.thumbnailUrl}
                   alt={featuredBlog.title}
-                  className="w-full h-auto rounded-lg shadow-lg"
+                  className="w-full h-auto rounded-xl transform transition-transform duration-500 hover:scale-105"
                 />
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       )}
 
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-12">
+        <motion.div 
+          className="flex flex-col md:flex-row md:justify-between md:items-center mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="mb-6 md:mb-0">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-2">
-              Stories & Insights
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white dark:text-gray-900">
+              Stories & <span className="text-orange-400 dark:text-blue-500">Insights</span>
             </h1>
-            <p className="text-slate-600 font-light max-w-2xl">
+            <p className="text-gray-400 dark:text-gray-600 font-light max-w-2xl">
               Discover thoughtful articles and creative perspectives from our community of writers
             </p>
           </div>
-          <button
+          <motion.button
             onClick={handleCreateBlog}
-            className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+            className="bg-orange-500 dark:bg-blue-500 hover:bg-orange-600 dark:hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-lg shadow-orange-500/20 dark:shadow-blue-500/20 flex items-center justify-center gap-2"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+            <FiEdit2 className="w-5 h-5" />
             Write a Story
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
         {/* Search and Filter */}
-        <div className="flex flex-col md:flex-row gap-4 mb-12">
+        <motion.div 
+          className="flex flex-col md:flex-row gap-4 mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
           <div className="flex-1 relative">
-            <svg className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <FaSearch className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               placeholder="Search articles..."
-              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent font-light"
+              className="w-full pl-12 pr-4 py-3 bg-[#1e293b] dark:bg-white border border-white/10 dark:border-gray-300 rounded-lg text-white dark:text-gray-900 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-blue-500 focus:border-transparent font-light"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
           <div className="md:w-48">
-            <select
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent font-light"
-              value={selectedTag}
-              onChange={e => setSelectedTag(e.target.value)}
-            >
-              <option value="">All topics</option>
-              {allTags.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <FiTag className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+              <select
+                className="w-full pl-12 pr-4 py-3 bg-[#1e293b] dark:bg-white border border-white/10 dark:border-gray-300 rounded-lg text-white dark:text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-blue-500 focus:border-transparent font-light appearance-none"
+                value={selectedTag}
+                onChange={e => setSelectedTag(e.target.value)}
+              >
+                <option value="">All topics</option>
+                {allTags.map(tag => (
+                  <option key={tag} value={tag}>{tag}</option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Tag Cloud */}
-        <div className="flex flex-wrap gap-2 mb-12">
+        <motion.div 
+          className="flex flex-wrap gap-2 mb-12"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
           <button 
             onClick={() => setSelectedTag('')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedTag === '' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              selectedTag === '' 
+                ? 'bg-orange-500 dark:bg-blue-500 text-white' 
+                : 'bg-[#1e293b] dark:bg-gray-100 text-gray-300 dark:text-gray-700 hover:bg-orange-500/20 dark:hover:bg-blue-500/20'
+            }`}
           >
             All Topics
           </button>
@@ -274,48 +410,64 @@ const Blog = () => {
             <button 
               key={tag} 
               onClick={() => setSelectedTag(tag)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedTag === tag ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                selectedTag === tag 
+                  ? 'bg-orange-500 dark:bg-blue-500 text-white' 
+                  : 'bg-[#1e293b] dark:bg-gray-100 text-gray-300 dark:text-gray-700 hover:bg-orange-500/20 dark:hover:bg-blue-500/20'
+              }`}
             >
               {tag}
             </button>
           ))}
-        </div>
+        </motion.div>
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-10 flex items-start gap-3">
-            <svg className="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+          <motion.div 
+            className="bg-red-500/10 border border-red-500/30 text-red-300 dark:text-red-500 px-6 py-4 rounded-lg mb-10 flex items-start gap-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="bg-red-500/20 dark:bg-red-500/10 p-2 rounded-full">
+              <svg className="w-6 h-6 text-red-400 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
             <div>
-              <h3 className="font-medium">Error loading content</h3>
+              <h3 className="font-medium text-white dark:text-gray-900">Error loading content</h3>
               <p className="mt-1 text-sm">{error}</p>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Loading State */}
         {loading && blogs.length === 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {[1, 2, 3].map((item) => (
-              <div key={item} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+              <motion.div
+                key={item}
+                className="bg-[#1e293b] dark:bg-gray-100 rounded-xl shadow-sm border border-white/5 dark:border-gray-300 overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: item * 0.1 }}
+              >
                 <div className="animate-pulse">
-                  <div className="bg-slate-200 h-48 w-full"></div>
+                  <div className="bg-gray-700 dark:bg-gray-300 h-48 w-full"></div>
                   <div className="p-6">
-                    <div className="h-4 bg-slate-200 rounded w-3/4 mb-4"></div>
-                    <div className="h-3 bg-slate-200 rounded w-full mb-2"></div>
-                    <div className="h-3 bg-slate-200 rounded w-5/6 mb-4"></div>
+                    <div className="h-4 bg-gray-700 dark:bg-gray-300 rounded w-3/4 mb-4"></div>
+                    <div className="h-3 bg-gray-700 dark:bg-gray-300 rounded w-full mb-2"></div>
+                    <div className="h-3 bg-gray-700 dark:bg-gray-300 rounded w-5/6 mb-4"></div>
                     <div className="flex gap-2 mb-4">
-                      <div className="h-6 bg-slate-200 rounded-full w-16"></div>
-                      <div className="h-6 bg-slate-200 rounded-full w-16"></div>
+                      <div className="h-6 bg-gray-700 dark:bg-gray-300 rounded-full w-16"></div>
+                      <div className="h-6 bg-gray-700 dark:bg-gray-300 rounded-full w-16"></div>
                     </div>
                     <div className="flex justify-between items-center mt-4">
-                      <div className="h-3 bg-slate-200 rounded w-16"></div>
-                      <div className="h-8 bg-slate-200 rounded w-20"></div>
+                      <div className="h-3 bg-gray-700 dark:bg-gray-300 rounded w-16"></div>
+                      <div className="h-8 bg-gray-700 dark:bg-gray-300 rounded w-20"></div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
@@ -323,33 +475,32 @@ const Blog = () => {
         {/* Blog Cards */}
         {filteredBlogs.length > 0 && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-              {filteredBlogs.slice(featuredBlog ? 1 : 0).map((blog, index) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-5">
+              {filteredBlogs.map((blog, index) => (
                 <motion.article
                   key={blog._id}
                   onClick={() => {
                     handleViewCount(blog._id);
                     navigate(`/blog/${blog._id}`);
                   }}
-                  className="bg-white rounded-xl shadow-sm hover:shadow-lg cursor-pointer transition-all duration-300 border border-slate-100 overflow-hidden group flex flex-col h-full"
-                  whileHover={{ y: -5 }}
+                  className="bg-[#1e293b] dark:bg-white rounded-xl shadow-sm hover:shadow-lg cursor-pointer transition-all duration-300 border border-white/5 dark:border-gray-300 overflow-hidden group flex flex-col h-full"
+                  whileHover={{ y: -8, scale: 1.02 }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.05 }}
                 >
-                  <div>
+                  <div className="overflow-hidden">
                     <img
                       src={blog.thumbnailUrl}
                       alt={blog.title}
-                      className="w-full h-auto rounded-lg shadow-lg"
+                      className="w-full h-48 object-cover rounded-t-xl transform transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
                   
                   <div className="p-6 flex flex-col flex-grow">
-                    {/* Article Header */}
                     <div className="mb-4">
-                      <div className="flex items-center text-xs text-slate-500 font-medium mb-3">
-                        <span className="font-medium text-slate-600">
+                      <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 font-medium mb-3">
+                        <span className="font-medium text-gray-300 dark:text-gray-700">
                           {blog.author?.username || 'Anonymous'}
                         </span>
                         <span className="mx-2">•</span>
@@ -361,62 +512,52 @@ const Blog = () => {
                           })}
                         </time>
                       </div>
-                      <h2 className="text-xl font-bold text-slate-800 mb-3 leading-tight group-hover:text-indigo-600 transition-colors">
+                      <h2 className="text-xl font-bold text-white dark:text-gray-900 mb-3 leading-tight group-hover:text-orange-400 dark:group-hover:text-blue-500 transition-colors">
                         {blog.title}
                       </h2>
                     </div>
 
-                    {/* Article Preview */}
                     <div className="mb-4 flex-grow">
-                      <p className="text-slate-600 leading-relaxed font-light">
+                      <p className="text-gray-400 dark:text-gray-600 leading-relaxed font-light">
                         {blog.summary || blog.content?.slice(0, 120) + '...'}
                       </p>
                     </div>
 
-                    {/* Tags */}
                     {blog.tags?.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-4">
                         {blog.tags.slice(0, 2).map(tag => (
                           <span 
                             key={tag} 
-                            className="bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-full font-medium"
+                            className="bg-orange-500/10 dark:bg-blue-500/10 text-orange-400 dark:text-blue-500 text-xs px-3 py-1 rounded-full font-medium"
                           >
                             {tag}
                           </span>
                         ))}
                         {blog.tags.length > 2 && (
-                          <span className="bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-full font-medium">
+                          <span className="bg-orange-500/10 dark:bg-blue-500/10 text-orange-400 dark:text-blue-500 text-xs px-3 py-1 rounded-full font-medium">
                             +{blog.tags.length - 2}
                           </span>
                         )}
                       </div>
                     )}
 
-                    {/* Article Meta */}
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
-                      <div className="flex items-center space-x-4 text-sm text-slate-500">
+                    <div className="flex items-center justify-between pt-4 border-t border-white/10 dark:border-gray-300 mt-auto">
+                      <div className="flex items-center space-x-4 text-sm text-gray-400 dark:text-gray-500">
                         <span className="flex items-center space-x-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
+                          <FaEye className="w-4 h-4" />
                           <span>{blog.viewsCount || 0}</span>
                         </span>
                         <span className="flex items-center space-x-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                          </svg>
+                          <FaHeart className="w-4 h-4" />
                           <span>{blog.likesCount || 0}</span>
                         </span>
                       </div>
                       
                       <button
                         onClick={(e) => handleLike(blog._id, e)}
-                        className="text-slate-500 hover:text-indigo-600 text-sm font-medium transition-colors px-3 py-1 rounded-md hover:bg-slate-50 flex items-center gap-1"
+                        className="text-gray-400 dark:text-gray-600 hover:text-orange-500 dark:hover:text-blue-500 text-sm font-medium transition-colors px-3 py-1 rounded-md hover:bg-orange-500/10 dark:hover:bg-blue-500/10 flex items-center gap-1"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905a3.61 3.61 0 01-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                        </svg>
+                        <FaHeart className="w-4 h-4" />
                         Like
                       </button>
                     </div>
@@ -426,9 +567,9 @@ const Blog = () => {
             </div>
 
             {/* Loading more indicator */}
-            {loading && blogs.length > 0 && (
+            {isLoadingMore.current && (
               <div className="flex justify-center py-8">
-                <div className="w-12 h-12 border-t-2 border-indigo-600 border-solid rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-t-2 border-orange-500 dark:border-blue-500 border-solid rounded-full animate-spin"></div>
               </div>
             )}
           </>
@@ -436,43 +577,51 @@ const Blog = () => {
 
         {/* End of Content */}
         {!hasMore && filteredBlogs.length > 0 && (
-          <div className="text-center py-12 border-t border-slate-200">
-            <div className="text-slate-500 font-light mb-2">You've reached the end</div>
-            <p className="text-slate-400 text-sm">No more articles to load</p>
+          <motion.div 
+            className="text-center py-12 border-t border-white/10 dark:border-gray-300"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="text-gray-500 font-light mb-2">You've reached the end</div>
+            <p className="text-gray-600 text-sm">No more articles to load</p>
             <button 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="mt-6 text-indigo-600 hover:text-indigo-800 font-medium flex items-center justify-center gap-2 mx-auto"
+              className="mt-6 text-orange-500 dark:text-blue-500 hover:text-orange-400 dark:hover:text-blue-400 font-medium flex items-center justify-center gap-2 mx-auto"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-              </svg>
+              <FaArrowUp className="w-5 h-5" />
               Back to top
             </button>
-          </div>
+          </motion.div>
         )}
 
         {/* No Results */}
         {filteredBlogs.length === 0 && !loading && (
-          <div className="text-center py-20">
-            <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <motion.div 
+            className="text-center py-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="bg-orange-500/10 dark:bg-blue-500/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-orange-500 dark:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-xl font-medium text-slate-800 mb-2">No articles found</h3>
-            <p className="text-slate-600 mb-6 max-w-md mx-auto">
+            <h3 className="text-xl font-medium text-white dark:text-gray-900 mb-2">No articles found</h3>
+            <p className="text-gray-400 dark:text-gray-600 mb-6 max-w-md mx-auto">
               We couldn't find any articles matching your search. Try adjusting your filters or search terms.
             </p>
-            <button
+            <motion.button
               onClick={() => {
                 setSearch('');
                 setSelectedTag('');
               }}
-              className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+              className="bg-orange-500 dark:bg-blue-500 hover:bg-orange-600 dark:hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-lg shadow-orange-500/20 dark:shadow-blue-500/20"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               Clear filters
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-const logOutUser = require('../controllers/Authentication/logout');
+const logOutUser = require('../controllers/logout');
 const router = require('express').Router();
 
 router.get('/logout', logOutUser);

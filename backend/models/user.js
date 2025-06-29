@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { prependListener } = require('./blogPost');
 
 const userSchema = new mongoose.Schema({
     username: {
@@ -32,6 +33,7 @@ const userSchema = new mongoose.Schema({
     
     
 },{timestamps: true});
+
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

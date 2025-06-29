@@ -7,7 +7,8 @@ const Landing = () => {
     return (
         <>
             <Navbar activePage="LandingPage"/>
-            <LandingPage/>
+            <div className="pt-15.5"><LandingPage/></div>
+            
             <AboutUs/>
         </>
     );

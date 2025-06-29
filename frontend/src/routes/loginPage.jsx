@@ -10,7 +10,8 @@ const Login = () => {
     return (
         <>
             <Navbar activePage={"Login"}/>
-            <LoginPage/>
+            <div className="pt-15.5"><LoginPage/></div>
+            
         </>
     );
 }

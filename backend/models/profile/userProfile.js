@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 const userProfileSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     username: {
         type: String,
         ref: 'User',
@@ -17,7 +22,7 @@ const userProfileSchema = new mongoose.Schema({
         
     },
     
-    bio:{
+    about:{
         type: String
     },
     profilePicture: {
@@ -30,9 +35,14 @@ const userProfileSchema = new mongoose.Schema({
         city: { type: String },
         state: { type: String },
         country: { type: String },
-        postalCode: { type: String },
-        latitude: { type: String },
-        longitude: { type: String },
+        postalCode: { type: String,
+            default:261001},
+        latitude: { type: String,
+            default: 0
+         },
+        longitude: { type: String,
+            default: 0
+         },
         
          // [longitude, latitude]
     },
@@ -77,6 +87,7 @@ const userProfileSchema = new mongoose.Schema({
     
     lastSeenAt: { type: Date, default: Date.now },
     joinedAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
       //Blog
     Blog: [{
         type: mongoose.SchemaTypes.ObjectId,

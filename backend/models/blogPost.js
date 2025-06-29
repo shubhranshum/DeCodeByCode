@@ -51,13 +51,38 @@ const BlogPostSchema = new Schema({
   canonicalUrl: { type: String }
 });
 BlogPostSchema.pre('findOneAndDelete', async function (next) {
-  const blogId = this.getQuery()["_id"]; // Get blog ID from query
+  const blogId = this.getQuery()["_id"]; // Blog being deleted
+
   try {
-    await mongoose.model('Comment').deleteMany({ blog: blogId });
+    const Comment = mongoose.model('Comment');
+    const UserProfile = mongoose.model('UserProfile');
+
+    // 1. Delete associated comments
+    await Comment.deleteMany({ blog: blogId });
+
+    // 2. Remove blog reference from all UserProfile arrays
+    await UserProfile.updateMany(
+      { Blog: blogId },
+      { $pull: { Blog: blogId } }
+    );
+    await UserProfile.updateMany(
+      { LikedBlogs: blogId },
+      { $pull: { LikedBlogs: blogId } }
+    );
+    await UserProfile.updateMany(
+      { DraftBlogs: blogId },
+      { $pull: { DraftBlogs: blogId } }
+    );
+    await UserProfile.updateMany(
+      { ArchivedBlogs: blogId },
+      { $pull: { ArchivedBlogs: blogId } }
+    );
+
     next();
   } catch (err) {
     next(err);
   }
 });
+
 
 module.exports = mongoose.model('BlogPost', BlogPostSchema);

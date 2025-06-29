@@ -4,19 +4,19 @@ import About from './routes/about-us.jsx';
 import Admin from './routes/Admin/admin.jsx';
 
 
+import BlogDetails from './components/Blog/blogDetail.jsx';
+// import CreateBlogForm from './components/Blog/createBlog.jsx';
+import EditBlogForm from './components/Blog/editBlog.jsx';
+import ProfilePage from './components/Profile/profilePage.jsx';
+import UserBlog from './components/Profile/userBlog.jsx';
+import BlogPage from './routes/blog/blog.jsx';
 import Home from './routes/home.jsx';
 import Landing from './routes/LandingPage.jsx';
 import Login from './routes/loginPage.jsx';
 import ProblemPage from './routes/problem.jsx';
 import ProblemsPage from './routes/problems.jsx';
 import SignUp from './routes/signUpPage.jsx';
-import BlogPage from './routes/blog.jsx';
-import BlogDetails from './components/Blog/blogDetail.jsx';
-import CreateBlogForm from './components/Blog/createBlog.jsx';
-import ProfilePage from './components/Profile/profilePage.jsx';
-import UserBlog from './components/Profile/userBlog.jsx';
-import EditBlogForm from './components/Blog/editBlog.jsx';
-import AdminProblem from './components/Admin/adminProblem.jsx';
+import CreateBlogForm from './routes/blog/blogPost.jsx';
 
 
 
@@ -37,6 +37,7 @@ export default function App() {
         <Route path="problem/:id" element={<ProblemPage />} />
         <Route path="/admin" element={<Admin/>}/>
 
+        
         <Route path="/blogs" element={<BlogPage />} />
         <Route path ="/create-blog" element={<CreateBlogForm/>} />
         <Route path="/blog/:id" element={<BlogDetails />} />
@@ -48,7 +49,6 @@ export default function App() {
         {/* <Route path ="/create" */}
 
         <Route path="/admin/edit-problem/:id" element={<EditProblem/>} />
-        <Route path="/admin/problem/:id" element={<AdminProblem/>} />
 
 
         {/* Add more routes as needed */}

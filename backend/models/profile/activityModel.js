@@ -1,11 +1,51 @@
-const activitySchema = new mongoose.Schema({
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    type: {
-        type: String,
-        enum: ['PROBLEM_SOLVED', 'BLOG_POSTED', 'COMMENT_ADDED', 'LIKE_GIVEN', 'ACHIEVEMENT_EARNED']
-    },
-    details: mongoose.Schema.Types.Mixed,
-    timestamp: { type: Date, default: Date.now }
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
+
+const activitySchema = new Schema({
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true,index:true },
+
+  // Dynamic reference to various collections
+  refId: {
+    type: Schema.Types.ObjectId,
+    required: true
+  },
+  refModel: {
+    type: String,
+    required: true,
+    enum: ['Problem', 'BlogPost', 'Comment'] // Add any model names you want to support
+  },
+
+  type: {
+    type: String,
+    enum: [
+      'PROBLEM_SOLVED',
+      'PROBLEM_CREATED',
+      'BLOG_POSTED',
+      'BLOG_EDITED',
+      'BLOG_DELETED',
+      'COMMENT_ADDED',
+      'LIKE_GIVEN',
+      
+    ],
+    required: true
+  },
+
+  details: {
+    type: Schema.Types.Mixed
+  },
+
+  timestamp: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-const Activity = mongoose.model('Activity', activitySchema);
+// Dynamic population setup (optional utility, not in schema)
+activitySchema.virtual('ref', {
+  ref: doc => doc.refModel,
+  localField: 'refId',
+  foreignField: '_id',
+  justOne: true
+});
+
+module.exports = mongoose.model('Activity', activitySchema);

@@ -1,5 +1,6 @@
 const Comment = require('../models/Comments');
 const BlogPost = require('../models/blogPost');
+const { logActivity } = require('./activityController');
 
 // Get all comments for a blog post (with nested structure)
 const getComments = async (req, res) => {
@@ -76,15 +77,20 @@ const addComment = async (req, res) => {
     if (!blogPost.allowComments) {
       return res.status(403).json({ message: 'Comments are not allowed on this post' });
     }
-
+    console.log(blogPost);
     const newComment = new Comment({
       blog: blogId,
       user: userId,
       text: text.trim(),
       parentComment: null // Top-level comment
     });
+    // blogPost.commentCount += 1;
+    // blogPost.save();
 
     await newComment.save();
+    const log = await logActivity(userId, newComment._id,"Comment", "COMMENT_ADDED", "Comment on a blog with title : "+blogPost.title);
+    console.log("Comment added successfully");
+    
     
     res.status(201).json({ 
       message: 'Comment added successfully',

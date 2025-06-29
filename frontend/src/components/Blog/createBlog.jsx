@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
+import { useNavigate } from 'react-router-dom';
 
 const CreateBlogForm = ({ blogId }) => {
   const [formData, setFormData] = useState({
@@ -18,19 +18,41 @@ const CreateBlogForm = ({ blogId }) => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [thumbnailError, setThumbnailError] = useState(false);
-  const navigate = useNavigate(); // Actual navigation hook
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const navigate = useNavigate();
 
-  const generateSlug = (title) =>
-      title.toLowerCase().trim()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '');
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/check/auth', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setIsAuthenticated(data.isAuthenticated);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        console.error('Failed to check authentication:', err);
+        setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   // If we're editing, fetch existing blog and prefill
   useEffect(() => {
-    if (!blogId) return;
-    (async () => {
+    if (!blogId || !isAuthenticated) return;
+    
+    const fetchBlog = async () => {
       try {
         const res = await fetch(`http://localhost:3000/blog/${blogId}`, {
           credentials: 'include',
@@ -50,8 +72,17 @@ const CreateBlogForm = ({ blogId }) => {
       } catch (err) {
         console.error('Failed to load blog for edit:', err);
       }
-    })();
-  }, [blogId]);
+    };
+
+    fetchBlog();
+  }, [blogId, isAuthenticated]);
+
+  const generateSlug = (title) =>
+      title.toLowerCase().trim()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -71,6 +102,12 @@ const CreateBlogForm = ({ blogId }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
     setError('');
     setIsSubmitting(true);
 
@@ -105,7 +142,7 @@ const CreateBlogForm = ({ blogId }) => {
       const method = blogId ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
-        method, // FIXED: Was incorrectly set to 'url' before
+        method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(payload),
@@ -116,7 +153,7 @@ const CreateBlogForm = ({ blogId }) => {
         throw new Error(errData.error || 'Save failed');
       }
 
-      navigate('/blogs'); // ACTUAL navigation
+      navigate('/blogs');
     } catch (err) {
       console.error(err);
       setError(err.message || 'An error occurred. Please try again.');
@@ -124,6 +161,56 @@ const CreateBlogForm = ({ blogId }) => {
       setIsSubmitting(false);
     }
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white flex flex-col items-center justify-center px-4 py-12">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-white rounded-2xl shadow-lg p-8 border border-slate-100">
+            <div className="bg-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            
+            <h2 className="text-2xl font-bold text-slate-800 mb-3">
+              Authentication Required
+            </h2>
+            <p className="text-slate-600 mb-6">
+              You need to be logged in to {blogId ? 'edit' : 'create'} blog posts.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => navigate('/login')}
+                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                Log In
+              </button>
+              
+              <button
+                onClick={() => navigate('/blogs')}
+                className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"
+              >
+                Back to Blogs
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
@@ -147,7 +234,7 @@ const CreateBlogForm = ({ blogId }) => {
                 </div>
               </div>
               <button
-                  onClick={() => navigate('/blogs')} // Actual navigation
+                  onClick={() => navigate('/blogs')}
                   className="p-2 rounded-full hover:bg-slate-100 transition-colors"
               >
                 <svg className="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -461,7 +548,7 @@ const CreateBlogForm = ({ blogId }) => {
 
                     <button
                         type="button"
-                        onClick={() => navigate('/blogs')} // Actual navigation
+                        onClick={() => navigate('/blogs')}
                         className="px-8 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all duration-200"
                     >
                       Cancel

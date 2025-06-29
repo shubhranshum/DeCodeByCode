@@ -14,7 +14,7 @@ const SignUp = () => {
     return (
         <>
         <Navbar activePage={"SignUp"}/>
-            <SignUpPage/>
+           <div className="pt-15.5"><SignUpPage/></div> 
         </>
     );
 }

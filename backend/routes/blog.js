@@ -10,18 +10,20 @@ router.get('/blog/:id', blogController.getBlogById);
 
 router.get('/blog/slug/:slug', blogController.getBlogBySlug);
 
-// Public Routes - Comments (using new nested comment controller)
-router.get('/blog/comments/:blogId', commentController.getComments);
+
+router.get('/blog/comments/:blogId', auth, commentController.getComments);
 
 // Protected Routes - Blog Management
+
+
 router.post('/create-blog', auth, blogController.createBlog);
 router.put('/update-blog/:id', auth, blogController.updateBlog);
 // router.put('/blog/:id', auth, blogController.createBlog);
 router.delete('/blog/:id', auth, blogController.deleteBlog);
 
 // Public Routes - Blog Interactions (no auth required for likes/views)
-router.post('/blog/:id/like', blogController.likeBlog);
-router.post('/blog/:id/view', blogController.viewBlog);
+router.post('/blog/:id/like', auth, blogController.likeBlog);
+router.post('/blog/:id/view', auth,blogController.viewBlog);
 
 // Protected Routes - Comment Management (using new nested comment controller)
 router.post('/blog/:blogId', auth, commentController.addComment);
