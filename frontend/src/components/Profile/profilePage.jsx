@@ -79,6 +79,7 @@ const ProfilePage = () => {
   const handleSubmitEdit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    console.log(editFormData);
     
     try {
       const res = await fetch('http://localhost:3000/profile', {
@@ -509,11 +510,11 @@ const ProfilePage = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600">Problems Solved</span>
-                    <span className="font-bold text-indigo-600">{profile.ProblemSolved || 0}</span>
+                    <span className="font-bold text-indigo-600">{profile.stats.problemSolved || 0}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600">Blog Posts</span>
-                    <span className="font-bold text-indigo-600">{profile.blogCount || 0}</span>
+                    <span className="font-bold text-indigo-600">{profile.stats.blogCount || 5}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600">Blog Views</span>

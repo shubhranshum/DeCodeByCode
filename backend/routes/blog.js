@@ -23,6 +23,8 @@ router.delete('/blog/:id', auth, blogController.deleteBlog);
 
 // Public Routes - Blog Interactions (no auth required for likes/views)
 router.post('/blog/:id/like', auth, blogController.likeBlog);
+router.get('/blog/:id/like', auth,blogController.getIfLiked);
+
 router.post('/blog/:id/view', auth,blogController.viewBlog);
 
 // Protected Routes - Comment Management (using new nested comment controller)

@@ -29,6 +29,7 @@ exports.getBlogsByUserId = async (req, res) => {
 
 
 
+
 // Create a new blog post
 exports.createBlog = async (req, res) => {
   try {
@@ -51,6 +52,7 @@ exports.createBlog = async (req, res) => {
     });
     const user = await User.findOne({ _id: author });
     username = user.username;
+    const savedBlog = await blog.save();
     const profile = await UserProfile.findOne({ username: username });
     if(blog.status=="Published")
     {
@@ -64,8 +66,12 @@ exports.createBlog = async (req, res) => {
     {
       profile.ArchivedBlogs.push(blog._id);
     }
+    if(blog.status == "Published")
+    {
+      profile.stats.blogCount += 1;
+    }
     await profile.save();
-    const savedBlog = await blog.save();
+    
     const activity = await logActivity(author, savedBlog._id,"Blog", "BLOG_POSTED", "Blog Post Created with id "+savedBlog.title);
     console.log('Activity logged:', activity);  
     
@@ -276,7 +282,11 @@ exports.likeBlog = async (req, res) => {
 
     // Prevent duplicate likes
     if (blog.likedBy.includes(userId)) {
-      return res.status(400).json({ message: 'Already liked' });
+      blog.likesCount -= 1;
+      blog.likedBy.pull(userId);
+      await blog.save()
+      return res.status(200).json({ likesCount: blog.likesCount });
+      
     }
 
     blog.likesCount += 1;
@@ -288,6 +298,24 @@ exports.likeBlog = async (req, res) => {
     res.status(500).json({ message: 'Error liking blog' });
   }
 };
+exports.getIfLiked = async (req, res) => {
+  try {
+    const blogId = req.params.id;
+    const userId = req.user._id;
+
+    const blog = await Blog.findById(blogId);
+
+    if (!blog) return res.status(404).json({ message: 'Blog not found' });
+
+    const isLiked = blog.likedBy.includes(userId);
+
+    return res.status(200).json({ liked:isLiked });
+  } catch (error) {
+    res.status(500).json({ message: 'Error checking if liked' });
+  }
+};
+
+
 
 exports.viewBlog = async (req, res) => {
   try {

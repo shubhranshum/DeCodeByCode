@@ -4,7 +4,7 @@ import About from './routes/about-us.jsx';
 import Admin from './routes/Admin/admin.jsx';
 
 
-import BlogDetails from './components/Blog/blogDetail.jsx';
+import BlogDetails from './routes/blog/blogDetails.jsx';
 // import CreateBlogForm from './components/Blog/createBlog.jsx';
 import EditBlogForm from './components/Blog/editBlog.jsx';
 import ProfilePage from './components/Profile/profilePage.jsx';

@@ -3,7 +3,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaStar, FaHeart, FaEye, FaSearch, FaArrowUp, FaSun, FaMoon } from 'react-icons/fa';
 import { FiEdit2, FiTag } from 'react-icons/fi';
-
+import BlogCard from './BlogUIElements/blogCard';
+import FeaturedBlogCard from './BlogUIElements/featuredBlogCard';
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -243,90 +244,7 @@ const Blog = () => {
       )}
 
       {/* Hero Section */}
-      {featuredBlog && (
-        <div className="bg-gradient-to-r from-[#1e293b] to-[#0f172a] dark:from-blue-100 dark:to-blue-200 py-16 px-4 border-b border-white/10 dark:border-gray-300">
-          <div className="max-w-6xl mx-auto">
-            <motion.div 
-              className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <div>
-                <div className="inline-block bg-orange-500 dark:bg-blue-500 text-white text-xs px-3 py-1 rounded-full mb-4">
-                  Featured Story
-                </div>
-                <motion.h1 
-                  className="text-4xl md:text-5xl font-bold mb-4 leading-tight text-white dark:text-gray-900"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  {featuredBlog.title}
-                </motion.h1>
-                <motion.p 
-                  className="text-gray-300 dark:text-gray-700 text-lg mb-6 max-w-2xl"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  {featuredBlog.summary || featuredBlog.content?.slice(0, 200) + '...'}
-                </motion.p>
-                <motion.div 
-                  className="flex flex-wrap items-center gap-4 mb-6"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  <div className="flex items-center">
-                    <div className="bg-gray-200 dark:bg-gray-400 border-2 border-dashed rounded-xl w-10 h-10" />
-                    <div className="ml-3">
-                      <p className="font-medium text-white dark:text-gray-900">{featuredBlog.author?.username || 'Anonymous'}</p>
-                      <p className="text-sm text-gray-400 dark:text-gray-600">
-                        {new Date(featuredBlog.createdAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-400 dark:text-gray-600">
-                    <FaEye className="w-4 h-4 mr-1" />
-                    <span>{featuredBlog.viewsCount || 0} views</span>
-                  </div>
-                </motion.div>
-                <motion.button
-                  onClick={() => {
-                    handleViewCount(featuredBlog._id);
-                    navigate(`/blog/${featuredBlog._id}`);
-                  }}
-                  className="bg-orange-500 dark:bg-blue-500 hover:bg-orange-600 dark:hover:bg-blue-600 px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-lg shadow-orange-500/20 dark:shadow-blue-500/20 text-white"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.8 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Read Full Story
-                </motion.button>
-              </div>
-              <motion.div
-                className="rounded-xl overflow-hidden shadow-xl"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                <img
-                  src={featuredBlog.thumbnailUrl}
-                  alt={featuredBlog.title}
-                  className="w-full h-auto rounded-xl transform transition-transform duration-500 hover:scale-105"
-                />
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      )}
+      {featuredBlog && <FeaturedBlogCard featuredBlog={featuredBlog}  handleViewCount={handleViewCount} />}
 
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Header */}
@@ -473,107 +391,7 @@ const Blog = () => {
         )}
 
         {/* Blog Cards */}
-        {filteredBlogs.length > 0 && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-5">
-              {filteredBlogs.map((blog, index) => (
-                <motion.article
-                  key={blog._id}
-                  onClick={() => {
-                    handleViewCount(blog._id);
-                    navigate(`/blog/${blog._id}`);
-                  }}
-                  className="bg-[#1e293b] dark:bg-white rounded-xl shadow-sm hover:shadow-lg cursor-pointer transition-all duration-300 border border-white/5 dark:border-gray-300 overflow-hidden group flex flex-col h-full"
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.05 }}
-                >
-                  <div className="overflow-hidden">
-                    <img
-                      src={blog.thumbnailUrl}
-                      alt={blog.title}
-                      className="w-full h-48 object-cover rounded-t-xl transform transition-transform duration-500 group-hover:scale-110"
-                    />
-                  </div>
-                  
-                  <div className="p-6 flex flex-col flex-grow">
-                    <div className="mb-4">
-                      <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 font-medium mb-3">
-                        <span className="font-medium text-gray-300 dark:text-gray-700">
-                          {blog.author?.username || 'Anonymous'}
-                        </span>
-                        <span className="mx-2">•</span>
-                        <time>
-                          {new Date(blog.createdAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </time>
-                      </div>
-                      <h2 className="text-xl font-bold text-white dark:text-gray-900 mb-3 leading-tight group-hover:text-orange-400 dark:group-hover:text-blue-500 transition-colors">
-                        {blog.title}
-                      </h2>
-                    </div>
-
-                    <div className="mb-4 flex-grow">
-                      <p className="text-gray-400 dark:text-gray-600 leading-relaxed font-light">
-                        {blog.summary || blog.content?.slice(0, 120) + '...'}
-                      </p>
-                    </div>
-
-                    {blog.tags?.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {blog.tags.slice(0, 2).map(tag => (
-                          <span 
-                            key={tag} 
-                            className="bg-orange-500/10 dark:bg-blue-500/10 text-orange-400 dark:text-blue-500 text-xs px-3 py-1 rounded-full font-medium"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {blog.tags.length > 2 && (
-                          <span className="bg-orange-500/10 dark:bg-blue-500/10 text-orange-400 dark:text-blue-500 text-xs px-3 py-1 rounded-full font-medium">
-                            +{blog.tags.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between pt-4 border-t border-white/10 dark:border-gray-300 mt-auto">
-                      <div className="flex items-center space-x-4 text-sm text-gray-400 dark:text-gray-500">
-                        <span className="flex items-center space-x-1">
-                          <FaEye className="w-4 h-4" />
-                          <span>{blog.viewsCount || 0}</span>
-                        </span>
-                        <span className="flex items-center space-x-1">
-                          <FaHeart className="w-4 h-4" />
-                          <span>{blog.likesCount || 0}</span>
-                        </span>
-                      </div>
-                      
-                      <button
-                        onClick={(e) => handleLike(blog._id, e)}
-                        className="text-gray-400 dark:text-gray-600 hover:text-orange-500 dark:hover:text-blue-500 text-sm font-medium transition-colors px-3 py-1 rounded-md hover:bg-orange-500/10 dark:hover:bg-blue-500/10 flex items-center gap-1"
-                      >
-                        <FaHeart className="w-4 h-4" />
-                        Like
-                      </button>
-                    </div>
-                  </div>
-                </motion.article>
-              ))}
-            </div>
-
-            {/* Loading more indicator */}
-            {isLoadingMore.current && (
-              <div className="flex justify-center py-8">
-                <div className="w-12 h-12 border-t-2 border-orange-500 dark:border-blue-500 border-solid rounded-full animate-spin"></div>
-              </div>
-            )}
-          </>
-        )}
+        {filteredBlogs.length > 0 && <BlogCard blogs={filteredBlogs} handleLike={handleLike} handleViewCount={handleViewCount} />}
 
         {/* End of Content */}
         {!hasMore && filteredBlogs.length > 0 && (
