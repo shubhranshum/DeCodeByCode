@@ -60,6 +60,7 @@ const Blog = () => {
           method: "GET",
           credentials: "include",
         });
+        console.log( response);
 
         if (!response.ok) throw new Error('Server error while fetching blogs');
 
@@ -90,22 +91,22 @@ const Blog = () => {
     fetchBlogs();
   }, [page]);
   
-  const checkLogin = async () => {
-    try {
-      const res = await fetch('http://localhost:3000/check/auth', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await res.json();
-      setIsUserLoggedIn(data.isAuthenticated);
-    } catch (err) {
-      console.error('Failed to check login status:', err);
-    }
-  }
+  // const checkLogin = async () => {
+  //   try {
+  //     const res = await fetch('http://localhost:3000/check/auth', {
+  //       method: 'GET',
+  //       credentials: 'include'
+  //     });
+  //     const data = await res.json();
+  //     setIsUserLoggedIn(data.isAuthenticated);
+  //   } catch (err) {
+  //     console.error('Failed to check login status:', err);
+  //   }
+  // }
   
-  useEffect(() => {
-    checkLogin();
-  }, []);
+  // useEffect(() => {
+  //   checkLogin();
+  // }, []);
   
   const handleCreateBlog = () => {
     navigate('/create-blog');

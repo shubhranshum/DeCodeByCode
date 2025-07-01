@@ -39,8 +39,9 @@ mongoose.connect(url).then(()=>{
 })
 
 app.use('/', router);
+app.use('/', blogRouter);
 
-app.use('/',auth,[homeRouter,problemHandling,logoutRouter,codeRunner,makeAdmin,blogRouter,profile]);
+app.use('/',auth,[homeRouter,problemHandling,logoutRouter,codeRunner,makeAdmin,profile]);
 
 
 app.use('/admin', auth, adminRouter);
