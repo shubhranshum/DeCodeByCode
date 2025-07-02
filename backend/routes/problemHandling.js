@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const fetchProblem = require('../controllers/fetchProblem');
-const fetchAllProblems = require('../controllers/fetchAllProblems');
+const getProblemById = require('../controllers/getProblemById');
+const getGlobalProblems = require('../controllers/getGlobalProblems');
 // const fetchAdminProblems = require('../controllers/fetchAdminProblems');
 
 
 
-router.get('/problems', fetchAllProblems);
-router.get('/problem/:id', fetchProblem);
+router.get('/problems', getGlobalProblems);
+router.get('/problem/:id', getProblemById);
 
 module.exports = router;

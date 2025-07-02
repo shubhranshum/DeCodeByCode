@@ -1,10 +1,11 @@
 const Problem = require('../models/problem');
 
-async function fetchProblem(req, res) {
-    console.log("Fetching problem details");
-    const id = req.params.id; // Assuming the problem ID is passed as a URL parameter
+async function getProblemById(req, res) {
+    const {id} = req.params;// Assuming the problem ID is passed as a URL parameter
+    console.log('Fetching problem with ID:', id);
     try {
         const problem = await Problem.findById(id).populate('user', 'username'); // Populate user details
+        console.log('Problem fetched:', problem);
         if (!problem) {
             return res.status(404).json({ message: 'Problem not found' });
         }
@@ -15,4 +16,4 @@ async function fetchProblem(req, res) {
     }
 }
 
-module.exports = fetchProblem;
+module.exports = getProblemById;
