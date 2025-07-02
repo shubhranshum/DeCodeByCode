@@ -29,10 +29,29 @@ export default function TestCaseSection({testCases,setTestCases}) {
         console.log("Test Cases Saved:", updatedTestCases);
         alert("Test cases saved successfully!");
         setNewInput("");
+        setExplanation("");
         setShowPopup(false);
       }
     }
   };
+  const removeTestCase = async (testCaseId) => {
+    const updatedTestCases = testCases.filter((_, index) => index !== id);
+    setTestCases(updatedTestCases);
+    // Update the backend
+    const response = await fetch(`http://localhost:3000/admin/edit-problem/${id}/testcase/${testCaseId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // Include cookies for session management
+      body: JSON.stringify({ id: id }),
+    });
+    if (!response.ok) {
+      alert("Failed to remove test case. Please try again.");
+      return;
+    }
+    console.log("Test Case Removed:", id);
+  }
 
   return (
     <div className="text-white space-y-6">

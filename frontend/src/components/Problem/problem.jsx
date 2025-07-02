@@ -36,7 +36,6 @@ export default function Problem() {
 
   const handleCodeSubmit = async (code) => {
     let isCorrect = true;
-    console.log(problem.testCases);
     for(let i = 0 ; i < problem.testCases.length; i++) {
       setVerdict("Running on test case: " + (i + 1));
       const testCase = problem.testCases[i];
@@ -144,7 +143,7 @@ export default function Problem() {
 
             <div className="output-section">
               <h4>Output:</h4>
-              <pre>{JSON.stringify(testCase.output, null, 2)}</pre>
+              <pre>{JSON.stringify(testCase.output.stdout, null, 2)}</pre>
             </div>
             {testCase.explanation && (
               <div className="explanation-section">

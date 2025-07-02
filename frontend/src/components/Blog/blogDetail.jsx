@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getTheme, setTheme as themesetTheme } from '../../utils/theme';
 const BlogDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ const BlogDetails = () => {
   const [bookmarked, setBookmarked] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState(getTheme);
   const [readingProgress, setReadingProgress] = useState(0);
   const [showToc, setShowToc] = useState(false);
   const [headings, setHeadings] = useState([]);
@@ -26,12 +26,13 @@ const BlogDetails = () => {
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    themesetTheme(newTheme);
   };
 
   // Apply theme on initial load
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
+    const savedTheme = getTheme();
+    console.log('Saved theme:', savedTheme);
     setTheme(savedTheme);
   }, []);
 
@@ -127,6 +128,41 @@ const BlogDetails = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  useEffect(() => {
+  if (!blog || !contentRef.current) return;
+
+  // Add copy buttons to all code blocks
+  const codeBlocks = contentRef.current.querySelectorAll('pre');
+  codeBlocks.forEach(block => {
+    // Skip if we've already added a copy button
+    if (block.querySelector('.copy-btn')) return;
+    
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" class="copy-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg>
+      <span class="copy-tooltip">Copy</span>
+    `;
+    
+    copyBtn.addEventListener('click', () => {
+      const code = block.querySelector('code') || block;
+      navigator.clipboard.writeText(code.textContent || '');
+      
+      // Show copied feedback
+      const tooltip = copyBtn.querySelector('.copy-tooltip');
+      if (tooltip) {
+        tooltip.textContent = 'Copied!';
+        setTimeout(() => {
+          tooltip.textContent = 'Copy';
+        }, 2000);
+      }
+    });
+    
+    block.appendChild(copyBtn);
+  });
+}, [blog]);
 
   const handleCommentSubmit = async () => {
     if (!newComment.trim()) return;
@@ -305,23 +341,7 @@ const BlogDetails = () => {
   };
 
   // Theme toggle button component
-  const ThemeToggle = () => (
-    <button
-      onClick={toggleTheme}
-      className="p-2 rounded-full bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-200 hover:bg-slate-300 dark:hover:bg-gray-600 transition-colors"
-      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-    >
-      {theme === 'light' ? (
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-        </svg>
-      ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
-        </svg>
-      )}
-    </button>
-  );
+  
 
   if (loading) {
     return (
@@ -435,7 +455,7 @@ const BlogDetails = () => {
             </svg>
             Back to articles
           </button>
-          <ThemeToggle />
+          
         </div>
 
         {/* Blog Header */}
@@ -653,6 +673,7 @@ const BlogDetails = () => {
       
       {/* Custom CSS for TinyMCE content */}
       <style jsx global>{`
+        
         .dark {
           --color-bg-primary: #111827;
           --color-bg-secondary: #1f2937;
@@ -762,33 +783,52 @@ const BlogDetails = () => {
           color: #9ca3af;
           border-left-color: #818cf8;
         }
+          .blog-content pre {
+      background: #0f172a;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      overflow: auto;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      border: 1px solid #334155;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark .blog-content pre {
+      background: #0f172a;
+      border-color: #475569;
+    }
+    
+    .blog-content code {
+      background: #f1f5f9;
+      padding: 0.3rem 0.5rem;
+      border-radius: 0.25rem;
+      font-family: 'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace;
+      font-size: 0.95rem;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .dark .blog-content code {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-color: #334155;
+    }
+      .blog-content pre code {
+      background: transparent;
+      padding: 0;
+      border: none;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+    }
+    
+    .dark .blog-content pre code {
+      color: #cbd5e1;
+    }
+
         
-        .blog-content pre {
-          background: #f9fafb;
-          padding: 1.5rem;
-          border-radius: 0.5rem;
-          overflow: auto;
-          margin: 1.5rem 0;
-          font-size: 0.95rem;
-          line-height: 1.5;
-        }
-        
-        .dark .blog-content pre {
-          background: #1f2937;
-        }
-        
-        .blog-content code {
-          background: #f3f4f6;
-          padding: 0.2rem 0.4rem;
-          border-radius: 0.25rem;
-          font-family: 'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace;
-          font-size: 0.9rem;
-        }
-        
-        .dark .blog-content code {
-          background: #1f2937;
-        }
-        
+                
         .blog-content img {
           max-width: 100%;
           height: auto;

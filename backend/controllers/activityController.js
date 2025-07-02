@@ -10,7 +10,6 @@ exports.logActivity = async (
   details
 ) => {
   try {
-    
     const activity = new Activity({
       user: userId,
       refId:refId,
@@ -18,8 +17,7 @@ exports.logActivity = async (
       refModel:refModel,
       details:details,
     });
-    
-    
+
 
     const saved = await activity.save();
 

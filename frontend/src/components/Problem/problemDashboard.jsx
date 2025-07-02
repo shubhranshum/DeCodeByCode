@@ -1,78 +1,124 @@
-import React,{useEffect,useState} from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "../Navbar/navbar.jsx";
-import { getAllProblems } from "../Tasks/getAllProblems.jsx"; // Assuming you have a service to fetch problem details
+import { getAllGlobalProblems } from "../Tasks/getAllGlobalProblems.jsx";
+import { Search, ChevronRight, FileText, CheckCircle, User, Clock } from "lucide-react";
 
 export default function ProblemDashboard() {
-  window.href = "/problems";
-  // Fetch all problems from the backend
-  const [problems, setProblems] = useState([]); // Initialize with props or empty array
+  const [problems, setProblems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
     async function loadProblems() {
       try {
-        const allProblems = await getAllProblems();
-        console.log("All problems fetched:", allProblems);
-        // console.log("Fetched problems:", problems);
-        setProblems(allProblems);
+        setIsLoading(true);
+        const data = await getAllGlobalProblems();
+        setProblems(data);
+        // console.log("Problem: ",problems)
       } catch (error) {
         console.error("Error fetching problems:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
-
     loadProblems();
-  },[])
-  console.log("Fetched problems:", problems);
+  }, []);
+
+  const filteredProblems = problems.filter(problem =>
+    problem.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    problem.statement?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const DifficultyBadge = ({ difficulty }) => {
+    const colors = {
+      Easy: "bg-green-100 text-green-800",
+      Medium: "bg-yellow-100 text-yellow-800",
+      Hard: "bg-red-100 text-red-800"
+    };
+    return (
+      <span className={`px-2 py-1 text-xs rounded-full ${colors[difficulty]}`}>
+        {difficulty}
+      </span>
+    );
+  };
+
   return (
     <>
-      <Navbar activePage={"Problems"}/>
-      <main className="min-h-screen bg-gradient-to-br from-gray-950 to-gray-800 text-white px-6 py-10 mt-12">
-        {/* Problem of the Day */}
-        <section className="bg-white/10 border-2 border-orange-400 rounded-3xl p-8 mb-12">
-          <h2 className="text-2xl font-bold mb-4 text-white">Problem of the day</h2>
-            <h1 className="text-2xl font-bold mb-4 font-mono">GCD makes equal</h1>
-          {/* <p className="mb-2 text-white/80">
-            You are given an array <code>a</code>, you can do the below described operation on it.
-          </p>
-          <p className="mb-2 text-white/80">
-            <strong>Operation:</strong> Choose any two indices <code>i, j</code> and replace <code>a[j] → a[j] / gcd(a[i], a[j])</code>.
-          </p>
-          <p className="mb-6 text-white/80">
-            Find the minimum number of operations to make all the elements of the array equal. If not possible return -1.
-          </p> */}
-          <Button className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-6 py-2 rounded-lg shadow"
-          onClick={() => window.location.href = "/problem/1"}
-          >
-            SUBMIT YOUR SOLUTION
-          </Button>
-        </section>
+      <Navbar activePage={"Problems"} />
+      <div className="min-h-screen bg-gray-50 px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Search Bar */}
+          <div className="relative mb-8">
+            <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search problems..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-        {/* Problem List */}
-        <section className="bg-white/5 rounded-2xl p-8 shadow-xl">
-          <h2 className="text-xl font-bold mb-6">Problem List</h2>
-
-            <div className="bg-transparent mb-4 space-x-4 flex">
-                Daily Problems
-            </div>
-
-            <Card className="bg-gray-900 border border-gray-700 rounded-xl p-4">
-              <CardContent className="text-white/90">
-              <ul className="space-y-2">
-                {problems.map((problem) => (
-                  <li
-                    // key={index}
-                    className="text-lg font-medium hover:underline cursor-pointer"
-                    onClick={() => window.location.href = `/problem/${problem._id}`}
-                  >
-                    {problem.title}. {problem.title}
-                  </li>
-                ))}
-              </ul>
-              </CardContent>
-            </Card>
-        </section>
-      </main>
+          {/* Problems List */}
+          <div className="space-y-4">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : filteredProblems.length > 0 ? (
+              filteredProblems.map((problem) => (
+                <Card
+                  key={problem._id}
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => window.location.href = `/problem/${problem._id}`}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold">{problem.title}</h3>
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                          <DifficultyBadge difficulty={problem.difficulty} />
+                          <span className="flex items-center gap-1">
+                            <User className="h-4 w-4" />
+                            {problem.user?.username || "Admin"}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            {problem.acceptedSolutions || 0} solved
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {new Date(problem.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex items-center gap-1"
+                      >
+                        Solve <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No problems found
+                </h3>
+                <p className="text-gray-600">
+                  {searchQuery ? "Try a different search" : "No problems available yet"}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </>
   );
 }
