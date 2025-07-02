@@ -8,7 +8,7 @@ import BlogDetails from './routes/blog/blogDetails.jsx';
 // import CreateBlogForm from './components/Blog/createBlog.jsx';
 import EditBlogForm from './components/Blog/editBlog.jsx';
 import ProfilePage from './routes/profilePage.jsx';
-import UserBlog from './components/Profile/userBlog.jsx';
+import UserBlog from './routes/userBlogs.jsx';
 import BlogPage from './routes/blog/blog.jsx';
 import Home from './routes/home.jsx';
 import Landing from './routes/LandingPage.jsx';
@@ -47,6 +47,7 @@ export default function App() {
         <Route path ="/create-blog" element={<CreateBlogForm/>} />
         <Route path="/blog/:id" element={<BlogDetails />} />
         <Route path ="/profile" element={<ProfilePage/>} />
+        <Route path = "/profile/user/:username" element={<ProfilePage/>} />
         <Route path = "/edit-blog/:id" element={<EditBlogForm/>} />
         <Route>
           <Route path="/profile/userblogs" element={<UserBlog />} />

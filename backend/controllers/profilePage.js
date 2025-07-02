@@ -1,6 +1,23 @@
 const UserProfile = require('../models/profile/userProfile');
 const BlogPost = require('../models/blogPost');
 
+const getProfileByUserName = async (req, res) => {
+  try {
+    const username = req.params.username;
+    console.log(username);
+    console.log("Hello from getProfileByID");
+    const profile = await UserProfile.findOne({ username: username }).populate('Blog').populate('DraftBlogs').populate('ArchivedBlogs').populate('LikedBlogs').lean();
+    console.log(profile);
+    if (!profile) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+    console.log(profile);
+    res.json(profile);
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 const getProfile = async (req, res) => {
   try {
 
@@ -13,7 +30,7 @@ const getProfile = async (req, res) => {
       .populate('ArchivedBlogs')
       .populate('LikedBlogs')
       .lean();  // You can also populate DraftBlogs, ArchivedBlogs, LikedBlogs as needed
-
+    console.log(profile);
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
@@ -69,4 +86,4 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { getProfile , updateProfile };
+module.exports = { getProfile , updateProfile , getProfileByUserName};
