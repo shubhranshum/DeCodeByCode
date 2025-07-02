@@ -170,7 +170,7 @@ const Blog = () => {
     ? featuredBlogs.sort((a, b) => {
       if (b.viewsCount !== a.viewsCount) {
           return b.viewsCount - a.viewsCount;}
-        else if (b.likesCount !== a.likesCount) {
+      else if (b.likesCount !== a.likesCount) {
           return b.likesCount - a.likesCount;
       }else {
           return new Date(b.createdAt) - new Date(a.createdAt);

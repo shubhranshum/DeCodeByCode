@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { getTheme, setTheme as themesetTheme } from '../../utils/theme';
 import AchievementsSection from './ProfilePage/achievementsSection';
 import ActivityFeed from './ProfilePage/activityFeed';
@@ -16,6 +16,9 @@ import SocialLinks from './ProfilePage/socialLinks';
 import StatsSection from './ProfilePage/statsSection';
 
 const ProfilePage = () => {
+  const { username } = useParams();
+  const isOwnProfile = !username;
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
@@ -24,6 +27,7 @@ const ProfilePage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [theme, setTheme] = useState(getTheme);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isFollowing, setIsFollowing] = useState(false);
   const [stats, setStats] = useState({
     problemsSolved: 0,
     blogCount: 0,
@@ -52,12 +56,19 @@ const ProfilePage = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:3000/profile', {
+      console.log(username);
+      const url = username
+        ? `http://localhost:3000/profile/user/${username}`
+        : 'http://localhost:3000/profile';
+      console.log(url);
+      const res = await fetch(url, {
         method: 'GET',
         credentials: 'include',
       });
+      
       const data = await res.json();
       setProfile(data);
+      setIsFollowing(data.isFollowing || false);
       
       // Set initial stats
       setStats({
@@ -77,6 +88,8 @@ const ProfilePage = () => {
   };
 
   const fetchActivities = async () => {
+    if (!isOwnProfile) return; // Skip for other users
+    
     try {
       setActivityLoading(true);
       const res = await fetch(`http://localhost:3000/profile/user-activities`, {
@@ -103,7 +116,7 @@ const ProfilePage = () => {
       await fetchActivities();
     };
     fetchAllData();
-  }, []);
+  }, [username]);
 
   const handleProfileUpdate = (updatedProfile) => {
     setProfile(updatedProfile);
@@ -111,7 +124,32 @@ const ProfilePage = () => {
     setTimeout(() => setSuccessMessage(''), 5000);
   };
 
-  if (loading || activityLoading) {
+  const handleFollow = async () => {
+    try {
+      const res = await fetch(`http://localhost:3000/profile/${userId}/follow`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: isFollowing ? 'unfollow' : 'follow' })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setIsFollowing(!isFollowing);
+        setProfile(prev => ({
+          ...prev,
+          stats: {
+            ...prev.stats,
+            followers: prev.stats.followers + (isFollowing ? -1 : 1)
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error following user:', error);
+    }
+  };
+
+  if (loading || (isOwnProfile && activityLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-gray-900">
         <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
@@ -129,7 +167,7 @@ const ProfilePage = () => {
         </div>
         <h2 className="text-2xl font-bold text-slate-800 dark:text-gray-100 mb-2">Profile Not Found</h2>
         <p className="text-slate-600 dark:text-gray-400 mb-8 max-w-md">
-          We couldn't find your profile information. Please try again later.
+          We couldn't find this profile information.
         </p>
         <button
           onClick={fetchProfile}
@@ -144,7 +182,7 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-gray-900 py-8 px-4 sm:px-6 transition-colors duration-200">
       {/* Edit Profile Modal */}
-      {isEditModalOpen && (
+      {isOwnProfile && isEditModalOpen && (
         <EditProfileModal 
           profile={profile} 
           onClose={() => setIsEditModalOpen(false)}
@@ -153,7 +191,7 @@ const ProfilePage = () => {
       )}
 
       {/* Success message */}
-      {successMessage && (
+      {isOwnProfile && successMessage && (
         <div className="fixed top-4 right-4 z-50">
           <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center animate-fadeInOut">
             <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,6 +208,9 @@ const ProfilePage = () => {
           onEditClick={() => setIsEditModalOpen(true)}
           theme={theme}
           toggleTheme={toggleTheme}
+          isOwnProfile={isOwnProfile}
+          isFollowing={isFollowing}
+          onFollowToggle={handleFollow}
         />
 
         {/* Navigation Tabs */}
@@ -182,14 +223,18 @@ const ProfilePage = () => {
           >
             Overview
           </button>
-          <button
-            className={`px-4 py-3 font-medium ${activeTab === 'activity' 
-              ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' 
-              : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300'}`}
-            onClick={() => setActiveTab('activity')}
-          >
-            Activity
-          </button>
+          
+          {isOwnProfile && (
+            <button
+              className={`px-4 py-3 font-medium ${activeTab === 'activity' 
+                ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' 
+                : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300'}`}
+              onClick={() => setActiveTab('activity')}
+            >
+              Activity
+            </button>
+          )}
+          
           <button
             className={`px-4 py-3 font-medium ${activeTab === 'connections' 
               ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' 
@@ -198,14 +243,17 @@ const ProfilePage = () => {
           >
             Connections
           </button>
-          <button
-            className={`px-4 py-3 font-medium ${activeTab === 'settings' 
-              ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' 
-              : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300'}`}
-            onClick={() => setActiveTab('settings')}
-          >
-            Settings
-          </button>
+          
+          {isOwnProfile && (
+            <button
+              className={`px-4 py-3 font-medium ${activeTab === 'settings' 
+                ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' 
+                : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300'}`}
+              onClick={() => setActiveTab('settings')}
+            >
+              Settings
+            </button>
+          )}
         </div>
 
         {/* Overview Tab */}
@@ -223,15 +271,17 @@ const ProfilePage = () => {
                 {/* Social Links */}
                 <SocialLinks socialLinks={profile.socialLinks || {}} />
                 
-                <button 
-                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium flex items-center gap-1 mt-4"
-                  onClick={() => setIsEditModalOpen(true)}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit bio
-                </button>
+                {isOwnProfile && (
+                  <button 
+                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium flex items-center gap-1 mt-4"
+                    onClick={() => setIsEditModalOpen(true)}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit bio
+                  </button>
+                )}
               </div>
 
               {/* Contribution Graph */}
@@ -239,94 +289,18 @@ const ProfilePage = () => {
                 <h2 className="text-xl font-bold text-slate-800 dark:text-gray-100 mb-4">Activity Heatmap</h2>
                 <ContributionGraph data={profile.activityData || []} />
                 <p className="text-sm text-slate-500 dark:text-gray-400 mt-3">
-                  Shows your activity over the past year. Darker squares indicate more activity.
+                  Shows activity over the past year. Darker squares indicate more activity.
                 </p>
               </div>
-
-              {/* Activity Tab */}
-        {activeTab === 'activity' && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-md p-5 transition-colors">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-gray-100">Your Activity</h2>
-              <button 
-                className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
-                onClick={() => setActiveTab('overview')}
-              >
-                Back to Overview
-              </button>
-            </div>
-            <ActivityFeed 
-              activities={activities} 
-              theme={theme} 
-              loading={activityLoading}
-              mode="summary"
-            />
-          </div>
-        )}
 
               {/* Skills */}
               <SkillsSection 
                 skills={profile.Skills || []} 
                 onEditClick={() => setIsEditModalOpen(true)}
+                allowEdit={isOwnProfile}
               />
 
-              {/* Projects */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-md p-6 transition-colors">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-slate-800 dark:text-gray-100">Projects</h2>
-                  <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Add Project
-                  </button>
-                </div>
-                
-                {profile.projects?.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {profile.projects.slice(0, 4).map(project => (
-                      <div key={project.id} className="border border-slate-200 dark:border-gray-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <div className="flex items-start">
-                          <div className="bg-indigo-100 dark:bg-indigo-900/30 w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 mr-3">
-                            <svg className="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-slate-800 dark:text-gray-200">{project.name}</h3>
-                            <p className="text-slate-600 dark:text-gray-400 text-sm mt-1 line-clamp-2">{project.description}</p>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex justify-between items-center">
-                          <div className="flex space-x-2">
-                            {project.tags?.slice(0, 3).map((tag, idx) => (
-                              <span key={idx} className="bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 text-xs px-2 py-1 rounded">
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                          <a href={project.link} target="_blank" rel="noopener" className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">
-                            View
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <div className="bg-slate-100 dark:bg-gray-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-slate-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-medium text-slate-700 dark:text-gray-300">No projects yet</h3>
-                    <p className="text-slate-500 dark:text-gray-500 mt-1">Showcase your work by adding projects</p>
-                    <button className="mt-4 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm">
-                      Add your first project
-                    </button>
-                  </div>
-                )}
-              </div>
+              
             </div>
 
             {/* Right Column */}
@@ -347,7 +321,7 @@ const ProfilePage = () => {
         )}
 
         {/* Activity Tab */}
-        {activeTab === 'activity' && (
+        {isOwnProfile && activeTab === 'activity' && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-md p-6 transition-colors">
             <ActivityFeed 
               activities={activities} 
@@ -363,11 +337,12 @@ const ProfilePage = () => {
           <ConnectionsSection 
             followers={profile.followers || []} 
             following={profile.following || []} 
+            isOwnProfile={isOwnProfile}
           />
         )}
 
         {/* Settings Tab */}
-        {activeTab === 'settings' && (
+        {isOwnProfile && activeTab === 'settings' && (
           <SettingsTab 
             profile={profile} 
             theme={theme}
@@ -375,8 +350,8 @@ const ProfilePage = () => {
           />
         )}
 
-        {/* Blogs Section */}
-        <BlogsSection blogs={profile.Blog || []} />
+        {/* Blogs Section - only for own profile */}
+        {isOwnProfile && <BlogsSection blogs={profile.Blog || []} />}
         
         {/* Recent Solutions Section */}
         <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-md p-6 transition-colors">
