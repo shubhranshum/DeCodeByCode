@@ -4,6 +4,7 @@ import SubmissionCodeEditor from "./submissionCodeEditor.jsx";
 import codeOutput from "./output.jsx";
 
 import MathjaxRenderer from "../MathjaxRenderer";
+import { time } from "framer-motion";
 
 
 export default function Problem() {
@@ -36,11 +37,16 @@ export default function Problem() {
 
   const handleCodeSubmit = async (code) => {
     let isCorrect = true;
+    var userOutput = null;
+    var maxTimeTaken = 0;
+    var maxMemoryUsed = 0;
     for(let i = 0 ; i < problem.testCases.length; i++) {
       setVerdict("Running on test case: " + (i + 1));
       const testCase = problem.testCases[i];
-      const userOutput = await codeOutput(code,testCase.input);
+      userOutput = await codeOutput(code,testCase.input);
       const correctOutput = testCase.output;
+      maxTimeTaken = Math.max(maxTimeTaken, userOutput.time);
+      maxMemoryUsed = Math.max(maxMemoryUsed, userOutput.memory);
       if((userOutput.status_id != 3)) {
         setVerdict(userOutput.status.description + "On Test Case: " + i+1);
         isCorrect = false;
@@ -48,11 +54,57 @@ export default function Problem() {
       }
       if(userOutput.stdout !== correctOutput.stdout){
         setVerdict("Wrong Answer on Test Case: " + (i + 1));
+        userOutput.stderr = "Wrong Answer on Test Case: " + (i + 1)
         isCorrect = false;
         break;
       }
     }
-    if(isCorrect) setVerdict("Accepted");
+    if(isCorrect) {
+      // by om vrit
+      const response = await fetch(`http://localhost:3000/problem/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          problemid: id,
+          solution: code,
+          solved: true,
+          status : "Accepted",
+          timetaken: maxTimeTaken,
+          memorytaken: maxMemoryUsed
+
+        }),
+      });
+      const data = await response.json();
+      console.log(data);
+      // by om vrit
+      
+      
+      setVerdict("Accepted")
+
+
+    }
+    else{
+      const response = await fetch(`http://localhost:3000/problem/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          problemid: id,
+          solution: code,
+          status : userOutput.stderr,
+          timetaken: maxTimeTaken,
+          memorytaken: maxMemoryUsed
+        }),
+      });
+      const data = await response.json();
+      console.log(data);
+    }
+
   }
 
   if (isLoading) {

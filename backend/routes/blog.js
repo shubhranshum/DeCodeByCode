@@ -18,7 +18,6 @@ router.get('/blog/comments/:blogId', auth, commentController.getComments);
 
 router.post('/create-blog', auth, blogController.createBlog);
 router.put('/update-blog/:id', auth, blogController.updateBlog);
-// router.put('/blog/:id', auth, blogController.createBlog);
 router.delete('/blog/:id', auth, blogController.deleteBlog);
 
 // Public Routes - Blog Interactions (no auth required for likes/views)
