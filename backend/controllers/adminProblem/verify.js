@@ -2,6 +2,12 @@ const codeOutput = require("../../utils/codeOutput");
 const Problem = require("../../models/problem");
 const mongoose = require("mongoose");
 
+
+function delay(time) {
+  return new Promise(resolve => setTimeout(resolve, time));
+}
+
+
 module.exports = async function (req, res) {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -34,7 +40,7 @@ module.exports = async function (req, res) {
         status_id: result.status_id,
         language_id: result.language_id
       };
-      if (result.stderr || result.compile_output || result.time * 1000 > problem.timeLimit || result.memory > problem.memoryLimit * 1024 * 1024) {
+      if (result.stderr || result.compile_output) {
         return res.status(500).json({ error: "Error in code execution" });
       }
     }
