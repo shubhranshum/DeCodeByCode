@@ -18,7 +18,7 @@ import ProblemsPage from './routes/problems.jsx';
 import SignUp from './routes/signUpPage.jsx';
 import CreateBlogForm from './routes/blog/blogPost.jsx';
 import UpdateProfileForm from './components/Profile/ProfilePage/editProfileModal.jsx';
-
+import Problem from './components/Admin/adminProblem.jsx';
 
 
 import EditProblem from './routes/Admin/CreateProblem/editProblem.jsx';
@@ -55,6 +55,7 @@ export default function App() {
         {/* <Route path ="/create" */}
 
         <Route path="/admin/edit-problem/:id" element={<EditProblem/>} />
+        <Route path="/admin/problem/:id" element={<Problem/>} />
         <Route path = "/profile/update" element={<UpdateProfileForm/>} />
 
 

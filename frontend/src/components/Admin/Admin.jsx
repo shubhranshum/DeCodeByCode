@@ -57,10 +57,14 @@ export default function AdminDashboard() {
 
   const handleVerifyProblem = async (id) => {
     try {
-      await fetch(`http://localhost:3000/admin/edit-problem/${id}/verify`, {
+      const response = await fetch(`http://localhost:3000/admin/edit-problem/${id}/verify`, {
         method: "POST",
         credentials: "include",
       });
+      if(response.status !== 200) {
+        alert("Failed to verify problem");
+        return;
+      }
       setProblems(problems.map(p =>
         p._id === id ? { ...p, isVerified: true } : p
       ));
@@ -72,8 +76,8 @@ export default function AdminDashboard() {
   const toggleGlobalStatus = async (id, currentStatus) => {
     try {
       const endpoint = currentStatus 
-        ? `http://localhost:3000/admin/makeProblemNonGlobal/${id}`
-        : `http://localhost:3000/admin/makeProblemGlobal/${id}`;
+        ? `http://localhost:3000/admin/postToGlobalProblems/${id}`
+        : `http://localhost:3000/admin/postToGlobalProblems/${id}`;
       
       const response = await fetch(endpoint, {
         method: "POST",
@@ -259,22 +263,18 @@ function ProblemCard({ problem, onView, onEdit, onVerify, onDelete, onToggleGlob
             tooltip="Edit Problem"
             variant="primary"
           />
-          {!problem.isVerified && (
             <ActionButton 
               icon={<CheckCircle className="h-4 w-4" />} 
               onClick={onVerify}
               tooltip="Verify Problem"
               variant="success"
             />
-          )}
-          {problem.isVerified && (
             <ActionButton 
               icon={problem.isGlobal ? <XCircle className="h-4 w-4" /> : <Globe className="h-4 w-4" />} 
               onClick={onToggleGlobal}
               tooltip={problem.isGlobal ? "Make Non-Global" : "Make Global"}
               variant={problem.isGlobal ? "danger" : "info"}
             />
-          )}
           <ActionButton 
             icon={<Trash2 className="h-4 w-4" />} 
             onClick={onDelete}
