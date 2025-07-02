@@ -5,7 +5,7 @@ export default function ProblemPage() {
     return (
         <>
             <Navbar activePage={"Problems"} />
-            <Problem />
+            <div className = "mt-15"><Problem /></div>
         </>
     );
 }

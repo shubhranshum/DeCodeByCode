@@ -13,7 +13,6 @@ export default function Problem() {
   const [verdict, setVerdict] = useState(null);
   const [activeTab, setActiveTab] = useState("problem");
   const [isLoading, setIsLoading] = useState(true);
-  console.log("Problem ID:", id);
   useEffect(() => {
     setIsLoading(true);
     fetch(`http://localhost:3000/admin/problem/${id}`, {
@@ -37,7 +36,6 @@ export default function Problem() {
 
   const handleCodeSubmit = async (code) => {
     let isCorrect = true;
-    console.log(problem.testCases);
     for(let i = 0 ; i < problem.testCases.length; i++) {
       setVerdict("Running on test case: " + (i + 1));
       const testCase = problem.testCases[i];
@@ -140,17 +138,17 @@ export default function Problem() {
 
             <div className="input-section">
               <h4>Input:</h4>
-              <pre>{JSON.stringify(testCase.input, null, 2)}</pre>
+              <MathjaxRenderer html={testCase.input} />
             </div>
 
             <div className="output-section">
               <h4>Output:</h4>
-              <pre>{JSON.stringify(testCase.output, null, 2)}</pre>
+              <MathjaxRenderer html={testCase.output.stdout} />
             </div>
             {testCase.explanation && (
               <div className="explanation-section">
                 <h4>Explanation:</h4>
-                <p>{testCase.explanation}</p>
+                <MathjaxRenderer html={testCase.explanation} />
               </div>
             )}
           </div>
@@ -178,7 +176,7 @@ export default function Problem() {
                       <div>
                         <h3 className="text-sm font-medium text-gray-400 mb-1">Expected Output</h3>
                         <div className="bg-gray-800 p-3 rounded font-mono text-sm">
-                          {testCase?.output?.stdout || "NO EXPECTED OUTPUT"}
+                          {testCase?.output.stdout || "NO EXPECTED OUTPUT"}
                         </div>
                       </div>
                     </div>

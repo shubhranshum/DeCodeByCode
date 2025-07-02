@@ -1,5 +1,5 @@
 
-export async function getAllProblems() {
+export async function getAllGlobalProblems() {
   const response = await fetch("http://localhost:3000/problems", {
     method: "GET",
     headers: {

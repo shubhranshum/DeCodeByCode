@@ -4,7 +4,7 @@ import TestCaseSection from "./testcases.jsx";
 import CodeSolutionSection from "./codeSolution.jsx";
 import StatementSection from "./statement.jsx";
 import { useParams } from "react-router-dom";
-import {getAdminProblemById} from "../../Tasks/getAdminProblemById.jsx"; // Assuming you have a service to fetch problem details
+import {getProblemById} from "../../Tasks/getProblemById.jsx"; // Assuming you have a service to fetch problem details
 
 export default function EditProblemSection() {
   const { id } = useParams(); // Assuming you have a problem ID to edit
@@ -52,7 +52,7 @@ export default function EditProblemSection() {
     // ✅ runs only once per component mount (i.e., per browser reload)
     const fetchProblem = async () => {
       try {
-        const data = await getAdminProblemById(id);
+        const data = await getProblemById(id);
         setProblem(data);
       } catch (err) {
         setError(err.message);

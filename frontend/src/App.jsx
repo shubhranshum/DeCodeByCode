@@ -17,6 +17,7 @@ import ProblemPage from './routes/problem.jsx';
 import ProblemsPage from './routes/problems.jsx';
 import SignUp from './routes/signUpPage.jsx';
 import CreateBlogForm from './routes/blog/blogPost.jsx';
+import Problem from './components/Admin/adminProblem.jsx';
 
 
 
@@ -49,6 +50,7 @@ export default function App() {
         {/* <Route path ="/create" */}
 
         <Route path="/admin/edit-problem/:id" element={<EditProblem/>} />
+        <Route path="/admin/problem/:id" element={<Problem/>} />
 
 
         {/* Add more routes as needed */}
