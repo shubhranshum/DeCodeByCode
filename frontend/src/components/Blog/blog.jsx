@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaStar, FaHeart, FaEye, FaSearch, FaArrowUp, FaSun, FaMoon } from 'react-icons/fa';
+import { useEffect, useRef, useState } from 'react';
+import { FaArrowUp, FaSearch } from 'react-icons/fa';
 import { FiEdit2, FiTag } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { getTheme, setTheme } from '../../utils/theme'; // Import utility functions
 import BlogCard from './BlogUIElements/blogCard';
 import FeaturedBlogCard from './BlogUIElements/featuredBlogCard';
+
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,34 +17,25 @@ const Blog = () => {
   const [hasMore, setHasMore] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(true);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setThemeState] = useState(getTheme); // Use getTheme directly
   const navigate = useNavigate();
   const isFetching = useRef(false);
   const scrollTimer = useRef(null);
   const lastScrollPosition = useRef(0);
   const isLoadingMore = useRef(false);
 
-  // Initialize theme from localStorage or system preference
+  // Initialize theme from utility function
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else {
-      setTheme(systemPrefersDark ? 'dark' : 'light');
-    }
+    const currentTheme = getTheme();
+    setThemeState(currentTheme);
+    setTheme(currentTheme);
+    console.log("Current Theme:", currentTheme);
   }, []);
 
   // Apply theme to document
-  useEffect(() => {
-    document.documentElement.className = theme;
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+  
 
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark');
-  };
+  
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -60,7 +53,6 @@ const Blog = () => {
           method: "GET",
           credentials: "include",
         });
-        console.log( response);
 
         if (!response.ok) throw new Error('Server error while fetching blogs');
 
@@ -90,23 +82,6 @@ const Blog = () => {
 
     fetchBlogs();
   }, [page]);
-  
-  // const checkLogin = async () => {
-  //   try {
-  //     const res = await fetch('http://localhost:3000/check/auth', {
-  //       method: 'GET',
-  //       credentials: 'include'
-  //     });
-  //     const data = await res.json();
-  //     setIsUserLoggedIn(data.isAuthenticated);
-  //   } catch (err) {
-  //     console.error('Failed to check login status:', err);
-  //   }
-  // }
-  
-  // useEffect(() => {
-  //   checkLogin();
-  // }, []);
   
   const handleCreateBlog = () => {
     navigate('/create-blog');
@@ -193,11 +168,11 @@ const Blog = () => {
 
   const featuredBlog = featuredBlogs.length > 0
     ? featuredBlogs.sort((a, b) => {
-        if (b.likesCount !== a.likesCount) {
+      if (b.viewsCount !== a.viewsCount) {
+          return b.viewsCount - a.viewsCount;}
+        else if (b.likesCount !== a.likesCount) {
           return b.likesCount - a.likesCount;
-        } else if (b.viewsCount !== a.viewsCount) {
-          return b.viewsCount - a.viewsCount;
-        } else {
+      }else {
           return new Date(b.createdAt) - new Date(a.createdAt);
         }
       })[0]
@@ -212,20 +187,8 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen pt-0 bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-gray-100 dark:to-gray-200 text-white dark:text-gray-900">
-      {/* Theme Toggle Button */}
-      <motion.button
-        onClick={toggleTheme}
-        className="fixed top-6 right-6 z-50 p-3 rounded-full shadow-lg"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        style={{
-          backgroundColor: theme === 'dark' ? '#f97316' : '#3b82f6',
-          color: 'white'
-        }}
-        aria-label="Toggle theme"
-      >
-        {theme === 'dark' ? <FaSun size={20} /> : <FaMoon size={20} />}
-      </motion.button>
+      
+     
 
       {/* Floating Back to Top Button */}
       {showScrollTop && (

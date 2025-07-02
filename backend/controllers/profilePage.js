@@ -27,7 +27,7 @@ const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     console.log(req.body);
-    const { profilePicture, username, about, city, state, country, college, skills } = req.body;
+    const { profilePicture,  about, city, state, country, college, skills, firstName,lastName,age} = req.body;
 
     
   
@@ -37,22 +37,26 @@ const updateProfile = async (req, res) => {
     }
     console.log(profile);
     profile.profilePicture = profilePicture;
-    profile.username = username;
-    profile.About = about;
+    
+    profile.about = about;
+    profile.age = age;
+    profile.firstName = firstName;
+    profile.lastName = lastName;
     profile.city = city;
     profile.state = state;
     profile.country = country;
     profile.college = college;
+    console.log(skills.length);
     for (const skill of skills) {
-      if (!Array.isArray(profile.Skills)) {
-  profile.Skills = [];
-}
-if (!profile.Skills.includes(skill)) {
+      if (!Array.isArray(profile.skills)) {
+      profile.skills = [];
+    }
+  if (!profile.Skills.includes(skill)) {
   profile.Skills.push(skill);
-}
+  }
 
 
-    };
+    }
 
     await profile.save();
 

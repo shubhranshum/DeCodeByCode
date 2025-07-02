@@ -7,7 +7,7 @@ import Admin from './routes/Admin/admin.jsx';
 import BlogDetails from './routes/blog/blogDetails.jsx';
 // import CreateBlogForm from './components/Blog/createBlog.jsx';
 import EditBlogForm from './components/Blog/editBlog.jsx';
-import ProfilePage from './components/Profile/profilePage.jsx';
+import ProfilePage from './routes/profilePage.jsx';
 import UserBlog from './components/Profile/userBlog.jsx';
 import BlogPage from './routes/blog/blog.jsx';
 import Home from './routes/home.jsx';
@@ -17,11 +17,16 @@ import ProblemPage from './routes/problem.jsx';
 import ProblemsPage from './routes/problems.jsx';
 import SignUp from './routes/signUpPage.jsx';
 import CreateBlogForm from './routes/blog/blogPost.jsx';
+import UpdateProfileForm from './components/Profile/ProfilePage/editProfileModal.jsx';
 
 
 
 import EditProblem from './routes/Admin/CreateProblem/editProblem.jsx';
+// index.js or App.js (at top level)
+import { getTheme, setTheme } from "./utils/theme";
 
+const theme = getTheme();
+setTheme(theme); // This sets [data-theme='light'] or [data-theme='dark']
 
 
 export default function App() {
@@ -49,6 +54,7 @@ export default function App() {
         {/* <Route path ="/create" */}
 
         <Route path="/admin/edit-problem/:id" element={<EditProblem/>} />
+        <Route path = "/profile/update" element={<UpdateProfileForm/>} />
 
 
         {/* Add more routes as needed */}
