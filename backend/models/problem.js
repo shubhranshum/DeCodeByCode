@@ -1,6 +1,32 @@
-// models/Problem.js
-
 const mongoose = require("mongoose");
+
+const Output = new mongoose.Schema({
+  stdout: {
+    type: String,
+    default: "",
+  },
+  stderr:{
+    type:String,
+    default: "",
+  },
+  time:{
+    type: Number,
+  },
+  memory:{
+    type: Number
+  },
+  compile_output: {
+    type: String,
+    default: "",
+  },
+  status_id:{
+    type: String,
+  },
+  language_id: {
+    type: String,
+  }
+})
+
 
 
 const testCaseSchema = new mongoose.Schema({
@@ -17,12 +43,18 @@ const testCaseSchema = new mongoose.Schema({
     default: "Explanation For Test Case."
   },
   output: {
-    stdout: { type: String, required: false },
-    stderr: { type: String },
-    status_id: { type: Number }
+    type: Output,
+    default: {
+      stdout: "",
+      stderr: "",
+      time: 0,
+      memory: 0,
+      compile_output: "",
+      status_id: "",
+      language_id: ""
+    }
   }
 });
-
 
 
 
@@ -70,6 +102,14 @@ const problemSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     // required: true, // Assuming every problem is created by a user
+  },
+  isVerified: {
+    type: Boolean,
+    default: false, // Default to false
+  },
+  isGlobal:{
+    type: Boolean,
+    default: false, // Default to false
   },
   createdAt: {
     type: Date,
