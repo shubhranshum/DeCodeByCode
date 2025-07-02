@@ -5,8 +5,18 @@ const getGlobalProblems = require('../controllers/getGlobalProblems');
 // const fetchAdminProblems = require('../controllers/fetchAdminProblems');
 
 
+// //by om vrit
+const submitProblem = require('../controllers/submitProblemController');
+
+
 
 router.get('/problems', getGlobalProblems);
 router.get('/problem/:id', getProblemById);
+
+
+
+//by om vrit
+router.post('/problem/submit',submitProblem);
+
 
 module.exports = router;
