@@ -17,22 +17,25 @@ async function userSignUp(req,res){
         return res.status(400).json({message: 'User already exists with this email or username'});
     }
     const hashedPassword = bcrypt.hashSync(password, 10);
-    const newUser = new User({
+    var newUser = new User({
         username,
         email,
         password: hashedPassword,
         college: college,
         isAdmin: false // Default to false, can be changed later
     })
+    newUser = await newUser.save();
+    console.log(newUser._id)
 
     const newProfile = new UserProfile({
+        userId: newUser._id,
         username,
         email,
         college: college
     });
 
     // console.log("Received data4:", { username, email, password });
-    await newUser.save();
+    
     await newProfile.save();
     // console.log("Received data5:", { username, email, password });
 

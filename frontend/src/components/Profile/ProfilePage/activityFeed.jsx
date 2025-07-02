@@ -1,77 +1,80 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const ActivityFeed = () => {
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAll, setShowAll] = useState(false);
+const ActivityFeed = ({ 
+  activities, 
+  theme, 
+  loading = false,
+  mode = 'summary' // 'summary' or 'full'
+}) => {
+  const [showAll, setShowAll] = useState(mode === 'full');
   const navigate = useNavigate();
+  const darkMode = theme === 'dark';
 
-  const fetchActivities = async () => {
-    try {
-      const res = await fetch(`http://localhost:3000/profile/user-activities`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-      const data = await res.json();
-      if (data.success) {
-        const sortedActivities = data.activities.sort(
-          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-        );
-        setActivities(sortedActivities);
-      }
-    } catch (error) {
-      console.error('Error fetching activities:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  useEffect(() => {
-    fetchActivities();
-  }, []);
-
-  // Enhanced SVG icons
+  // Enhanced SVG icons with theme support
   const renderIcon = (type) => {
-    const iconClass = "w-5 h-5";
+    const iconClass = "w-4 h-4"; // Smaller icon size
     
     switch (type) {
       case 'BLOG_POSTED':
       case 'BLOG_EDITED':
         return (
-          <div className="bg-blue-100 text-blue-700 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className={`${darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'} w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0`}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-          </div>
+          </motion.div>
         );
       case 'COMMENT_ADDED':
         return (
-          <div className="bg-purple-100 text-purple-700 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className={`${darkMode ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-600'} w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0`}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-          </div>
+          </motion.div>
         );
       case 'PROBLEM_SOLVED':
         return (
-          <div className="bg-green-100 text-green-700 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className={`${darkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-600'} w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0`}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-          </div>
+          </motion.div>
         );
       default:
         return (
-          <div className="bg-slate-100 text-slate-700 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className={`${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'} w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0`}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
-          </div>
+          </motion.div>
         );
     }
   };
-
+  
+  
   // Improved time formatter
   const formatTimeAgo = (timestamp) => {
     const time = new Date(timestamp);
@@ -143,106 +146,105 @@ const ActivityFeed = () => {
     }
   };
 
-  // Loading skeleton
+  // Loading skeleton with theme support
   if (loading) {
+    const bgClass = darkMode ? 'bg-gray-700' : 'bg-slate-200';
+    
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-xl font-bold text-slate-800 mb-6">Recent Activity</h2>
-        <div className="space-y-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex items-start gap-4 animate-pulse">
-              <div className="bg-slate-200 w-10 h-10 rounded-full flex-shrink-0"></div>
-              <div className="flex-1">
-                <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-slate-200 rounded w-full"></div>
-                <div className="h-3 bg-slate-200 rounded w-1/4 mt-2"></div>
-              </div>
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="flex items-start gap-3"
+          >
+            <div className={`${bgClass} w-7 h-7 rounded-full flex-shrink-0 animate-pulse`}></div>
+            <div className="flex-1">
+              <div className={`h-3 ${bgClass} rounded w-3/4 mb-1.5`}></div>
+              <div className={`h-2.5 ${bgClass} rounded w-full`}></div>
             </div>
-          ))}
-        </div>
+          </motion.div>
+        ))}
       </div>
     );
   }
 
-  // Determine which activities to show
-  const displayedActivities = showAll ? activities : activities.slice(0, 4);
-  const hasMoreActivities = activities.length > 4;
+  // Sort activities by timestamp
+  const sortedActivities = [...activities].sort(
+    (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+  );
+  
+  const maxItems = mode === 'summary' ? 3 : sortedActivities.length;
+  const displayedActivities = showAll ? sortedActivities : sortedActivities.slice(0, maxItems);
+  const hasMoreActivities = sortedActivities.length > maxItems;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-slate-800">Recent Activity</h2>
-        <div className="flex items-center gap-3">
-          {hasMoreActivities && !showAll && (
-            <button 
-              onClick={() => setShowAll(true)}
-              className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
-            >
-              View All
-            </button>
-          )}
-          <button 
-            onClick={fetchActivities}
-            className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Refresh
-          </button>
-        </div>
-      </div>
-      
-      <div className="space-y-4">
+    <div className="w-full">
+      <div className="space-y-3">
         {displayedActivities.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-4"
+          >
+            <div className={`${darkMode ? 'bg-gray-700' : 'bg-slate-100'} w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3`}>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${darkMode ? 'text-gray-400' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-slate-700">No activity yet</h3>
-            <p className="text-slate-500 mt-1">Your activities will appear here</p>
-          </div>
+            <h3 className="text-base font-medium">No activity yet</h3>
+            <p className={`${darkMode ? 'text-gray-400' : 'text-slate-500'} text-sm mt-1`}>Your activities will appear here</p>
+          </motion.div>
         ) : (
-          displayedActivities.map((activity) => {
-            const { title, summary } = getActivityText(activity);
-            
-            return (
-              <div
-                key={activity._id}
-                onClick={() => handleActivityClick(activity)}
-                className="flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all 
-                          hover:bg-slate-50 active:bg-slate-100 border border-slate-100"
-              >
-                {renderIcon(activity.type)}
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-800 truncate">{title}</div>
-                  <p className="text-slate-600 text-sm truncate mb-1">{summary}</p>
-                  <div className="text-slate-400 text-xs">
-                    {formatTimeAgo(activity.timestamp)}
+          <AnimatePresence>
+            {displayedActivities.map((activity, index) => {
+              const { title, summary } = getActivityText(activity);
+              
+              return (
+                <motion.div
+                  key={activity._id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => handleActivityClick(activity)}
+                  className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all 
+                            ${darkMode ? 
+                              'hover:bg-gray-700/30' : 
+                              'hover:bg-slate-100'}`}
+                >
+                  {renderIcon(activity.type)}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate text-slate-800 dark:text-gray-200">{title}</div>
+                    <p className={`text-xs truncate ${darkMode ? 'text-gray-400' : 'text-slate-600'}`}>{summary}</p>
+                    <div className={`text-[0.7rem] ${darkMode ? 'text-gray-500' : 'text-slate-500'}`}>
+                      {formatTimeAgo(activity.timestamp)}
+                    </div>
                   </div>
-                </div>
-                <div className="flex-shrink-0 text-slate-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            );
-          })
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         )}
       </div>
 
-      {/* Show Less button when expanded */}
-      {showAll && hasMoreActivities && (
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => setShowAll(false)}
-            className="text-sm text-indigo-600 hover:text-indigo-800 px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
+      {/* View All button in summary mode */}
+      {mode === 'summary' && hasMoreActivities && !showAll && (
+        <div className="mt-4 text-center">
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setActiveTab('activity')}
+            className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
+              darkMode ? 
+                'text-indigo-400 hover:text-indigo-300 hover:bg-gray-700/30' : 
+                'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
+            }`}
           >
-            Show Less
-          </button>
+            View All Activities
+          </motion.button>
         </div>
       )}
     </div>

@@ -113,6 +113,14 @@ export default function SignUpPage() {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Simulate successful signup
+      const user = await fetch('http://localhost:3000/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+        
+      })
       console.log("Signup successful with data:", formData);
       
       // Redirect to login after successful signup

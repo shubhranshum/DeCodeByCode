@@ -1,14 +1,13 @@
-const adminProblem = require('../../models/adminProblem');
+const Problem = require('../../models/problem');
 
 async function createProblem(req, res) {
     if(req.user === undefined) {
         return res.status(401).json({ message: 'Unauthorized: User not authenticated' });
     }
     try {
-        const count = await adminProblem.countDocuments();
-        const newProblem = new adminProblem({
-            // _id : count + 1, // Automatically set content based on the count
+        const newProblem = new Problem({
             title: req.body.title,
+            user: req.user._id,
             createdAt: new Date()
         });
         console.log("New Problem Created:", newProblem);
