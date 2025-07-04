@@ -1,5 +1,5 @@
 import React from "react";
-import UserBlogs from "@/components/Profile/userBlog";
+import UserBlogs from "@/components/Profile/ProfilePage/userBlog";
 import Navbar from "@/components/Navbar/navbar";
 
 

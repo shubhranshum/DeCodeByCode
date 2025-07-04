@@ -14,6 +14,8 @@ import SettingsTab from './ProfilePage/settingsTab';
 import SkillsSection from './ProfilePage/skillsSection';
 import SocialLinks from './ProfilePage/socialLinks';
 import StatsSection from './ProfilePage/statsSection';
+import RecentAttempts from './ProfilePage/recentAttempts'; // UPDATED
+import RecentSolvedProblems from './ProfilePage/recentSolvedProblems';
 
 const ProfilePage = () => {
   const { username } = useParams();
@@ -23,11 +25,13 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(localStorage.getItem('activeTab') || 'overview');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [theme, setTheme] = useState(getTheme);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const [successMessage, setSuccessMessage] = useState('');
   const [isFollowing, setIsFollowing] = useState(false);
+  const [recentAttempts, setRecentAttempts] = useState([]);
+  const [solvedProblems, setSolvedProblems] = useState([]);
   const [stats, setStats] = useState({
     problemsSolved: 0,
     blogCount: 0,
@@ -42,6 +46,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const savedTheme = getTheme();
     setTheme(savedTheme);
+    localStorage.setItem('theme', savedTheme);
     document.documentElement.classList.toggle('dark', savedTheme === 'dark');
   }, []);
 
@@ -49,18 +54,62 @@ const ProfilePage = () => {
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    themesetTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
+
+  const fetchRecentAttempts = async () => {
+    try {
+      console.log("Called fetch recent attmepts hook")
+      const url = username
+        ? `http://localhost:3000/profile/recent-attempts/${username}`
+        : 'http://localhost:3000/profile/recent-attempts';
+      const res = await fetch(url, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // console.log(data.attemptedProblems);
+        setRecentAttempts(data.attemptedProblems);
+      } 
+    } catch (error) {
+      console.error('Error fetching recent attempts:', error);
+     
+      
+    }
+  };
+
+  // Dummy function to fetch recent solved problems
+  const fetchSolvedProblems = async () => {
+    try {
+      const url = username
+        ? `http://localhost:3000/profile/solved-problems/${username}`
+        : 'http://localhost:3000/profile/solved-problems';
+      const res = await fetch(url, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setSolvedProblems(data.solvedProblems);
+      }
+    } catch (err) {
+      console.error('Error fetching solved problems:', err);
+      
+      
+    }
   };
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      console.log(username);
       const url = username
         ? `http://localhost:3000/profile/user/${username}`
         : 'http://localhost:3000/profile';
-      console.log(url);
+        
       const res = await fetch(url, {
         method: 'GET',
         credentials: 'include',
@@ -72,7 +121,7 @@ const ProfilePage = () => {
       
       // Set initial stats
       setStats({
-        problemsSolved: data.stats?.problemSolved || 0,
+        problemsSolved: data.stats?.problemsSolved || 0,
         blogCount: data.stats?.blogCount || 0,
         blogViews: data.stats?.blogViews || 0,
         solutionsAccepted: data.stats?.solutionsAccepted || 0,
@@ -114,6 +163,8 @@ const ProfilePage = () => {
     const fetchAllData = async () => {
       await fetchProfile();
       await fetchActivities();
+      await fetchSolvedProblems();
+      await fetchRecentAttempts();
     };
     fetchAllData();
   }, [username]);
@@ -124,54 +175,29 @@ const ProfilePage = () => {
     setTimeout(() => setSuccessMessage(''), 5000);
   };
 
-  const handleFollow = async () => {
-    try {
-      const res = await fetch(`http://localhost:3000/profile/${userId}/follow`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: isFollowing ? 'unfollow' : 'follow' })
-      });
-      
-      const data = await res.json();
-      if (data.success) {
-        setIsFollowing(!isFollowing);
-        setProfile(prev => ({
-          ...prev,
-          stats: {
-            ...prev.stats,
-            followers: prev.stats.followers + (isFollowing ? -1 : 1)
-          }
-        }));
-      }
-    } catch (error) {
-      console.error('Error following user:', error);
-    }
-  };
-
   if (loading || (isOwnProfile && activityLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-gray-900">
-        <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-gray-900' : 'bg-slate-50'}`}>
+        <div className={`w-16 h-16 border-4 ${theme === 'dark' ? 'border-indigo-500' : 'border-indigo-600'} border-t-transparent rounded-full animate-spin`}></div>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center bg-slate-50 dark:bg-gray-900">
-        <div className="bg-slate-100 dark:bg-gray-800 rounded-full p-4 mb-6">
-          <svg className="w-16 h-16 text-slate-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className={`min-h-screen flex flex-col items-center justify-center px-4 text-center ${theme === 'dark' ? 'bg-gray-900' : 'bg-slate-50'}`}>
+        <div className={`rounded-full p-4 mb-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-slate-100'}`}>
+          <svg className="w-16 h-16 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-gray-100 mb-2">Profile Not Found</h2>
-        <p className="text-slate-600 dark:text-gray-400 mb-8 max-w-md">
+        <h2 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>Profile Not Found</h2>
+        <p className={`mb-8 max-w-md ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>
           We couldn't find this profile information.
         </p>
         <button
           onClick={fetchProfile}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium"
+          className={`px-6 py-3 rounded-lg font-medium ${theme === 'dark' ? 'bg-indigo-700 hover:bg-indigo-600' : 'bg-indigo-600 hover:bg-indigo-700'} text-white`}
         >
           Reload Profile
         </button>
@@ -180,13 +206,14 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-900 py-8 px-4 sm:px-6 transition-colors duration-200">
+    <div className={`min-h-screen py-8 px-4 sm:px-6 transition-colors duration-200 ${theme === 'dark' ? 'bg-gray-900' : 'bg-slate-50'}`}>
       {/* Edit Profile Modal */}
       {isOwnProfile && isEditModalOpen && (
         <EditProfileModal 
           profile={profile} 
           onClose={() => setIsEditModalOpen(false)}
           onUpdate={handleProfileUpdate}
+          theme={theme}
         />
       )}
 
@@ -210,16 +237,23 @@ const ProfilePage = () => {
           toggleTheme={toggleTheme}
           isOwnProfile={isOwnProfile}
           isFollowing={isFollowing}
-          onFollowToggle={handleFollow}
         />
 
         {/* Navigation Tabs */}
-        <div className="flex flex-wrap border-b border-slate-200 dark:border-gray-700 mb-8">
+        <div className={`flex flex-wrap border-b mb-8 ${theme === 'dark' ? 'border-gray-700' : 'border-slate-200'}`}>
           <button
             className={`px-4 py-3 font-medium ${activeTab === 'overview' 
-              ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' 
-              : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300'}`}
-            onClick={() => setActiveTab('overview')}
+              ? theme === 'dark' 
+                ? 'text-indigo-400 border-b-2 border-indigo-400' 
+                : 'text-indigo-600 border-b-2 border-indigo-600'
+              : theme === 'dark' 
+                ? 'text-gray-400 hover:text-gray-300' 
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            onClick={() => {
+              setActiveTab('overview');
+              localStorage.setItem('activeTab', 'overview');
+            }}
           >
             Overview
           </button>
@@ -227,9 +261,17 @@ const ProfilePage = () => {
           {isOwnProfile && (
             <button
               className={`px-4 py-3 font-medium ${activeTab === 'activity' 
-                ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' 
-                : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300'}`}
-              onClick={() => setActiveTab('activity')}
+                ? theme === 'dark' 
+                  ? 'text-indigo-400 border-b-2 border-indigo-400' 
+                  : 'text-indigo-600 border-b-2 border-indigo-600'
+                : theme === 'dark' 
+                  ? 'text-gray-400 hover:text-gray-300' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+              onClick={() => {
+                setActiveTab('activity');
+                localStorage.setItem('activeTab', 'activity');
+              }}
             >
               Activity
             </button>
@@ -237,19 +279,69 @@ const ProfilePage = () => {
           
           <button
             className={`px-4 py-3 font-medium ${activeTab === 'connections' 
-              ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' 
-              : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300'}`}
-            onClick={() => setActiveTab('connections')}
+              ? theme === 'dark' 
+                ? 'text-indigo-400 border-b-2 border-indigo-400' 
+                : 'text-indigo-600 border-b-2 border-indigo-600'
+              : theme === 'dark' 
+                ? 'text-gray-400 hover:text-gray-300' 
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            onClick={() => {
+              setActiveTab('connections');
+              localStorage.setItem('activeTab', 'connections');
+            }}
           >
             Connections
+          </button>
+          
+          <button
+            className={`px-4 py-3 font-medium ${activeTab === 'attempts' 
+              ? theme === 'dark' 
+                ? 'text-indigo-400 border-b-2 border-indigo-400' 
+                : 'text-indigo-600 border-b-2 border-indigo-600'
+              : theme === 'dark' 
+                ? 'text-gray-400 hover:text-gray-300' 
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            onClick={() => {
+              setActiveTab('attempts');
+              localStorage.setItem('activeTab', 'attempts');
+            }}
+          >
+            Recent Attempts
+          </button>
+          
+          <button
+            className={`px-4 py-3 font-medium ${activeTab === 'problems' 
+              ? theme === 'dark' 
+                ? 'text-indigo-400 border-b-2 border-indigo-400' 
+                : 'text-indigo-600 border-b-2 border-indigo-600'
+              : theme === 'dark' 
+                ? 'text-gray-400 hover:text-gray-300' 
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            onClick={() => {
+              setActiveTab('problems');
+              localStorage.setItem('activeTab', 'problems');
+            }}
+          >
+            Solved Problems
           </button>
           
           {isOwnProfile && (
             <button
               className={`px-4 py-3 font-medium ${activeTab === 'settings' 
-                ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' 
-                : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300'}`}
-              onClick={() => setActiveTab('settings')}
+                ? theme === 'dark' 
+                  ? 'text-indigo-400 border-b-2 border-indigo-400' 
+                  : 'text-indigo-600 border-b-2 border-indigo-600'
+                : theme === 'dark' 
+                  ? 'text-gray-400 hover:text-gray-300' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+              onClick={() => {
+                setActiveTab('settings');
+                localStorage.setItem('activeTab', 'settings');
+              }}
             >
               Settings
             </button>
@@ -262,18 +354,22 @@ const ProfilePage = () => {
             {/* Left Column */}
             <div className="md:col-span-2 space-y-8">
               {/* About */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-md p-6 transition-colors">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-gray-100 mb-4">About Me</h2>
-                <p className="text-slate-600 dark:text-gray-300 mb-4">
+              <div className={`rounded-xl shadow-sm p-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                <h2 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>About Me</h2>
+                <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-slate-600'}`}>
                   {profile.about || "This user hasn't written anything about themselves yet."}
                 </p>
                 
                 {/* Social Links */}
-                <SocialLinks socialLinks={profile.socialLinks || {}} />
+                <SocialLinks socialLinks={profile.socialLinks || {}} theme={theme} />
                 
                 {isOwnProfile && (
                   <button 
-                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium flex items-center gap-1 mt-4"
+                    className={`font-medium flex items-center gap-1 mt-4 ${
+                      theme === 'dark' 
+                        ? 'text-indigo-400 hover:text-indigo-300' 
+                        : 'text-indigo-600 hover:text-indigo-800'
+                    }`}
                     onClick={() => setIsEditModalOpen(true)}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,10 +381,10 @@ const ProfilePage = () => {
               </div>
 
               {/* Contribution Graph */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-md p-6 transition-colors">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-gray-100 mb-4">Activity Heatmap</h2>
-                <ContributionGraph data={profile.activityData || []} />
-                <p className="text-sm text-slate-500 dark:text-gray-400 mt-3">
+              <div className={`rounded-xl shadow-sm p-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                <h2 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>Activity Heatmap</h2>
+                <ContributionGraph data={profile.activityData || []} theme={theme} />
+                <p className={`text-sm mt-3 ${theme === 'dark' ? 'text-gray-400' : 'text-slate-500'}`}>
                   Shows activity over the past year. Darker squares indicate more activity.
                 </p>
               </div>
@@ -298,31 +394,30 @@ const ProfilePage = () => {
                 skills={profile.Skills || []} 
                 onEditClick={() => setIsEditModalOpen(true)}
                 allowEdit={isOwnProfile}
+                theme={theme}
               />
-
-              
             </div>
 
             {/* Right Column */}
             <div className="space-y-8">
               {/* Stats */}
-              <StatsSection stats={stats} />
+              <StatsSection stats={stats} theme={theme} />
               
               {/* Badges */}
-              <BadgesSection badges={profile.badges || []} />
+              <BadgesSection badges={profile.badges || []} theme={theme} />
               
               {/* Achievements */}
-              <AchievementsSection achievements={profile.achievements || []} />
+              <AchievementsSection achievements={profile.achievements || []} theme={theme} />
               
               {/* Certifications */}
-              <CertificationsSection certifications={profile.certifications || []} />
+              <CertificationsSection certifications={profile.certifications || []} theme={theme} />
             </div>
           </div>
         )}
 
         {/* Activity Tab */}
         {isOwnProfile && activeTab === 'activity' && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-md p-6 transition-colors">
+          <div className={`rounded-xl shadow-sm p-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
             <ActivityFeed 
               activities={activities} 
               theme={theme} 
@@ -338,6 +433,23 @@ const ProfilePage = () => {
             followers={profile.followers || []} 
             following={profile.following || []} 
             isOwnProfile={isOwnProfile}
+            theme={theme}
+          />
+        )}
+
+        {/* RECENT ATTEMPTS TAB */}
+        {activeTab === 'attempts' && (
+          <RecentAttempts 
+            attempts={recentAttempts} 
+            theme={theme} 
+          />
+        )}
+
+        {/* SOLVED PROBLEMS TAB */}
+        {isOwnProfile && activeTab === 'problems' && (
+          <RecentSolvedProblems 
+            problems={solvedProblems} 
+            theme={theme} 
           />
         )}
 
@@ -351,91 +463,10 @@ const ProfilePage = () => {
         )}
 
         {/* Blogs Section - only for own profile */}
-        {isOwnProfile && <BlogsSection blogs={profile.Blog || []} />}
-        
-        {/* Recent Solutions Section */}
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-md p-6 transition-colors">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-gray-100">Recent Solutions</h2>
-            <Link to="/problems" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm flex items-center">
-              View all
-              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-          
-          <div className="space-y-4">
-            {profile.recentSolutions?.length > 0 ? (
-              profile.recentSolutions.slice(0, 3).map(solution => (
-                <div key={solution.id} className="flex items-center p-4 border border-slate-200 dark:border-gray-700 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-md bg-green-100 dark:bg-green-900/30 flex items-center justify-center mr-4">
-                    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-slate-800 dark:text-gray-200 truncate">
-                      {solution.title}
-                    </h3>
-                    <div className="flex items-center mt-1">
-                      <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 rounded mr-2">
-                        {solution.difficulty}
-                      </span>
-                      <span className="text-slate-500 dark:text-gray-400 text-sm">
-                        Solved {formatTimeAgo(solution.solvedAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <Link 
-                    to={`/solutions/${solution.id}`} 
-                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 ml-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </Link>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-6">
-                <div className="bg-slate-100 dark:bg-gray-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-slate-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-slate-700 dark:text-gray-300">No solutions yet</h3>
-                <p className="text-slate-500 dark:text-gray-500 mt-1">Solve problems to see them appear here</p>
-                <Link to="/problems" className="mt-4 inline-block text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm">
-                  Browse problems
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
+        {isOwnProfile && <BlogsSection blogs={profile.Blog || []} theme={theme} />}
       </div>
     </div>
   );
-};
-
-// Helper function to format time
-const formatTimeAgo = (timestamp) => {
-  const time = new Date(timestamp);
-  const now = new Date();
-  const seconds = Math.floor((now - time) / 1000);
-  
-  if (seconds < 60) return 'Just now';
-  
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
-  
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hr ago`;
-  
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} day${days > 1 ? 's' : ''} ago`;
-  
-  return time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 export default ProfilePage;

@@ -7,11 +7,11 @@ const getProfileByUserName = async (req, res) => {
     console.log(username);
     console.log("Hello from getProfileByID");
     const profile = await UserProfile.findOne({ username: username }).populate('Blog').populate('DraftBlogs').populate('ArchivedBlogs').populate('LikedBlogs').lean();
-    console.log(profile);
+    console.log("Hello from getProfileByUserName");
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
-    console.log(profile);
+    
     res.json(profile);
   } catch (error) {
     console.error('Error fetching profile:', error);
@@ -20,9 +20,9 @@ const getProfileByUserName = async (req, res) => {
 }
 const getProfile = async (req, res) => {
   try {
-
+    console.log("Hello from getProfile");
     const user = req.user.username;
-    console.log(user);
+   
 
     const profile = await UserProfile.findOne({ username: user })
       .populate('Blog')
@@ -30,7 +30,7 @@ const getProfile = async (req, res) => {
       .populate('ArchivedBlogs')
       .populate('LikedBlogs')
       .lean();  // You can also populate DraftBlogs, ArchivedBlogs, LikedBlogs as needed
-    console.log(profile);
+    
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
@@ -43,7 +43,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    console.log(req.body);
+    console.log("Hello from updateProfile");
     const { profilePicture,  about, city, state, country, college, skills, firstName,lastName,age} = req.body;
 
     
@@ -52,7 +52,7 @@ const updateProfile = async (req, res) => {
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
-    console.log(profile);
+    
     profile.profilePicture = profilePicture;
     
     profile.about = about;
@@ -85,5 +85,6 @@ const updateProfile = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 module.exports = { getProfile , updateProfile , getProfileByUserName};
