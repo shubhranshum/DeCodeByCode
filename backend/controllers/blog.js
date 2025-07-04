@@ -1,12 +1,12 @@
-const Blog = require('../models/blogPost');
-const Comment = require('../models/Comments');
-const User = require('../models/user');
-const UserProfile = require('../models/profile/userProfile');
+const Blog = require('../models/blogPost.js');
+const Comment = require('../models/Comments.js');
+const User = require('../models/user.js');
+const UserProfile = require('../models/profile/userProfile.js');
 
 
  // or User if you're using that
 
-const { param } = require('../routes/blog');
+const { param } = require('../routes/blog.js');
 const { logActivity, getUserActivities, deleteUserActivities } = require('./activityController.js');
 
 // Increment likesCount
@@ -17,6 +17,7 @@ exports.getBlogsByUserId = async (req, res) => {
   console.log("Hello from getBlogsByUserId");
   try {
     const userId = req.user._id;
+    
 
     const blogs = await Blog.find({ author: userId });
     return res.json(blogs);
@@ -33,6 +34,7 @@ exports.getBlogsByUserId = async (req, res) => {
 // Create a new blog post
 exports.createBlog = async (req, res) => {
   try {
+    console.log("Hello from create blog")
     const { title, content, slug, summary, thumbnailUrl, tags, category, status, allowComments, isFeatured } = req.body;
     const author = req.user._id;
 
@@ -72,11 +74,11 @@ exports.createBlog = async (req, res) => {
     }
     await profile.save();
     
-    const activity = await logActivity(author, savedBlog._id,"Blog", "BLOG_POSTED", "Blog Post Created with id "+savedBlog.title);
-    console.log('Activity logged:', activity);  
+    await logActivity(author, savedBlog._id,"BlogPost", "BLOG_POSTED", savedBlog.title);
+
     
-    console.log('Blog Saved:', savedBlog);
-    console.log('Profile updated:', profile);
+    
+
     
     res.status(201).json(savedBlog);
   } catch (err) {
@@ -156,7 +158,27 @@ exports.deleteBlog = async (req, res) => {
     }
 
     // 1. Delete the blog
-    await blog.deleteOne();
+    
+    const profile = await UserProfile.findOne({ _id: req.user._id });
+    
+    switch(blog.status){
+      case "Published":
+        profile.Blog.pull(blogId);
+        profile.stats.blogCount -= 1;
+        break;
+      case "Draft":
+        profile.DraftBlogs.pull(blogId);
+        break;
+      case "Archived":
+        profile.ArchivedBlogs.pull(blogId);
+        break;
+    }
+    await blog.deleteOne(
+      { _id: blogId }
+    );
+   
+
+    await profile.save();
 
     // 2. Delete all related comments
     await Comment.deleteMany({ blogId: blogId });

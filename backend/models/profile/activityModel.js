@@ -19,12 +19,19 @@ const activitySchema = new Schema({
     type: String,
     enum: [
       'PROBLEM_SOLVED',
+      'PROBLEM_ATTEMPTED',
       'PROBLEM_CREATED',
       'BLOG_POSTED',
       'BLOG_EDITED',
       'BLOG_DELETED',
       'COMMENT_ADDED',
       'LIKE_GIVEN',
+
+      'FOLLOW_GIVEN',
+      'FOLLOW_ACCEPTED',
+      'FOLLOW_REJECTED',
+      'FOLLOW_REQUESTED',
+
       
     ],
     required: true
@@ -34,11 +41,11 @@ const activitySchema = new Schema({
     type: Schema.Types.Mixed
   },
 
-  timestamp: {
-    type: Date,
-    default: Date.now
-  }
-});
+  
+},{
+  timestamps: true
+}
+);
 
 // Dynamic population setup (optional utility, not in schema)
 activitySchema.virtual('ref', {

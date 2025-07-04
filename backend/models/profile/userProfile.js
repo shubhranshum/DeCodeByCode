@@ -34,7 +34,8 @@ const userProfileSchema = new mongoose.Schema({
         
     },
     Skills:{
-        type: [String]
+        type: [String],
+        default: []
     },
     
     about:{
@@ -101,20 +102,38 @@ const userProfileSchema = new mongoose.Schema({
       //Blog
     Blog: [{
         type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost'
+        ref: 'BlogPost',
+        default: []
     }],
     DraftBlogs: [{
         type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost'
+        ref: 'BlogPost',
+        default: []
     }],
     ArchivedBlogs: [{
         type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost'
+        ref: 'BlogPost',
+        default: []
     }],
     LikedBlogs: [{
         type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost'
+        ref: 'BlogPost',
+        default: []
     }],
+
+    ProblemHistory: [
+  {
+    problemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Problem' },
+    status: { type: String, enum: ['Solved', 'Attempted'], required: true },
+    solvedAt: { type: Date },
+    lastTriedAt: { type: Date, required: true }  // ← NEW FIELD
+  }
+]
+
+
+
+
+    
 }, { timestamps: true });
 const Profile = mongoose.model('UserProfile', userProfileSchema);
 module.exports = Profile
