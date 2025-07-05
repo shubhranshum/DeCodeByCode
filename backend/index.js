@@ -46,7 +46,7 @@ app.use('/',auth,[homeRouter,problemHandling,logoutRouter,codeRunner,makeAdmin])
 
 
 app.use('/admin', auth, adminRouter);
-app.listen(PORT,(err)=>{
+app.listen(PORT,'0.0.0.0',(err)=>{
     if(err){
         console.error('Error starting the server:', err);
     } else {

@@ -7,6 +7,8 @@ const auth = require('../middlewares/auth');
 // Public Routes - Blog
 router.get('/blogs', blogController.getAllBlogs);
 router.get('/blog/:id', blogController.getBlogById);
+router.get('/blogs/:username', blogController.getAllBlogsByUserName);
+// router.get('/blog/')
 
 router.get('/blog/slug/:slug', blogController.getBlogBySlug);
 

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { getTheme, setTheme as themesetTheme } from '../../utils/theme';
+import { useEffect, useState, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import { getTheme } from '../../utils/theme';
 import AchievementsSection from './ProfilePage/achievementsSection';
 import ActivityFeed from './ProfilePage/activityFeed';
 import BadgesSection from './ProfilePage/badgesSection';
@@ -14,14 +14,20 @@ import SettingsTab from './ProfilePage/settingsTab';
 import SkillsSection from './ProfilePage/skillsSection';
 import SocialLinks from './ProfilePage/socialLinks';
 import StatsSection from './ProfilePage/statsSection';
-import RecentAttempts from './ProfilePage/recentAttempts'; // UPDATED
+import RecentAttempts from './ProfilePage/recentAttempts';
 import RecentSolvedProblems from './ProfilePage/recentSolvedProblems';
+import { useUser } from '../../context/userContext';
 
 const ProfilePage = () => {
-  const { username } = useParams();
-  const isOwnProfile = !username;
+  const { username: urlUsername } = useParams();
+  const { user: currentUser } = useUser();
+  const isOwnProfile = currentUser && currentUser.username === urlUsername;
+  
+  // Track mounted state to prevent state updates on unmounted component
+  const isMounted = useRef(true);
 
   const [profile, setProfile] = useState(null);
+  const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
@@ -48,6 +54,11 @@ const ProfilePage = () => {
     setTheme(savedTheme);
     localStorage.setItem('theme', savedTheme);
     document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    
+    // Cleanup function
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   // Toggle theme function
@@ -58,95 +69,103 @@ const ProfilePage = () => {
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
+  const fetchBlogs = async () => {
+    try {
+      const url = `http://localhost:3000/blogs/${urlUsername}`;
+      const res = await fetch(url, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      const data = await res.json();
+      if (isMounted.current && data.success) {
+        setBlogs(data.blogs);
+      }
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+    }
+  };
+
   const fetchRecentAttempts = async () => {
     try {
-      console.log("Called fetch recent attmepts hook")
-      const url = username
-        ? `http://localhost:3000/profile/recent-attempts/${username}`
-        : 'http://localhost:3000/profile/recent-attempts';
+      const url = `http://localhost:3000/profile/recent-attempts/${urlUsername}`;
       const res = await fetch(url, {
         method: 'GET',
         credentials: 'include'
       });
       const data = await res.json();
       
-      if (data.success) {
-        // console.log(data.attemptedProblems);
+      if (isMounted.current && data.success) {
         setRecentAttempts(data.attemptedProblems);
       } 
     } catch (error) {
       console.error('Error fetching recent attempts:', error);
-     
-      
     }
   };
 
-  // Dummy function to fetch recent solved problems
   const fetchSolvedProblems = async () => {
     try {
-      const url = username
-        ? `http://localhost:3000/profile/solved-problems/${username}`
-        : 'http://localhost:3000/profile/solved-problems';
+      const url = `http://localhost:3000/profile/solved-problems/${urlUsername}`;
       const res = await fetch(url, {
         method: 'GET',
         credentials: 'include'
       });
       const data = await res.json();
 
-      if (data.success) {
+      if (isMounted.current && data.success) {
         setSolvedProblems(data.solvedProblems);
       }
     } catch (err) {
       console.error('Error fetching solved problems:', err);
-      
-      
     }
   };
 
   const fetchProfile = async () => {
     try {
-      setLoading(true);
-      const url = username
-        ? `http://localhost:3000/profile/user/${username}`
-        : 'http://localhost:3000/profile';
-        
+      if (isMounted.current) setLoading(true);
+      const url = `http://localhost:3000/profile/user/${urlUsername}`;
       const res = await fetch(url, {
         method: 'GET',
         credentials: 'include',
       });
       
       const data = await res.json();
-      setProfile(data);
-      setIsFollowing(data.isFollowing || false);
-      
-      // Set initial stats
-      setStats({
-        problemsSolved: data.stats?.problemsSolved || 0,
-        blogCount: data.stats?.blogCount || 0,
-        blogViews: data.stats?.blogViews || 0,
-        solutionsAccepted: data.stats?.solutionsAccepted || 0,
-        followers: data.stats?.followers || 0,
-        following: data.stats?.following || 0,
-        ranking: data.stats?.ranking || 0
-      });
+      if (isMounted.current) {
+        setProfile(data);
+        setIsFollowing(data.isFollowing || false);
+        
+        setStats({
+          problemsSolved: data.stats?.problemsSolved || 0,
+          blogCount: data.stats?.blogCount || 0,
+          blogViews: data.stats?.blogViews || 0,
+          solutionsAccepted: data.stats?.solutionsAccepted || 0,
+          followers: data.stats?.followers || 0,
+          following: data.stats?.following || 0,
+          ranking: data.stats?.ranking || 0
+        });
+      }
     } catch (err) {
       console.error('Error fetching profile:', err);
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   };
 
   const fetchActivities = async () => {
-    if (!isOwnProfile) return; // Skip for other users
+    // Only fetch activities for own profile
+    if (!isOwnProfile) {
+      if (isMounted.current) setActivityLoading(false);
+      return;
+    }
     
     try {
-      setActivityLoading(true);
+      if (isMounted.current) setActivityLoading(true);
       const res = await fetch(`http://localhost:3000/profile/user-activities`, {
         method: 'GET',
         credentials: 'include',
       });
       const data = await res.json();
-      if (data.success) {
+      if (isMounted.current && data.success) {
         const sortedActivities = data.activities.sort(
           (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
         );
@@ -155,24 +174,36 @@ const ProfilePage = () => {
     } catch (error) {
       console.error('Error fetching activities:', error);
     } finally {
-      setActivityLoading(false);
+      if (isMounted.current) setActivityLoading(false);
     }
   };
 
   useEffect(() => {
+    isMounted.current = true;
+    
     const fetchAllData = async () => {
       await fetchProfile();
       await fetchActivities();
       await fetchSolvedProblems();
       await fetchRecentAttempts();
+      await fetchBlogs();
     };
+    
     fetchAllData();
-  }, [username]);
+    
+    return () => {
+      isMounted.current = false;
+    };
+  }, [urlUsername]);
 
   const handleProfileUpdate = (updatedProfile) => {
-    setProfile(updatedProfile);
-    setSuccessMessage('Profile updated successfully!');
-    setTimeout(() => setSuccessMessage(''), 5000);
+    if (isMounted.current) {
+      setProfile(updatedProfile);
+      setSuccessMessage('Profile updated successfully!');
+      setTimeout(() => {
+        if (isMounted.current) setSuccessMessage('');
+      }, 5000);
+    }
   };
 
   if (loading || (isOwnProfile && activityLoading)) {
@@ -207,7 +238,6 @@ const ProfilePage = () => {
 
   return (
     <div className={`min-h-screen py-8 px-4 sm:px-6 transition-colors duration-200 ${theme === 'dark' ? 'bg-gray-900' : 'bg-slate-50'}`}>
-      {/* Edit Profile Modal */}
       {isOwnProfile && isEditModalOpen && (
         <EditProfileModal 
           profile={profile} 
@@ -217,7 +247,6 @@ const ProfilePage = () => {
         />
       )}
 
-      {/* Success message */}
       {isOwnProfile && successMessage && (
         <div className="fixed top-4 right-4 z-50">
           <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center animate-fadeInOut">
@@ -236,10 +265,8 @@ const ProfilePage = () => {
           theme={theme}
           toggleTheme={toggleTheme}
           isOwnProfile={isOwnProfile}
-          isFollowing={isFollowing}
         />
 
-        {/* Navigation Tabs */}
         <div className={`flex flex-wrap border-b mb-8 ${theme === 'dark' ? 'border-gray-700' : 'border-slate-200'}`}>
           <button
             className={`px-4 py-3 font-medium ${activeTab === 'overview' 
@@ -294,7 +321,7 @@ const ProfilePage = () => {
             Connections
           </button>
           
-          <button
+          {isOwnProfile && <button
             className={`px-4 py-3 font-medium ${activeTab === 'attempts' 
               ? theme === 'dark' 
                 ? 'text-indigo-400 border-b-2 border-indigo-400' 
@@ -309,7 +336,7 @@ const ProfilePage = () => {
             }}
           >
             Recent Attempts
-          </button>
+          </button>}
           
           <button
             className={`px-4 py-3 font-medium ${activeTab === 'problems' 
@@ -348,19 +375,15 @@ const ProfilePage = () => {
           )}
         </div>
 
-        {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Left Column */}
             <div className="md:col-span-2 space-y-8">
-              {/* About */}
               <div className={`rounded-xl shadow-sm p-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                 <h2 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>About Me</h2>
                 <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-slate-600'}`}>
                   {profile.about || "This user hasn't written anything about themselves yet."}
                 </p>
                 
-                {/* Social Links */}
                 <SocialLinks socialLinks={profile.socialLinks || {}} theme={theme} />
                 
                 {isOwnProfile && (
@@ -380,7 +403,6 @@ const ProfilePage = () => {
                 )}
               </div>
 
-              {/* Contribution Graph */}
               <div className={`rounded-xl shadow-sm p-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                 <h2 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>Activity Heatmap</h2>
                 <ContributionGraph data={profile.activityData || []} theme={theme} />
@@ -389,7 +411,6 @@ const ProfilePage = () => {
                 </p>
               </div>
 
-              {/* Skills */}
               <SkillsSection 
                 skills={profile.Skills || []} 
                 onEditClick={() => setIsEditModalOpen(true)}
@@ -398,24 +419,15 @@ const ProfilePage = () => {
               />
             </div>
 
-            {/* Right Column */}
             <div className="space-y-8">
-              {/* Stats */}
               <StatsSection stats={stats} theme={theme} />
-              
-              {/* Badges */}
               <BadgesSection badges={profile.badges || []} theme={theme} />
-              
-              {/* Achievements */}
               <AchievementsSection achievements={profile.achievements || []} theme={theme} />
-              
-              {/* Certifications */}
               <CertificationsSection certifications={profile.certifications || []} theme={theme} />
             </div>
           </div>
         )}
 
-        {/* Activity Tab */}
         {isOwnProfile && activeTab === 'activity' && (
           <div className={`rounded-xl shadow-sm p-6 transition-colors ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
             <ActivityFeed 
@@ -427,7 +439,6 @@ const ProfilePage = () => {
           </div>
         )}
         
-        {/* Connections Tab */}
         {activeTab === 'connections' && (
           <ConnectionsSection 
             followers={profile.followers || []} 
@@ -437,23 +448,20 @@ const ProfilePage = () => {
           />
         )}
 
-        {/* RECENT ATTEMPTS TAB */}
-        {activeTab === 'attempts' && (
+        {isOwnProfile && activeTab === 'attempts' && (
           <RecentAttempts 
             attempts={recentAttempts} 
             theme={theme} 
           />
         )}
 
-        {/* SOLVED PROBLEMS TAB */}
-        {isOwnProfile && activeTab === 'problems' && (
+        {activeTab === 'problems' && (
           <RecentSolvedProblems 
             problems={solvedProblems} 
             theme={theme} 
           />
         )}
 
-        {/* Settings Tab */}
         {isOwnProfile && activeTab === 'settings' && (
           <SettingsTab 
             profile={profile} 
@@ -462,8 +470,7 @@ const ProfilePage = () => {
           />
         )}
 
-        {/* Blogs Section - only for own profile */}
-        {isOwnProfile && <BlogsSection blogs={profile.Blog || []} theme={theme} />}
+        {isOwnProfile && <BlogsSection blogs={blogs || []} theme={theme} />}
       </div>
     </div>
   );

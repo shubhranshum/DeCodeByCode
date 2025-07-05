@@ -26,6 +26,7 @@ const activitySchema = new Schema({
       'BLOG_DELETED',
       'COMMENT_ADDED',
       'LIKE_GIVEN',
+      
 
       'FOLLOW_GIVEN',
       'FOLLOW_ACCEPTED',

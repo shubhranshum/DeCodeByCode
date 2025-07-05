@@ -1,5 +1,6 @@
 const Profile = require('../models/profile/userProfile');
 const Problem = require('../models/problem');
+const User = require('../models/user');
 
 const getSolvedProblems = async (req, res) => {
   try {
@@ -65,6 +66,7 @@ const getSolvedProblemsByUsername = async (req, res) => {
         solvedAt: entry.solvedAt,
         lastTriedAt: entry.lastTriedAt
       }));
+      console.log(solvedProblems.length)
 
     res.status(200).json({ success: true, solvedProblems });
   } catch (error) {

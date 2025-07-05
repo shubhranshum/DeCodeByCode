@@ -726,69 +726,7 @@ function SolutionsTab({ solutions, isLoading, isDark }) {
 
   return (
     <div className="space-y-4">
-      {/* Top Solution Card */}
-      <div
-        className={`p-4 rounded-xl shadow-sm transition-all ${
-          isDark
-            ? "bg-gradient-to-br from-amber-900/20 to-amber-800/30 border border-amber-800/50"
-            : "bg-gradient-to-br from-amber-100/80 to-amber-50 border border-amber-200"
-        }`}
-      >
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                isDark 
-                  ? "bg-gradient-to-br from-amber-700/60 to-amber-900/60" 
-                  : "bg-gradient-to-br from-amber-200 to-amber-300"
-              }`}
-            >
-              <span className="text-sm font-bold">TS</span>
-            </div>
-            <div>
-              <h3 className="font-bold text-lg">Top Solution</h3>
-              <p className="text-xs text-slate-500 dark:text-amber-200/80">
-                Highest rated solution for this problem
-              </p>
-            </div>
-          </div>
-          <span
-            className={`text-xs px-3 py-1 rounded-full font-medium ${
-              isDark
-                ? "bg-gradient-to-r from-green-900/40 to-emerald-900/40 text-green-300"
-                : "bg-gradient-to-r from-green-100 to-emerald-100 text-green-700"
-            }`}
-          >
-            98% Acceptance
-          </span>
-        </div>
-
-        <div className="mt-3 flex items-center gap-2">
-          <div className="flex-1">
-            <div className={`text-sm ${isDark ? "text-gray-300" : "text-slate-700"}`}>
-              <span className="font-medium">Two-pointer approach</span> with O(n) time complexity
-            </div>
-          </div>
-          <div className={`text-xs px-2 py-1 rounded ${
-            isDark ? "bg-gray-700" : "bg-slate-200"
-          }`}>
-            JavaScript
-          </div>
-        </div>
-
-        <button
-          className={`mt-4 w-full py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-            isDark
-              ? "bg-gradient-to-r from-amber-700/40 to-amber-900/40 hover:from-amber-600/50 hover:to-amber-800/50"
-              : "bg-gradient-to-r from-amber-200 to-amber-300 hover:from-amber-300 hover:to-amber-400"
-          }`}
-        >
-          View Solution
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
+      
 
       {/* Solutions Header */}
       <div className="flex justify-between items-center">

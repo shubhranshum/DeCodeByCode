@@ -5,8 +5,10 @@ const getProfileByUserName = async (req, res) => {
   try {
     const username = req.params.username;
     console.log(username);
-    console.log("Hello from getProfileByID");
-    const profile = await UserProfile.findOne({ username: username }).populate('Blog').populate('DraftBlogs').populate('ArchivedBlogs').populate('LikedBlogs').lean();
+    console.log("Hello from getProfileByUsername");
+    const profile = await UserProfile.findOne({ username: username }).
+    
+    populate('userId','isAdmin').lean();
     console.log("Hello from getProfileByUserName");
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
@@ -22,18 +24,17 @@ const getProfile = async (req, res) => {
   try {
     console.log("Hello from getProfile");
     const user = req.user.username;
-   
+    
 
     const profile = await UserProfile.findOne({ username: user })
-      .populate('Blog')
-      .populate('DraftBlogs')
-      .populate('ArchivedBlogs')
-      .populate('LikedBlogs')
+      
+      .populate('userId','isAdmin')
       .lean();  // You can also populate DraftBlogs, ArchivedBlogs, LikedBlogs as needed
-    
+    console.log(profile)
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
+    
     res.json(profile);
   } catch (error) {
     console.error('Error fetching profile:', error);

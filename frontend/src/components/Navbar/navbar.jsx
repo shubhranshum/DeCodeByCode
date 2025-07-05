@@ -76,7 +76,8 @@ const ProfileDropdown = ({ user, onSignOut }) => {
             <MenuItem>
               {({ active }) => (
                 <a
-                  href="/profile"
+                  href={`/profile/u/${user.username}`}
+
                   className={classNames(
                     active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
                     'block px-4 py-2 text-sm rounded-md flex items-center gap-2'

@@ -1,5 +1,5 @@
 const Profile = require('../models/profile/userProfile');
-
+const User = require('../models/user');
 
 const getAttemptedProblems = async (req, res) => {
   try {

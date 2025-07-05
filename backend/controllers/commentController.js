@@ -91,7 +91,7 @@ const addComment = async (req, res) => {
     const blog = await BlogPost.findById(blogId);
     blog.commentCount += 1;
     blog.save();
-    const log = await logActivity(userId, newComment._id,"Comment", "COMMENT_ADDED", "Comment on a blog with title : "+blogPost.title);
+    const log = await logActivity(userId, blogId,"Comment", "COMMENT_ADDED", "Comment "+text+" on a blog with title : "+blogPost.title);
     console.log("Comment added successfully");
     
     
