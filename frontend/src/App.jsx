@@ -49,8 +49,8 @@ export default function App() {
         <Route path="/blogs" element={<BlogPage />} />
         <Route path ="/create-blog" element={<CreateBlogForm/>} />
         <Route path="/blog/:id" element={<BlogDetails />} />
-        <Route path ="/profile" element={<ProfilePage/>} />
-        <Route path = "/profile/user/:username" element={<ProfilePage/>} />
+        <Route path ="/profile/u/:username" element={<ProfilePage/>} />
+        <Route path = "/profile/:username" element={<ProfilePage/>} />0
         <Route path = "/edit-blog/:id" element={<EditBlogForm/>} />
         <Route>
           <Route path="/profile/userblogs" element={<UserBlog />} />

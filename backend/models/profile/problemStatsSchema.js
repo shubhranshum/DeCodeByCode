@@ -9,6 +9,9 @@ const problemStatSchema = new Schema({
   status:{
     type: String,
   },
+  language:{
+    type: String
+  },
   
   attempts: { type: Number, default: 0 },
   solution: { type: String },
