@@ -11,6 +11,7 @@ const submitProblem = async (req, res) => {
         const { problemid, solution, status, timetaken, memorytaken } = req.body;
 
         const problem = await Problem.findById(problemid);
+        
         if (!problem) return res.status(404).json({ message: "Problem not found" });
 
         const user = await User.findById(req.user._id);
@@ -30,14 +31,20 @@ const submitProblem = async (req, res) => {
             timetaken,
             memorytaken
         });
-        await problemStat.save();
+        
+        
+
 
         const now = new Date();
         const existingEntryIndex = profile.ProblemHistory.findIndex(entry =>
             entry.problemId.equals(problem._id)
         );
 
+
+        problem.attemptCount++;
         if (status === "Accepted") {
+            problem.solvedCount++;
+            problem.solvedBy.push(user._id);
             if (existingEntryIndex === -1) {
                 // First time solving correctly
                 profile.ProblemHistory.push({
@@ -83,7 +90,8 @@ const submitProblem = async (req, res) => {
                 logActivity(user._id, problemid, "Problem", "PROBLEM_ATTEMPTED", problem.title);
             }
         }
-
+        await problem.save();
+        await problemStat.save();
         await profile.save();
 
         res.status(200).json({ message: "Problem submitted successfully" });

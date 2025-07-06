@@ -103,6 +103,20 @@ const problemSchema = new mongoose.Schema({
     ref: "User",
     // required: true, // Assuming every problem is created by a user
   },
+  //added by omvrut
+
+  attemptCount: {
+    type: Number,
+    default: 0,
+  },
+  solvedCount: {
+    type: Number,
+    default: 0,
+  },
+  solvedBy:{
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "User"
+  },
   isVerified: {
     type: Boolean,
     default: false, // Default to false

@@ -4,7 +4,7 @@ const RecentAttempts = ({ attempts, theme }) => {
   if (!attempts || attempts.length === 0) {
     return (
       <div className={`rounded-xl shadow-sm p-6 transition-colors ${theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white text-slate-600'}`}>
-        <p>No recent attempts found.</p>
+        <p>No problems has been left unattempted</p>
       </div>
     );
   }

@@ -3,7 +3,9 @@ const userProfileSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: true,
+        indexed: true,
+        unique: true
     },
     username: {
         type: String,
@@ -26,7 +28,8 @@ const userProfileSchema = new mongoose.Schema({
     email: {
         type: String,
         ref: 'User',
-        required: true
+        required: true,
+        unique: true
     },
     college: {
         type:String,
@@ -100,26 +103,7 @@ const userProfileSchema = new mongoose.Schema({
     joinedAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
       //Blog
-    Blog: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost',
-        default: []
-    }],
-    DraftBlogs: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost',
-        default: []
-    }],
-    ArchivedBlogs: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost',
-        default: []
-    }],
-    LikedBlogs: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost',
-        default: []
-    }],
+    
 
     ProblemHistory: [
   {
