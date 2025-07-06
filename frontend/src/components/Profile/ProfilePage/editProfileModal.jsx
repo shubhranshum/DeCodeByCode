@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const EditProfileModal = ({ profile, onClose, onUpdate }) => {
+  // const navigator = Navigate();
   const [editFormData, setEditFormData] = useState({
     profilePicture: profile.profilePicture || "",
     username: profile.username || "",
@@ -70,6 +72,7 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
     } finally {
       setIsSubmitting(false);
     }
+    // navigator("/profile");
   };
 
   return (

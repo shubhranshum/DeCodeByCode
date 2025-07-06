@@ -242,6 +242,7 @@ const ProfilePage = () => {
         <EditProfileModal 
           profile={profile} 
           onClose={() => setIsEditModalOpen(false)}
+
           onUpdate={handleProfileUpdate}
           theme={theme}
         />

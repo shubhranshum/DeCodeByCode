@@ -64,23 +64,26 @@ const updateProfile = async (req, res) => {
     profile.state = state;
     profile.country = country;
     profile.college = college;
-    console.log(skills.length);
+    // console.log(skills.length);
     for (const skill of skills) {
-      if (!Array.isArray(profile.skills)) {
-      profile.skills = [];
+      if (!Array.isArray(profile.Skills)) {
+      profile.Skills = [];
     }
-  if (!profile.Skills.includes(skill)) {
-  profile.Skills.push(skill);
-  }
+    if (!profile.Skills.includes(skill)) {
+    profile.Skills.push(skill);
+    }
 
 
     }
 
     await profile.save();
+    const updatedProfile = await UserProfile.findOne({ userId: userId }).populate('userId','isAdmin').lean();
+    res.status(200).json(updatedProfile);
 
-    const updatedProfile = await UserProfile.findOne({ userId: userId }).populate('Blog').populate('DraftBlogs').populate('ArchivedBlogs').populate('LikedBlogs').lean(); res.json(updatedProfile);
+    
 
-    res.status(200).json({ updatedProfile: updatedProfile });
+    
+   
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).json({ message: 'Internal server error' });
