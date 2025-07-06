@@ -1,11 +1,11 @@
-const Problem = require('../models/problem');
+const Problem = require('../../models/problem');
 
 async function getProblemById(req, res) {
-    const {id} = req.params;// Assuming the problem ID is passed as a URL parameter
-    console.log('Fetching problem with ID:', id);
+    console.log('Fetching problem by ID');
+    const {problemId} = req.params;// Assuming the problem ID is passed as a URL parameter
+    console.log('Problem ID:', problemId);
     try {
-        const problem = await Problem.findById(id).populate('user', 'username'); // Populate user details
-        console.log('Problem fetched:', problem);
+        const problem = await Problem.findById(problemId).populate('user', 'username'); // Populate user details
         if (!problem) {
             return res.status(404).json({ message: 'Problem not found' });
         }

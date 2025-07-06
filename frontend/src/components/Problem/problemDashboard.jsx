@@ -72,7 +72,7 @@ export default function ProblemDashboard() {
                 <Card
                   key={problem._id}
                   className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => window.location.href = `/problem/${problem._id}`}
+                  onClick={() => window.location.href = `/problems/${problem._id}`}
                 >
                   <CardContent className="p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -86,7 +86,7 @@ export default function ProblemDashboard() {
                           </span>
                           <span className="flex items-center gap-1">
                             <CheckCircle className="h-4 w-4 text-green-500" />
-                            {problem.acceptedSolutions || 0} solved
+                            {problem.solvedCount || 0} solved
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />

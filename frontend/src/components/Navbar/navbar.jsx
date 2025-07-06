@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const navigation = [
   { name: 'Home', href: '/home', icon: HomeIcon, current: false },
-  { name: 'BattleGround', href: '#', icon: TrophyIcon, current: false },
+  { name: 'BattleGround', href: 'contests', icon: TrophyIcon, current: false },
   { name: 'Problems', href: '/problems', icon: CodeBracketIcon, current: false },
   { name: 'Learn', href: '/learn', icon: AcademicCapIcon, current: false },
   { name: 'Blogs', href: '/blogs', icon: BookOpenIcon, current: false },
@@ -76,7 +76,8 @@ const ProfileDropdown = ({ user, onSignOut }) => {
             <MenuItem>
               {({ active }) => (
                 <a
-                  href="/profile"
+                  href={`/profile/u/${user.username}`}
+
                   className={classNames(
                     active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
                     'block px-4 py-2 text-sm rounded-md flex items-center gap-2'

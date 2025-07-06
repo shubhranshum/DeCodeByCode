@@ -39,7 +39,7 @@ const BlogPostSchema = new Schema({
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  publishedAt: { type: Date },
+  publishedAt: { type: Date , default: Date.now},
 
   allowComments: { type: Boolean, default: true },
   isFeatured: { type: Boolean, default: false },

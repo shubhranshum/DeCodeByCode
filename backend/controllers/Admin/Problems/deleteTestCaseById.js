@@ -1,14 +1,13 @@
-const Problem = require('../../models/problem');
+const Problem = require('../../../models/problem');
 
 async function deleteTestCaseById(req, res) {
     if(req.user === undefined) {
         return res.status(401).json({ message: 'Unauthorized: User not authenticated' });
     }
     try {
-        const problem = await Problem.findById(req.params.id);
+        const problem = await Problem.findById(req.params.problem);
         const testCase = problem.testCases;
         updateTestCase = testCase.filter((testCase) => {
-            // console.log("TestCase ID:", testCase._id.toString(), "Request Body TestCase ID:", req.params.testCaseId);
             return testCase._id.toString() !== req.params.testCaseId;
         })
         // console.log("Update TestCase:", updateTestCase);

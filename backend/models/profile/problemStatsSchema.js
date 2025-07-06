@@ -1,16 +1,28 @@
-const problemStatSchema = new mongoose.Schema({
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    problemid: { type: Number, ref:'Problem', required: true },
-    problem: { type: mongoose.Schema.Types.ObjectId, ref: 'Problem', required: true },
-    solved: Boolean,
-    attempts: Number,
-    solution: String,
-    solvedAt: Date,
-    timeTaken: Number, // in minutes
-    difficulty: {
-        type: String,
-        enum: ['Easy', 'Medium', 'Hard']
-    }
-});
+const mongoose = require('mongoose');
 
-const ProblemStat = mongoose.model('ProblemStat', problemStatSchema);
+const Schema = mongoose.Schema;
+
+const problemStatSchema = new Schema({
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  problemid: { type: Schema.Types.ObjectId, ref: 'Problem', required: true },
+  problemtitle: { type: String, required: true },
+  status:{
+    type: String,
+  },
+  language:{
+    type: String
+  },
+  
+  attempts: { type: Number, default: 0 },
+  solution: { type: String },
+  solvedAt: { type: Date },
+  timetaken: { type: Number },
+  memorytaken: { type: Number },
+  
+
+
+
+  
+}, { timestamps: true });
+
+module.exports = mongoose.model('ProblemStats', problemStatSchema);

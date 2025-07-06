@@ -1,4 +1,4 @@
-const Problem = require('../../models/problem');
+const Problem = require('../../../models/problem');
 
 async function createProblem(req, res) {
     if(req.user === undefined) {
@@ -10,7 +10,6 @@ async function createProblem(req, res) {
             user: req.user._id,
             createdAt: new Date()
         });
-        console.log("New Problem Created:", newProblem);
         // // if(req.user) newProblem.user = req.user;// Set the user ID from the authenticated user
         await newProblem.save();
         res.status(201).json({ message: 'Problem created successfully', problem: newProblem });

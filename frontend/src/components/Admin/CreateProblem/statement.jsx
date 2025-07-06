@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useParams } from "react-router-dom";
 
-export default function StatementSection({ statement, setStatement }) {
-  const { id } = useParams();
+export default function StatementSection({ statement, setStatement , id}) {
 
   const [problemData, setProblemData] = useState(statement || {
     title: "",
@@ -19,12 +17,6 @@ export default function StatementSection({ statement, setStatement }) {
   };
 
   const handleSave = async () => {
-    const { title, statement, difficulty, inputFormat, outputFormat , notes} = problemData;
-
-    // if (!title || !statement || !difficulty || !inputFormat || !outputFormat) {
-    //   alert("Please fill in all required fields.");
-    //   return;
-    // }
 
     setStatement(problemData);
 

@@ -5,13 +5,15 @@ const getProfileByUserName = async (req, res) => {
   try {
     const username = req.params.username;
     console.log(username);
-    console.log("Hello from getProfileByID");
-    const profile = await UserProfile.findOne({ username: username }).populate('Blog').populate('DraftBlogs').populate('ArchivedBlogs').populate('LikedBlogs').lean();
-    console.log(profile);
+    console.log("Hello from getProfileByUsername");
+    const profile = await UserProfile.findOne({ username: username }).
+    
+    populate('userId','isAdmin').lean();
+    console.log("Hello from getProfileByUserName");
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
-    console.log(profile);
+    
     res.json(profile);
   } catch (error) {
     console.error('Error fetching profile:', error);
@@ -20,20 +22,19 @@ const getProfileByUserName = async (req, res) => {
 }
 const getProfile = async (req, res) => {
   try {
-
+    console.log("Hello from getProfile");
     const user = req.user.username;
-    console.log(user);
+    
 
     const profile = await UserProfile.findOne({ username: user })
-      .populate('Blog')
-      .populate('DraftBlogs')
-      .populate('ArchivedBlogs')
-      .populate('LikedBlogs')
+      
+      .populate('userId','isAdmin')
       .lean();  // You can also populate DraftBlogs, ArchivedBlogs, LikedBlogs as needed
-    console.log(profile);
+    console.log(profile)
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
+    
     res.json(profile);
   } catch (error) {
     console.error('Error fetching profile:', error);
@@ -43,7 +44,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    console.log(req.body);
+    console.log("Hello from updateProfile");
     const { profilePicture,  about, city, state, country, college, skills, firstName,lastName,age} = req.body;
 
     
@@ -52,7 +53,7 @@ const updateProfile = async (req, res) => {
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
-    console.log(profile);
+    
     profile.profilePicture = profilePicture;
     
     profile.about = about;
@@ -63,27 +64,31 @@ const updateProfile = async (req, res) => {
     profile.state = state;
     profile.country = country;
     profile.college = college;
-    console.log(skills.length);
+    // console.log(skills.length);
     for (const skill of skills) {
-      if (!Array.isArray(profile.skills)) {
-      profile.skills = [];
+      if (!Array.isArray(profile.Skills)) {
+      profile.Skills = [];
     }
-  if (!profile.Skills.includes(skill)) {
-  profile.Skills.push(skill);
-  }
+    if (!profile.Skills.includes(skill)) {
+    profile.Skills.push(skill);
+    }
 
 
     }
 
     await profile.save();
+    const updatedProfile = await UserProfile.findOne({ userId: userId }).populate('userId','isAdmin').lean();
+    res.status(200).json(updatedProfile);
 
-    const updatedProfile = await UserProfile.findOne({ userId: userId }).populate('Blog').populate('DraftBlogs').populate('ArchivedBlogs').populate('LikedBlogs').lean(); res.json(updatedProfile);
+    
 
-    res.status(200).json({ updatedProfile: updatedProfile });
+    
+   
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 module.exports = { getProfile , updateProfile , getProfileByUserName};

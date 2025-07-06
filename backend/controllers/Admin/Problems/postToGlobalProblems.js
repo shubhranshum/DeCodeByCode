@@ -1,7 +1,7 @@
-const Problem = require('../../models/problem');
+const Problem = require('../../../models/problem');
 
 async function postToGlobalProblems(req, res) {
-    const id = req.params.id;
+    const id = req.params.problemId; // Assuming the problem ID is passed as a URL parameter
     // console.log('Fetching all problems');
     try {
         const toTestIsVerified = await Problem.findById(id)

@@ -1,6 +1,6 @@
 
 export async function getProblemById(id) {
-    const response = await fetch(`http://localhost:3000/admin/problem/${id}`, {
+    const response = await fetch(`http://localhost:3000/admin/problems/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

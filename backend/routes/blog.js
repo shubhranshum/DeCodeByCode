@@ -7,6 +7,8 @@ const auth = require('../middlewares/auth');
 // Public Routes - Blog
 router.get('/blogs', blogController.getAllBlogs);
 router.get('/blog/:id', blogController.getBlogById);
+router.get('/blogs/:username', blogController.getAllBlogsByUserName);
+// router.get('/blog/')
 
 router.get('/blog/slug/:slug', blogController.getBlogBySlug);
 
@@ -18,7 +20,6 @@ router.get('/blog/comments/:blogId', auth, commentController.getComments);
 
 router.post('/create-blog', auth, blogController.createBlog);
 router.put('/update-blog/:id', auth, blogController.updateBlog);
-// router.put('/blog/:id', auth, blogController.createBlog);
 router.delete('/blog/:id', auth, blogController.deleteBlog);
 
 // Public Routes - Blog Interactions (no auth required for likes/views)

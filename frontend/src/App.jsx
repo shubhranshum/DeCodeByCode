@@ -13,15 +13,18 @@ import BlogPage from './routes/blog/blog.jsx';
 import Home from './routes/home.jsx';
 import Landing from './routes/LandingPage.jsx';
 import Login from './routes/loginPage.jsx';
-import ProblemPage from './routes/problem.jsx';
-import ProblemsPage from './routes/problems.jsx';
+import ProblemPage from './routes/problem/problem.jsx';
+import ProblemsPage from './routes/problem/problems.jsx';
 import SignUp from './routes/signUpPage.jsx';
 import CreateBlogForm from './routes/blog/blogPost.jsx';
 import UpdateProfileForm from './components/Profile/ProfilePage/editProfileModal.jsx';
-
-
+import Problem from './components/Admin/CreateProblem/adminProblem.jsx';
+import Contest from './routes/contest/contestDashboard.jsx'
+import ContestView from './components/Contest/contest.jsx';
+import ContestProblemPage from './routes/contest/problem.jsx';
 
 import EditProblem from './routes/Admin/CreateProblem/editProblem.jsx';
+import EditContest from './routes/Admin/CreateContest/editContest.jsx';
 // index.js or App.js (at top level)
 import { getTheme, setTheme } from "./utils/theme";
 
@@ -39,23 +42,29 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/home" element={<Home />} />
         <Route path="problems" element={<ProblemsPage/>}></Route>
-        <Route path="problem/:id" element={<ProblemPage />} />
+        <Route path="problems/:problemId" element={<ProblemPage />} />
         <Route path="/admin" element={<Admin/>}/>
 
         
         <Route path="/blogs" element={<BlogPage />} />
         <Route path ="/create-blog" element={<CreateBlogForm/>} />
         <Route path="/blog/:id" element={<BlogDetails />} />
-        <Route path ="/profile" element={<ProfilePage/>} />
-        <Route path = "/profile/user/:username" element={<ProfilePage/>} />
+        <Route path ="/profile/u/:username" element={<ProfilePage/>} />
+        <Route path = "/profile/:username" element={<ProfilePage/>} />0
         <Route path = "/edit-blog/:id" element={<EditBlogForm/>} />
         <Route>
           <Route path="/profile/userblogs" element={<UserBlog />} />
         </Route>
         {/* <Route path ="/create" */}
 
-        <Route path="/admin/edit-problem/:id" element={<EditProblem/>} />
+        <Route path="/admin/edit-problem/:problemId" element={<EditProblem/>} />
+        <Route path="/admin/problems/:problemId" element={<Problem/>} />
         <Route path = "/profile/update" element={<UpdateProfileForm/>} />
+
+        <Route path="/contests" element={<Contest />} />
+        <Route path="/contests/:contestId" element={<ContestView />} />
+        <Route path="/contests/:contestId/problems/:problemId" element={<ContestProblemPage />} />
+        <Route path="/admin/edit-contest/:contestId" element={<EditContest />} />
 
 
         {/* Add more routes as needed */}
