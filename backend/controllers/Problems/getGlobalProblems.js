@@ -1,4 +1,4 @@
-const Problem = require('../models/problem');
+const Problem = require('../../models/problem');
 
 async function getAllGlobalProblems(req, res) {
     // console.log('Fetching all problems');

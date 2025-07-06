@@ -1,4 +1,4 @@
-const Problem = require('../../models/problem');
+const Problem = require('../../../models/problem');
 
 async function editProblem(req, res) {
     // console.log(req.body, req.user);
@@ -7,8 +7,8 @@ async function editProblem(req, res) {
     }
     const updates = req.body;
     try {
-        let problem = await Problem.findByIdAndUpdate(req.params.id, { $set: updates },{new: true});
-        problem = await Problem.findByIdAndUpdate(req.params.id,{$set : {isVerified: false}}, {new: true})
+        updates.isVerified = false; // Ensure isVerified is set to false on update
+        const problem = await Problem.findByIdAndUpdate(req.params.problemId, { $set: updates },{new: true});
         if (!problem) {
             console.log("Problem not found");
             return res.status(404).json({ message: 'Problem not found' });

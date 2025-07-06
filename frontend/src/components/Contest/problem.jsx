@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import SubmissionCodeEditor from "../Tasks/submissionCodeEditor.jsx";
 import codeOutput from "../Tasks/output.jsx";
 import MathjaxRenderer from "../MathjaxRenderer";
-
+import { getProblemById } from "../Tasks/getProblemById"; // Adjust the import based on your API structure
 
 
 import { ClipboardCopy, Sun, Moon, CheckCircle, XCircle, ChevronRight } from "lucide-react";
@@ -19,6 +19,8 @@ export default function Problem() {
   const [darkMode, setDarkMode] = useState(true);
   const [copiedIndex, setCopiedIndex] = useState(null);
 
+//   const data = getProblemById(id);
+
   useEffect(() => {
     setIsLoading(true);
     fetch(`http://localhost:3000/problems/${problemId}`, {
@@ -30,6 +32,7 @@ export default function Problem() {
     })
       .then(res => res.json())
       .then(data => {
+        console.log(data);
         setProblem(data);
         setIsLoading(false);
       })
@@ -64,6 +67,7 @@ export default function Problem() {
       }
     }
     if(isCorrect) {
+     
       const response = await fetch(`http://localhost:3000/problem/submit`, {
         method: "POST",
         headers: {
@@ -104,7 +108,7 @@ export default function Problem() {
         }),
       });
       const data = await response.json();
-      console.log(data);
+    //   console.log(data);
     }
 
   }
@@ -195,7 +199,7 @@ export default function Problem() {
           <div className={`flex border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
             <button
               className={`px-4 py-3 font-medium text-sm flex-1 ${
-                activeTab === "problem" ?
+                activeTab === "problem" ? 
                 (darkMode ? 'text-blue-400 border-b-2 border-blue-400' : 'text-blue-600 border-b-2 border-blue-600') : 
                 (darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
               }`}
@@ -205,7 +209,7 @@ export default function Problem() {
             </button>
             <button
               className={`px-4 py-3 font-medium text-sm flex-1 ${
-                activeTab === "testcases" ?
+                activeTab === "testcases" ? 
                 (darkMode ? 'text-blue-400 border-b-2 border-blue-400' : 'text-blue-600 border-b-2 border-blue-600') : 
                 (darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
               }`}

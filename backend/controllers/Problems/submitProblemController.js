@@ -1,9 +1,9 @@
-const ProblemStat = require("../models/profile/problemStatsSchema.js");
+const ProblemStat = require("../../models/profile/problemStatsSchema.js");
 
-const Problem = require("../models/problem.js");
+const Problem = require("../../models/problem.js");
 
-const User = require("../models/user.js");
-const { logActivity, getUserActivities, deleteUserActivities } = require('./activityController.js');
+const User = require("../../models/user.js");
+const { logActivity, getUserActivities, deleteUserActivities } = require('../activityController.js');
 
 
 const submitProblem = async (req, res) => {

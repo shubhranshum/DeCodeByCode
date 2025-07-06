@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import {useParams} from 'react-router-dom';
 
-export default function GeneralInfoSection({generalInfo, setGeneralInfo}) {
-    const { id } = useParams();
+
+export default function GeneralInfoSection({generalInfo, setGeneralInfo,id}) {
     const [savedTimeLimit, setSavedTimeLimit] = useState(generalInfo.timeLimit || 1);
     const [savedMemoryLimit, setSavedMemoryLimit] = useState(generalInfo.memoryLimit || 256);
     const handleSave = async () => {

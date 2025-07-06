@@ -1,13 +1,13 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import SubmissionCodeEditor from "../Problem/submissionCodeEditor.jsx";
-import codeOutput from "../Problem/output.jsx";
+import SubmissionCodeEditor from "../../Tasks/submissionCodeEditor.jsx";
+import codeOutput from "../../Tasks/output.jsx";
 
-import MathjaxRenderer from "../MathjaxRenderer.jsx";
+import MathjaxRenderer from "../../MathjaxRenderer.jsx";
 
 
 export default function Problem() {
-  const { id } = useParams();
+  const { problemId } = useParams();
   const [problem, setProblem] = useState(null);
   const [code, setCode] = useState("// Write your solution here");
   const [verdict, setVerdict] = useState(null);
@@ -15,7 +15,7 @@ export default function Problem() {
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     setIsLoading(true);
-    fetch(`http://localhost:3000/admin/problem/${id}`, {
+    fetch(`http://localhost:3000/admin/problems/${problemId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -32,7 +32,7 @@ export default function Problem() {
         console.error("Failed to load problem:", err);
         setIsLoading(false);
       });
-  }, [id]);
+  }, [problemId]);
 
   const handleCodeSubmit = async (code) => {
     let isCorrect = true;
@@ -83,7 +83,7 @@ export default function Problem() {
       <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
         <h1 className="text-2xl font-bold text-orange-500">{problem.title}</h1>
         <div className="flex items-center mt-2 text-sm text-gray-400">
-          <span className="mr-4">Problem ID: {id}</span>
+          <span className="mr-4">Problem ID: {problemId}</span>
           <span className={`px-2 py-1 rounded ${verdict === "Accepted" ? 'bg-green-900 text-green-300' : verdict && verdict.includes("Wrong") ? 'bg-red-900 text-red-300' : 'bg-gray-700 text-gray-300'}`}>
             {verdict ? verdict : "Not Submitted"}
           </span>

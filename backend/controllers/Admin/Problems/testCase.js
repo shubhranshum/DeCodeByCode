@@ -1,13 +1,13 @@
-const Problem = require("../../models/problem"); // Adjust based on your schema
+const Problem = require("../../../models/problem"); // Adjust based on your schema
 
 
 module.exports = async function (req, res) {
-  const { id } = req.params;
+  const { problemId } = req.params;
   const { input, visible, explanation } = req.body;
   // console.log(input,visible,explanation);
   if (!input) return res.status(400).json({ error: "Test case input required" });
   try {
-    const problem = await Problem.findById(id);
+    const problem = await Problem.findById(problemId);
     if (!problem) return res.status(404).json({ error: "Problem not found" });
     problem.testCases.push({ input, visible: visible || false , explanation: explanation || "" });
     problem.isVerified = false; // Set isVerified to false when adding a test case
