@@ -16,7 +16,7 @@ exports.getFeaturedBlogs = async(req,res)=>{
   try {
     const blogs = await Blog.find({ isFeatured: true }).populate('author', 'username email');
     const topBlogs = blogs.sort((a, b) => b.likesCount - a.likesCount).slice(0, 6);
-    console.log(topBlogs);
+   
     return res.status(200).json({blogs:topBlogs});
   } catch (err) {
     console.error('getFeaturedBlogs error:', err);

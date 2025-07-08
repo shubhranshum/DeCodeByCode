@@ -1,13 +1,10 @@
 const Announcement = require('../../../models/home/announcement/announcemnt');
 const verifyAnnouncement = async (req, res) => {
     try {
-        const { announcementId } = req.params;
-        const announcement = await Announcement.findById(announcementId);
-        if (!announcement) {
-            return res.status(404).json({ message: 'Announcement not found' });
-        }
-        announcement.isVerified = !announcement.isVerified;
-        await announcement.save();
+        console.log("Hello from verifyAnnouncement");
+        
+       
+        
         res.status(200).json({ message: 'Announcement updated successfully', announcement });
     } catch (err) {
         console.error('Error updating announcement:', err);

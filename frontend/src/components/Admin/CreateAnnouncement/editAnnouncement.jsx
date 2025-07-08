@@ -134,7 +134,10 @@ export default function EditAnnouncementForm() {
       
       if (res.ok) {
         toast.success("Announcement updated successfully");
-        navigate("/announcements", { replace: true });
+        navigate(-1);
+        window.location.reload();
+        setSubmitting(false);
+      
       } else {
         const errorData = await res.json();
         toast.error(errorData.message || "Failed to update announcement");

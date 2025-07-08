@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../Navbar/navbar.jsx";
+import { formatDate } from "date-fns";
 
 // Custom hooks for better modularity
 const useFeaturedBlogs = () => {
@@ -39,39 +40,18 @@ const useUpcomingContests = () => {
     // Simulated API call with mock data
     const fetchContests = async () => {
       try {
-        // In a real app, this would be an actual API call
-        setTimeout(() => {
-          setContests([
-            {
-              id: 1,
-              name: "Codeforces Round #950",
-              date: "Jul 15, 2023",
-              time: "17:35 UTC+2",
-              duration: "2 hrs",
-              platform: "Codeforces",
-              link: "https://codeforces.com",
-            },
-            {
-              id: 2,
-              name: "Google Kick Start 2023",
-              date: "Jul 22, 2023",
-              time: "13:00 UTC",
-              duration: "3 hrs",
-              platform: "Google",
-              link: "https://codingcompetitions.withgoogle.com/kickstart",
-            },
-            {
-              id: 3,
-              name: "LeetCode Biweekly Contest",
-              date: "Jul 30, 2023",
-              time: "14:30 UTC",
-              duration: "1.5 hrs",
-              platform: "LeetCode",
-              link: "https://leetcode.com/contest",
-            },
-          ]);
-          setLoading(false);
-        }, 500);
+         const res = await fetch("http://localhost:3000/upcoming-contests", {
+           method: "GET",
+           credentials: "include",
+         });
+         const data = await res.json();
+         console.log(data.filteredContests);
+         setContests(data.filteredContests);
+         setLoading(false);
+         data.filteredContests.forEach(contest => {
+           console.log(contest);
+         })
+        
       } catch (err) {
         console.error("Error fetching contests:", err);
         setLoading(false);
@@ -83,6 +63,15 @@ const useUpcomingContests = () => {
 
   return { contests, loading };
 };
+function formatDateToDMY(isoDateStr) {
+  const date = new Date(isoDateStr);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+}
+
 
 const useAnnouncements = () => {
   const [announcements, setAnnouncements] = useState([]);
@@ -161,7 +150,7 @@ const BlogCard = ({ blog }) => (
       </Link>
       <div className="flex items-center gap-1 text-gray-400">
         <span className="text-xs">♡</span>
-        <span className="text-sm">{blog?.likes || 0}</span>
+        <span className="text-sm">{blog?.likedBy.length || 0}</span>
       </div>
     </div>
     <p className="mt-2 text-gray-300 text-sm line-clamp-2">
@@ -180,8 +169,8 @@ const BlogCard = ({ blog }) => (
       </div>
     )}
     <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
-      {/* <span> {blog?.author || "Anonymous"}</span> */}
-      {/* <span>{blog?.date || "Recently"}</span> */}
+      <span> {blog?.author.username || "Anonymous"}</span>
+      <span>{formatDateToDMY(blog?.createdAt) || "Recently"}</span>
     </div>
   </div>
 );
@@ -192,12 +181,12 @@ const ContestCard = ({ contest }) => (
     <div className="flex justify-between items-start gap-2">
       <div>
         <h3 className="font-medium text-orange-300 hover:underline">
-          <a href={contest.link} target="_blank" rel="noopener noreferrer">
-            {contest.name}
+          <a href="/contest"target="_blank" rel="noopener noreferrer">
+            {contest.title}
           </a>
         </h3>
         <div className="flex items-center gap-2 mt-1 text-sm text-gray-300">
-          <span>{contest.platform}</span>
+          {/* <span>{contest.platform}</span> */}
           <span className="text-gray-500">•</span>
           <span>{contest.duration}</span>
         </div>
@@ -303,7 +292,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/practice"
+              to="/problems"
               className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-medium py-3 px-8 rounded-lg transition-all shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30"
             >
               Start Practicing

@@ -2,6 +2,7 @@ const Contest = require('../../models/contest/contest');
 
 async function getAllGlobalContests(req, res) {
     try {
+        console.log("Hello from getAllGlobalContests");
         const contests = await Contest.find({}).populate('creator', 'username'); // Populate user details
         const filteredContests = contests.filter(contest => contest.isGlobal); // Filter out private problems
         res.status(200).json(filteredContests);

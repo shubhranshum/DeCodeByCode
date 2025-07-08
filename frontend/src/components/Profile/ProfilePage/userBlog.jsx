@@ -119,27 +119,27 @@ const UserBlogs = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen py-12 px-4 bg-slate-50 dark:bg-gray-900">
+      <div className="min-h-screen py-12 px-4 bg-gradient-to-b from-purple-50 to-white dark:from-gray-900 dark:to-gray-800">
         <div className="max-w-5xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-10 bg-slate-200 dark:bg-gray-700 rounded w-1/4 mb-8"></div>
+            <div className="h-10 bg-purple-200 dark:bg-gray-700 rounded w-1/4 mb-8"></div>
             <div className="flex gap-4 mb-8">
-              <div className="h-10 bg-slate-200 dark:bg-gray-700 rounded-full w-24"></div>
-              <div className="h-10 bg-slate-200 dark:bg-gray-700 rounded-full w-24"></div>
-              <div className="h-10 bg-slate-200 dark:bg-gray-700 rounded-full w-24"></div>
+              <div className="h-10 bg-purple-200 dark:bg-gray-700 rounded-full w-24"></div>
+              <div className="h-10 bg-purple-200 dark:bg-gray-700 rounded-full w-24"></div>
+              <div className="h-10 bg-purple-200 dark:bg-gray-700 rounded-full w-24"></div>
             </div>
-            <div className="h-10 bg-slate-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+            <div className="h-10 bg-purple-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="border rounded-xl p-6 bg-white dark:bg-gray-800">
-                  <div className="h-6 bg-slate-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-slate-200 dark:bg-gray-700 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-slate-200 dark:bg-gray-700 rounded w-5/6 mb-6"></div>
+                  <div className="h-6 bg-purple-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+                  <div className="h-4 bg-purple-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+                  <div className="h-4 bg-purple-200 dark:bg-gray-700 rounded w-5/6 mb-6"></div>
                   <div className="flex justify-between">
-                    <div className="h-4 bg-slate-200 dark:bg-gray-700 rounded w-32"></div>
+                    <div className="h-4 bg-purple-200 dark:bg-gray-700 rounded w-32"></div>
                     <div className="flex gap-2">
-                      <div className="h-8 bg-slate-200 dark:bg-gray-700 rounded w-16"></div>
-                      <div className="h-8 bg-slate-200 dark:bg-gray-700 rounded w-16"></div>
+                      <div className="h-8 bg-purple-200 dark:bg-gray-700 rounded w-16"></div>
+                      <div className="h-8 bg-purple-200 dark:bg-gray-700 rounded w-16"></div>
                     </div>
                   </div>
                 </div>
@@ -152,22 +152,25 @@ const UserBlogs = () => {
   }
 
   return (
-    <div className="min-h-screen py-12 px-4 bg-gradient-to-b from-slate-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen py-12 px-4 bg-gradient-to-b from-purple-50 to-white dark:from-gray-900 dark:to-gray-800">
       <div className="max-w-5xl mx-auto">
         {/* Header with theme toggle */}
-       
-          <div pd-4 className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-purple-900 dark:text-orange-200 mb-2">
               Your Blog Posts
             </h1>
-            <p className="text-slate-600 dark:text-slate-400">
+            <p className="text-purple-700 dark:text-orange-300">
               Manage your published, draft, and archived blog posts
             </p>
           </div>
-          
-  
-         
-      
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-purple-100 dark:bg-orange-900/30 text-purple-700 dark:text-orange-300 hover:bg-purple-200 dark:hover:bg-orange-800/40 transition-colors"
+          >
+            {theme === 'light' ? <FiMoon className="w-5 h-5" /> : <FiSun className="w-5 h-5" />}
+          </button>
+        </div>
 
         {/* Tabs and Search */}
         <div className="flex flex-col md:flex-row justify-between gap-6 mb-8">
@@ -178,16 +181,16 @@ const UserBlogs = () => {
                 onClick={() => setActiveTab(tab.key)}
                 className={`px-5 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 transition-all ${
                   activeTab === tab.key
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-gray-600'
+                    ? 'bg-purple-600 dark:bg-orange-600 text-white shadow-md'
+                    : 'bg-purple-100 dark:bg-gray-700 text-purple-800 dark:text-orange-200 hover:bg-purple-200 dark:hover:bg-gray-600'
                 }`}
               >
                 {tab.label}
                 {tab.count > 0 && (
                   <span className={`px-2 py-0.5 rounded-full text-xs ${
                     activeTab === tab.key 
-                      ? 'bg-white text-indigo-600' 
-                      : 'bg-slate-300 dark:bg-gray-600 text-slate-700 dark:text-slate-200'
+                      ? 'bg-white text-purple-600 dark:text-orange-600' 
+                      : 'bg-purple-200 dark:bg-gray-600 text-purple-800 dark:text-orange-200'
                   }`}>
                     {tab.count}
                   </span>
@@ -198,12 +201,12 @@ const UserBlogs = () => {
           
           <div className="relative w-full md:w-64">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <FiSearch className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <FiSearch className="w-5 h-5 text-purple-400 dark:text-orange-400" />
             </div>
             <input
               type="text"
               placeholder="Search your blogs..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-full text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-orange-900/30 rounded-full text-purple-900 dark:text-orange-200 placeholder:text-purple-400 dark:placeholder:text-orange-500 focus:outline-none focus:ring-2 focus:ring-purple-300 dark:focus:ring-orange-500"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -214,7 +217,7 @@ const UserBlogs = () => {
         <div className="mb-8">
           <button
             onClick={() => navigate('/create-blog')}
-            className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-5 py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg"
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 dark:from-orange-600 dark:to-orange-700 hover:from-purple-700 hover:to-purple-800 dark:hover:from-orange-700 dark:hover:to-orange-800 text-white px-5 py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg"
           >
             <FiPlus className="w-5 h-5" />
             Create New Blog
@@ -226,17 +229,17 @@ const UserBlogs = () => {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center border border-purple-100 dark:border-orange-900/30"
           >
-            <div className="bg-indigo-50 dark:bg-indigo-900/30 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-              <div className="bg-indigo-100 dark:bg-indigo-800/40 w-16 h-16 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-purple-50 dark:bg-orange-900/20 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="bg-purple-100 dark:bg-orange-800/30 w-16 h-16 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-purple-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                 </svg>
               </div>
             </div>
-            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-2">No blogs found</h3>
-            <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto mb-6">
+            <h3 className="text-xl font-semibold text-purple-900 dark:text-orange-200 mb-2">No blogs found</h3>
+            <p className="text-purple-700 dark:text-orange-300 max-w-md mx-auto mb-6">
               {searchQuery 
                 ? `No blogs match your search for "${searchQuery}"`
                 : `You haven't created any ${activeTab === 'Blog' ? 'published' : activeTab === 'DraftBlogs' ? 'draft' : 'archived'} blogs yet`}
@@ -244,7 +247,7 @@ const UserBlogs = () => {
             {!searchQuery && (
               <button
                 onClick={() => navigate('/create-blog')}
-                className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-6 py-2.5 rounded-lg font-medium"
+                className="bg-gradient-to-r from-purple-600 to-purple-700 dark:from-orange-600 dark:to-orange-700 hover:from-purple-700 hover:to-purple-800 dark:hover:from-orange-700 dark:hover:to-orange-800 text-white px-6 py-2.5 rounded-lg font-medium"
               >
                 Create Your First Blog
               </button>
@@ -260,11 +263,11 @@ const UserBlogs = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3, delay: idx * 0.05 }}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-100 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow flex flex-col relative"
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-purple-100 dark:border-orange-900/30 overflow-hidden hover:shadow-lg transition-shadow flex flex-col relative"
                 >
                   {deletingId === blog._id && (
                     <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-80 flex items-center justify-center z-10">
-                      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-8 h-8 border-4 border-purple-600 dark:border-orange-600 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                   )}
                   
@@ -275,33 +278,33 @@ const UserBlogs = () => {
                           {blog.status}
                         </span>
                       </div>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="text-xs text-purple-600 dark:text-orange-400">
                         {formatDate(blog.createdAt)}
                       </span>
                     </div>
                     
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-3 line-clamp-2">
+                    <h3 className="text-xl font-bold text-purple-900 dark:text-orange-200 mb-3 line-clamp-2">
                       {blog.title}
                     </h3>
                     
-                    <p className="text-slate-600 dark:text-slate-400 mb-4 line-clamp-3">
+                    <p className="text-purple-800 dark:text-white mb-4 line-clamp-3">
                       {blog.summary || 'No summary available.'}
                     </p>
                     
                     <div className="flex flex-wrap gap-2 mb-4">
                       {blog.tags?.slice(0, 3).map(tag => (
-                        <span key={tag} className="bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-slate-300 text-xs px-2 py-1 rounded">
+                        <span key={tag} className="bg-purple-100 dark:bg-orange-900/30 text-purple-800 dark:text-orange-200 text-xs px-2 py-1 rounded">
                           {tag}
                         </span>
                       ))}
                       {blog.tags?.length > 3 && (
-                        <span className="bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-slate-300 text-xs px-2 py-1 rounded">
+                        <span className="bg-purple-100 dark:bg-orange-900/30 text-purple-800 dark:text-orange-200 text-xs px-2 py-1 rounded">
                           +{blog.tags.length - 3}
                         </span>
                       )}
                     </div>
                     
-                    <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center text-sm text-purple-600 dark:text-orange-400">
                       <span className="flex items-center mr-4">
                         <FiEye className="w-4 h-4 mr-1" />
                         {blog.viewsCount || 0} views
@@ -313,13 +316,13 @@ const UserBlogs = () => {
                     </div>
                   </div>
                   
-                  <div className="border-t border-slate-100 dark:border-gray-700 p-4 bg-slate-50 dark:bg-gray-700/50 flex justify-end gap-2">
+                  <div className="border-t border-purple-100 dark:border-orange-900/30 p-4 bg-purple-50 dark:bg-orange-900/20 flex justify-end gap-2">
                     <button
                       onClick={e => {
                         e.stopPropagation();
                         navigate(`/edit-blog/${blog._id}`);
                       }}
-                      className="flex items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 px-3 py-1.5 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                      className="flex items-center gap-1 text-sm font-medium text-purple-700 dark:text-orange-300 hover:text-purple-900 dark:hover:text-orange-200 px-3 py-1.5 rounded hover:bg-purple-100 dark:hover:bg-orange-900/30"
                     >
                       <FiEdit2 className="w-4 h-4" />
                       Edit
@@ -357,21 +360,21 @@ const UserBlogs = () => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full border border-purple-100 dark:border-orange-900/30"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center">
                 <div className="mx-auto bg-rose-100 dark:bg-rose-900/30 w-16 h-16 rounded-full flex items-center justify-center mb-4">
                   <FiTrash2 className="w-8 h-8 text-rose-600 dark:text-rose-400" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Delete Blog Post?</h3>
-                <p className="text-slate-600 dark:text-slate-400 mb-6">
+                <h3 className="text-xl font-bold text-purple-900 dark:text-orange-200 mb-2">Delete Blog Post?</h3>
+                <p className="text-purple-700 dark:text-orange-300 mb-6">
                   Are you sure you want to delete this blog? This action cannot be undone.
                 </p>
                 <div className="flex justify-center gap-3">
                   <button
                     onClick={() => setShowDeleteConfirm(null)}
-                    className="px-5 py-2.5 rounded-lg border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-gray-700 font-medium transition-colors"
+                    className="px-5 py-2.5 rounded-lg border border-purple-200 dark:border-orange-900/30 text-purple-800 dark:text-orange-200 hover:bg-purple-50 dark:hover:bg-orange-900/20 font-medium transition-colors"
                   >
                     Cancel
                   </button>

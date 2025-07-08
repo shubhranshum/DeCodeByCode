@@ -86,15 +86,15 @@ export default function Problem() {
     const data = await res.json();
 
     // Find the latest correct submission
-    const latestCorrectSubmission = data.submissions.find(
-      (sub) => sub.status === "Accepted"
-    );
+    // const latestCorrectSubmission = data.submissions.find(
+    //   (sub) => sub.status === "Accepted"
+    // );
 
-    console.log("Latest correct submission:", latestCorrectSubmission.solution);
-    // Only set code if we found a correct submission
-    if (latestCorrectSubmission) {
-      setCode(latestCorrectSubmission.solution);
-    }
+    
+    // // Only set code if we found a correct submission
+    // if (latestCorrectSubmission) {
+    //   setCode(latestCorrectSubmission.solution);
+    // }
 
     setStatus(data.ifSolved);
     setSubmissions(data.submissions || []);
@@ -331,7 +331,7 @@ export default function Problem() {
 
             <div
               className="p-4 overflow-y-auto"
-              style={{ maxHeight: "calc(100vh - 250px)" }}
+              style={{ maxHeight: "calc(150vh - 250px)" }}
             >
               {activeTab === "problem" ? (
                 <div className="space-y-6">
@@ -460,82 +460,11 @@ export default function Problem() {
             </div>
           </div>
 
-          {/* Solutions Section */}
-          <div
-            className={`rounded-lg border overflow-hidden ${
-              isDark
-                ? "bg-gray-800 border-gray-700"
-                : "bg-white border-slate-200"
-            }`}
-          >
-            <div
-              className={`px-4 py-3 border-b ${
-                isDark ? "border-gray-700" : "border-slate-200"
-              }`}
-            >
-              <h2 className="font-medium">Community Solutions</h2>
-              <p
-                className={`text-sm mt-1 ${
-                  isDark ? "text-gray-400" : "text-slate-500"
-                }`}
-              >
-                Learn from how others solved this problem
-              </p>
-            </div>
-            <div className="p-4">
-              <div
-                className={`text-center py-6 rounded-lg ${
-                  isDark ? "bg-gray-700/50" : "bg-slate-100"
-                }`}
-              >
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${
-                    isDark ? "bg-gray-700" : "bg-slate-200"
-                  }`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-slate-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-base font-medium">Explore Solutions</h3>
-                <p
-                  className={`text-sm mt-1 ${
-                    isDark ? "text-gray-400" : "text-slate-500"
-                  }`}
-                >
-                  View top solutions after solving this problem
-                </p>
-                <button
-                  onClick={() => {
-                    setActiveTab("solutions");
-                    fetchSolutions();
-                  }}
-                  className={`mt-3 px-4 py-2 text-sm rounded-lg font-medium ${
-                    isDark
-                      ? "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600"
-                      : "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700"
-                  }`}
-                >
-                  Browse Solutions
-                </button>
-              </div>
-            </div>
-          </div>
+          
         </div>
 
         {/* Right Panel - Editor & Submissions */}
-        <div className="lg:w-1/2 flex flex-col gap-4">
+        <div className="lg:w-1/2 flex flex-col gap-4 min-h-[600px]">
           {/* Code Editor Panel */}
           <div
             className={`flex-1 rounded-lg border overflow-hidden ${
@@ -575,7 +504,7 @@ export default function Problem() {
                 </div>
               </div>
             </div>
-            <div className="h-[400px]">
+            <div className="h-[500px]">
               <SubmissionCodeEditor
                 initialCode={code}
                 language="cpp"
