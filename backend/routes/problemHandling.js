@@ -1,18 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const getProblemById = require('../controllers/getProblemById');
-const getGlobalProblems = require('../controllers/getGlobalProblems');
-const {getProblemSubmissionsByUser, getSubmittedSolutions} = require('../controllers/Problem/getProblemSubmission');
-// const fetchAdminProblems = require('../controllers/fetchAdminProblems');
+const getProblemById = require('../controllers/Problems/getProblemById');
+const getGlobalProblems = require('../controllers/Problems/getGlobalProblems');
+const{getProblemSubmissionsByUser,getSubmittedSolutions} = require('../controllers/Problem/getProblemSubmission');
 
 
-// //by om vrit
-const submitProblem = require('../controllers/submitProblemController');
+
+const submitProblem = require('../controllers/Problems/submitProblemController');
 
 
 
 router.get('/problems', getGlobalProblems);
-router.get('/problem/:id', getProblemById);
+router.get('/problems/:problemId', getProblemById);
 
 
 

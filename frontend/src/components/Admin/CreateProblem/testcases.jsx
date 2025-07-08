@@ -1,9 +1,8 @@
 import React, {useState} from "react";
-import { useParams } from "react-router-dom";
 
 
-export default function TestCaseSection({testCases,setTestCases}) {
-  const { id } = useParams();
+
+export default function TestCaseSection({testCases,setTestCases, id}) {
   const [showPopup, setShowPopup] = useState(false);
   const [newInput, setNewInput] = useState("");
   const [explanation, setExplanation] = useState("");

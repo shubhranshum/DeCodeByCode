@@ -7,7 +7,7 @@ import { useParams } from "react-router-dom";
 import {getProblemById} from "../../Tasks/getProblemById.jsx"; // Assuming you have a service to fetch problem details
 
 export default function EditProblemSection() {
-  const { id } = useParams(); // Assuming you have a problem ID to edit
+  const { problemId } = useParams(); // Assuming you have a problem ID to edit
   const [activeSection, setActiveSection] = useState("statement");
   const [generalInfo, setGeneralInfo] = useState({
     timeLimit: 1,
@@ -52,7 +52,7 @@ export default function EditProblemSection() {
     // ✅ runs only once per component mount (i.e., per browser reload)
     const fetchProblem = async () => {
       try {
-        const data = await getProblemById(id);
+        const data = await getProblemById(problemId);
         setProblem(data);
       } catch (err) {
         setError(err.message);
@@ -116,24 +116,28 @@ export default function EditProblemSection() {
           <GeneralInfoSection
             generalInfo={generalInfo}
             setGeneralInfo={setGeneralInfo}
+            id={problemId}
           />
         )}
         {activeSection === "statement" && (
           <StatementSection
             statement={statement}
             setStatement={setStatement}
+            id={problemId}
           />
         )}
         {activeSection === "code" && (
           <CodeSolutionSection
             codeSolution={codeSolution}
             setCodeSolution={setCodeSolution}
+            id={problemId}
           />
         )}
         {activeSection === "testcase" && (
           <TestCaseSection
             testCases={testCases}
             setTestCases={setTestCases}
+            id={problemId}
           />
         )}
       </main>

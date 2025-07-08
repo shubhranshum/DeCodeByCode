@@ -9,6 +9,7 @@ const router = require('./routes/auth.js');
 const homeRouter = require('./routes/home.js');
 const logoutRouter = require('./routes/logout.js');
 const problemHandling = require('./routes/problemHandling.js');
+const contestHandling = require('./routes/contestHandling.js');
 const codeRunner = require('./routes/codeRunner.js');
 const makeAdmin = require('./routes/makeAdmin.js');
 

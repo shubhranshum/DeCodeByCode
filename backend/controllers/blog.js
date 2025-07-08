@@ -11,7 +11,18 @@ const { logActivity, getUserActivities, deleteUserActivities } = require('./acti
 
 // Increment likesCount
 // controllers/blogController.js (or similar)
-
+exports.getFeaturedBlogs = async(req,res)=>{
+  console.log("Hello from getFeaturedBlogs");
+  try {
+    const blogs = await Blog.find({ isFeatured: true }).populate('author', 'username email');
+    const topBlogs = blogs.sort((a, b) => b.likesCount - a.likesCount).slice(0, 6);
+    console.log(topBlogs);
+    return res.status(200).json({blogs:topBlogs});
+  } catch (err) {
+    console.error('getFeaturedBlogs error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
 
 exports.getBlogsByUserId = async (req, res) => {
   console.log("Hello from getBlogsByUserId");

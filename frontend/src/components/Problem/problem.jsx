@@ -1,11 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import SubmissionCodeEditor from "./submissionCodeEditor.jsx";
-import codeOutput from "./output.jsx";
+import SubmissionCodeEditor from "../Tasks/submissionCodeEditor.jsx";
+import codeOutput from "../Tasks/output.jsx";
 import MathjaxRenderer from "../MathjaxRenderer";
 
 export default function Problem() {
-  const { id } = useParams();
+  const { problemId } = useParams();
   const [problem, setProblem] = useState(null);
   const [code, setCode] = useState("// Write your solution here");
   const [verdict, setVerdict] = useState(null);
@@ -19,34 +19,43 @@ export default function Problem() {
   const theme = "dark";
   const isDark = theme === "dark";
 
-  useEffect(() => {
-    setIsLoading(true);
-    fetch(`http://localhost:3000/problem/${id}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
+ useEffect(() => {
+  let isMounted = true;
+  setIsLoading(true);
+  
+  fetch(`http://localhost:3000/problems/${problemId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (isMounted) {
         setProblem(data);
         setIsLoading(false);
-      })
-      .catch((err) => {
+      }
+    })
+    .catch((err) => {
+      if (isMounted) {
         console.error("Failed to load problem:", err);
         setIsLoading(false);
-      });
+      }
+    });
 
-    fetchSolutions();
-    fetchSubmissions();
-    console.log(status);
-  }, [id]);
+  fetchSolutions();
+  fetchSubmissions();
+
+  return () => {
+    isMounted = false;
+  };
+}, [problemId]);
 
   // Fetch solutions
   const fetchSolutions = async () => {
     if (solutions.length > 0) return;
     setIsSolutionsLoading(true);
     try {
-      const res = await fetch(`http://localhost:3000/problem/solutions/${id}`, {
+      const res = await fetch(`http://localhost:3000/problem/solutions/${problemId}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -63,34 +72,45 @@ export default function Problem() {
 
   // Fetch submissions
   const fetchSubmissions = async () => {
-    if (submissions.length > 0) return;
-    setIsSubmissionsLoading(true);
-    try {
-      const res = await fetch(
-        `http://localhost:3000/problem/submissions/${id}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-      const data = await res.json();
-      console.log(data.ifSolved);
-      setStatus(data.ifSolved);
+  if (submissions.length > 0) return;
+  setIsSubmissionsLoading(true);
+  try {
+    const res = await fetch(
+      `http://localhost:3000/problem/submissions/${problemId}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
+    const data = await res.json();
 
-      setSubmissions(data.submissions || []);
-    } catch (err) {
-      console.error("Failed to load submissions:", err);
-    } finally {
-      setIsSubmissionsLoading(false);
+    // Find the latest correct submission
+    const latestCorrectSubmission = data.submissions.find(
+      (sub) => sub.status === "Accepted"
+    );
+
+    console.log("Latest correct submission:", latestCorrectSubmission.solution);
+    // Only set code if we found a correct submission
+    if (latestCorrectSubmission) {
+      setCode(latestCorrectSubmission.solution);
     }
-  };
+
+    setStatus(data.ifSolved);
+    setSubmissions(data.submissions || []);
+  } catch (err) {
+    console.error("Failed to load submissions:", err);
+  } finally {
+    setIsSubmissionsLoading(false);
+  }
+};
 
   const handleCodeSubmit = async (code) => {
     let isCorrect = true;
     let userOutput = null;
     let maxTimeTaken = 0;
     let maxMemoryUsed = 0;
+    setCode(code);
 
     for (let i = 0; i < problem.testCases.length; i++) {
       setVerdict(`Running on test case: ${i + 1}`);
@@ -115,7 +135,7 @@ export default function Problem() {
     }
 
     const submissionData = {
-      problemid: id,
+      problemid: problemId,
       solution: code,
       solved: isCorrect,
       status: isCorrect ? "Accepted" : userOutput.stderr,
@@ -221,7 +241,7 @@ export default function Problem() {
                   isDark ? "text-gray-400" : "text-slate-500"
                 }`}
               >
-                Problem ID: {id}
+                Problem ID: {problemId}
               </span>
               
             </div>
@@ -557,6 +577,7 @@ export default function Problem() {
             </div>
             <div className="h-[400px]">
               <SubmissionCodeEditor
+                initialCode={code}
                 language="cpp"
                 onCodeChange={setCode}
                 theme={isDark ? "vs-dark" : "light"}

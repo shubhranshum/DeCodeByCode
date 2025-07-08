@@ -1,8 +1,6 @@
 import React from "react";
-import { useParams } from "react-router-dom";
 
-export default function CodeSolutionSection({codeSolution, setCodeSolution}) {
-  const { id } = useParams();
+export default function CodeSolutionSection({codeSolution, setCodeSolution,id}) {
     const [solution, setSolution] = React.useState(codeSolution || "// Write the correct code solution here...");
     const handleSave = async () => {
     if (!solution.trim()) {
