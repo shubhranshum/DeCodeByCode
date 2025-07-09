@@ -43,7 +43,7 @@ app.use('/', router);
 app.use('/', blogRouter);
 app.use('/', profile);
 
-app.use('/',auth,[homeRouter,problemHandling,logoutRouter,codeRunner,makeAdmin]);
+app.use('/',auth,[homeRouter,problemHandling,contestHandling,logoutRouter,codeRunner,makeAdmin]);
 
 
 app.use('/admin', auth, adminRouter);

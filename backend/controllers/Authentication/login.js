@@ -14,7 +14,7 @@ async function userLogin(req,res){
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '2d' });
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '30d' });
     // req._id = token;
     console.log('Token generated:', token);
     await res.cookie('token',token,

@@ -1,7 +1,7 @@
 const https = require('https');
 
 const apiHost = 'judge0-ce.p.rapidapi.com';
-const apiKey = '1f3fc74d88mshdbef3dc3183be94p115014jsne8523645581f';
+const apiKey = '88943d3a6cmshd72fa3acdc8f2e5p17b102jsn4ceb8fafa680';
 
 function submitToJudge0(code, language = 52, stdin = '') {
   return new Promise((resolve, reject) => {

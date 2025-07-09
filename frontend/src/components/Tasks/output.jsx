@@ -1,6 +1,7 @@
-async function codeOutput(code,stdin) {
+async function codeOutput(code,stdin,expected_output) {
     // console.log("Code Submitted: ",code); // this should be the code string
     console.log("Submitted Code:", code);
+    console.log(expected_output);
     try {
       const response = await fetch("http://localhost:3000/submit", {
         method: "POST",
@@ -9,9 +10,10 @@ async function codeOutput(code,stdin) {
         },
         "credentials": "include", // Include cookies for session management
         body: JSON.stringify({
-          code: code,
-          language: 52,
-          stdin: stdin, // Use the state variable for stdin
+          code,
+          language: 52, // C++
+          stdin,
+          expected_output
         }),
       });
       const token = await response.json();
