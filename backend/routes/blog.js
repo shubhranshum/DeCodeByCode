@@ -32,7 +32,11 @@ router.post('/blog/:id/view', auth,blogController.viewBlog);
 router.post('/blog/:blogId', auth, commentController.addComment);
 router.post('/blog/:blogId/reply', auth, commentController.addReply);
 router.delete('/comment/:commentId', auth, commentController.deleteComment);
+ 
 
+
+//getting featured blogs from home page 
+router.get('/featured-blogs', blogController.getFeaturedBlogs);
 
 
 // Optional: Keep old comment route for backward compatibility (if needed)

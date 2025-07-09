@@ -23,10 +23,14 @@ import Contest from './routes/contest/contestDashboard.jsx'
 import ContestView from './components/Contest/contest.jsx';
 import ContestProblemPage from './routes/contest/problem.jsx';
 
+
+
 import EditProblem from './routes/Admin/CreateProblem/editProblem.jsx';
 import EditContest from './routes/Admin/CreateContest/editContest.jsx';
 // index.js or App.js (at top level)
 import { getTheme, setTheme } from "./utils/theme";
+import { Edit } from 'lucide-react';
+import EditAnnouncementForm from './components/Admin/CreateAnnouncement/editAnnouncement.jsx';
 
 const theme = getTheme();
 setTheme(theme); // This sets [data-theme='light'] or [data-theme='dark']
@@ -66,6 +70,8 @@ export default function App() {
         <Route path="/contests/:contestId/problems/:problemId" element={<ContestProblemPage />} />
         <Route path="/admin/edit-contest/:contestId" element={<EditContest />} />
 
+        //Announcement router
+        <Route path = "/admin/edit-announcement/:announcementId" element={<EditAnnouncementForm/>} />
 
         {/* Add more routes as needed */}
       </Routes>
