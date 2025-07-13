@@ -98,6 +98,10 @@ const problemSchema = new mongoose.Schema({
     type: String,
     // required: true, // Assuming every problem has a code solution
   },
+  points:{
+    type: Number,
+    default: 100, // Default to 0 points
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

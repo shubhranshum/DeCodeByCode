@@ -84,6 +84,7 @@ export default function AdminDashboard() {
         setAnnouncements(announcementsData);
         setProblems(problemsData);
         setContests(contestsData);
+        
       } catch (error) {
         console.error("Error fetching data:", error);
         setProblems([]);
@@ -94,6 +95,9 @@ export default function AdminDashboard() {
       }
     }
     loadData();
+    return () => {
+      localStorage.removeItem("adminDashboardActiveTab");
+    };
   }, []);
 
   const filteredItems =
