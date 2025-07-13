@@ -22,6 +22,7 @@ import Problem from './components/Admin/CreateProblem/adminProblem.jsx';
 import Contest from './routes/contest/contestDashboard.jsx'
 import ContestView from './components/Contest/contest.jsx';
 import ContestProblemPage from './routes/contest/problem.jsx';
+import StandingPage from './routes/contest/standings.jsx';
 
 
 
@@ -68,6 +69,9 @@ export default function App() {
         <Route path="/contests" element={<Contest />} />
         <Route path="/contests/:contestId" element={<ContestView />} />
         <Route path="/contests/:contestId/problems/:problemId" element={<ContestProblemPage />} />
+        <Route path="/contests/:contestId/standings" element={<StandingPage />} />
+
+
         <Route path="/admin/edit-contest/:contestId" element={<EditContest />} />
 
         //Announcement router

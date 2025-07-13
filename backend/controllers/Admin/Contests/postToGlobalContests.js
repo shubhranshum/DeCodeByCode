@@ -2,6 +2,7 @@ const Contest = require('../../../models/contest/contest');
 
 async function postToGlobalContests(req, res) {
     const id = req.params.contestId;
+    console.log('Contest ID:', id);
     try {
         const toTestIsVerified = await Contest.findById(id)
         if(!toTestIsVerified){

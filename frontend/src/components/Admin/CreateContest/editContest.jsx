@@ -330,7 +330,7 @@ const setProblemsForContest = async (problems) => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button 
-                          onClick={() => window.location.href = `/problem/${problem._id}`}
+                          onClick={() => window.location.href = `/problems/${problem._id}`}
                           className="text-blue-400 hover:text-blue-300 mr-4">View</button>
                           <button 
                             onClick={() => handleRemoveProblem(problem._id)}

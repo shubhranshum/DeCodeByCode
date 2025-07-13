@@ -20,6 +20,7 @@ import { handleDeleteContest } from "./CreateContest/hooks/handleDeleteContest.j
 import { handleVerifyContest } from "./CreateContest/hooks/handleVerifyContest.jsx";
 import { StatCard } from "./utils/ui/statCard.jsx";
 import { EmptyState } from "./utils/ui/emptyState.jsx";
+import { toast } from 'react-toastify';
 import {
   Search,
   Plus,

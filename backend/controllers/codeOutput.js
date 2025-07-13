@@ -2,17 +2,19 @@ const https = require('https');
 
 // Move to .env in production
 const apiHost = 'judge0-ce.p.rapidapi.com';
-const apiKey = 'd44ab3460dmshfb6a28c27e99da0p11e7cbjsn5208618990b4';
+// const apiKey = 'a8fea594d2msh8cb80877f3ac627p10960cjsn6f05dc7b2856';
+const apiKey = 'd58f926360msh3615eb1fef6b3c3p18d3bbjsn7ce9b04dd188';
 
 // --- Submit Code ---
 exports.submitCode = (req, res) => {
-  const { code, language = 52, stdin = '' } = req.body;
-  console.log('Received submission:', { code: code?.slice(0, 100), language, stdin: stdin?.length });
+  const { code, language = 52, stdin = '' , expected_output = null} = req.body;
+  console.log('Received submission:', { code: code?.slice(0, 100), language, stdin: stdin?.length , expected_output: expected_output?.length });
 
   const payload = {
     language_id: language,
     source_code: Buffer.from(code).toString('base64'),
     stdin: Buffer.from(stdin).toString('base64'),
+    expected_output: expected_output ? Buffer.from(expected_output).toString('base64') : '',
   };
   const jsonPayload = JSON.stringify(payload);
 

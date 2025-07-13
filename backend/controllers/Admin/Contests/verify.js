@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 
 module.exports = async function (req, res) {
   const { contestId } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!mongoose.Types.ObjectId.isValid(contestId)) {
     return res.status(400).json({ error: "Invalid Contest ID" });
   }
   try {
