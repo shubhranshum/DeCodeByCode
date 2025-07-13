@@ -3,7 +3,9 @@ const userProfileSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: true,
+        indexed: true,
+        unique: true
     },
     username: {
         type: String,
@@ -26,7 +28,8 @@ const userProfileSchema = new mongoose.Schema({
     email: {
         type: String,
         ref: 'User',
-        required: true
+        required: true,
+        unique: true
     },
     college: {
         type:String,
@@ -34,7 +37,8 @@ const userProfileSchema = new mongoose.Schema({
         
     },
     Skills:{
-        type: [String]
+        type: [String],
+        default: []
     },
     
     about:{
@@ -99,22 +103,21 @@ const userProfileSchema = new mongoose.Schema({
     joinedAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
       //Blog
-    Blog: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost'
-    }],
-    DraftBlogs: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost'
-    }],
-    ArchivedBlogs: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost'
-    }],
-    LikedBlogs: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'BlogPost'
-    }],
+    
+
+    ProblemHistory: [
+  {
+    problemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Problem' },
+    status: { type: String, enum: ['Solved', 'Attempted'], required: true },
+    solvedAt: { type: Date },
+    lastTriedAt: { type: Date, required: true }  // ← NEW FIELD
+  }
+]
+
+
+
+
+    
 }, { timestamps: true });
 const Profile = mongoose.model('UserProfile', userProfileSchema);
 module.exports = Profile

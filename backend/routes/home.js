@@ -6,7 +6,6 @@ router.get('/home', (req, res) => {
         if (!req.user) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
-        console.log("Here");
         // Send user data excluding sensitive information
         const { _id, username, email, college, isAdmin } = req.user;
         // console.log("User data:", { _id, username, email, college });

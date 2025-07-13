@@ -9,6 +9,7 @@ const router = require('./routes/auth.js');
 const homeRouter = require('./routes/home.js');
 const logoutRouter = require('./routes/logout.js');
 const problemHandling = require('./routes/problemHandling.js');
+const contestHandling = require('./routes/contestHandling.js');
 const codeRunner = require('./routes/codeRunner.js');
 const makeAdmin = require('./routes/makeAdmin.js');
 
@@ -40,12 +41,13 @@ mongoose.connect(url).then(()=>{
 
 app.use('/', router);
 app.use('/', blogRouter);
+app.use('/', profile);
 
-app.use('/',auth,[homeRouter,problemHandling,logoutRouter,codeRunner,makeAdmin,profile]);
+app.use('/',auth,[homeRouter,problemHandling,logoutRouter,codeRunner,makeAdmin]);
 
 
 app.use('/admin', auth, adminRouter);
-app.listen(PORT,(err)=>{
+app.listen(PORT,'0.0.0.0',(err)=>{
     if(err){
         console.error('Error starting the server:', err);
     } else {

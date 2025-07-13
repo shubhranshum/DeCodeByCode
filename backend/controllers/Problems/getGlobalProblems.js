@@ -1,0 +1,19 @@
+const Problem = require('../../models/problem');
+
+async function getAllGlobalProblems(req, res) {
+    // console.log('Fetching all problems');
+    try {
+        const problems = await Problem.find({}).populate('user', 'username'); // Populate user details
+        const filteredProblems = problems.filter(problem => problem.isGlobal); // Filter out private problems
+        // console.log('Problems fetched:', problems);
+        if (!problems) {
+            return res.status(404).json({ message: 'Problem not found' });
+        }
+        res.status(200).json(filteredProblems);
+    } catch (err) {
+        console.error('Error fetching problem:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+module.exports = getAllGlobalProblems;

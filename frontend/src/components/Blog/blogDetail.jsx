@@ -2,6 +2,102 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getTheme, setTheme as themesetTheme } from '../../utils/theme';
+
+// ThemeToggle component
+const ThemeToggle = ({ theme, toggleTheme }) => (
+  <button
+    onClick={toggleTheme}
+    className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-gray-600 transition-colors"
+  >
+    {theme === 'light' ? (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+      </svg>
+    ) : (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    )}
+  </button>
+);
+
+// AuthorProfile component
+const AuthorProfile = ({ author, navigate,blog }) => (
+  <div className="flex items-center">
+    <div className="bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full w-10 h-10 flex items-center justify-center text-white font-medium">
+      {author?.username?.charAt(0) || 'A'}
+    </div>
+    <div className="ml-3">
+      <a 
+        onClick={(e) => {
+          e.preventDefault();
+          navigate(`/profile/${author?.username || 'anonymous'}`);
+        }}
+        className="font-medium text-slate-800 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors"
+      >
+        {author?.username || 'Anonymous'}
+      </a>
+      <p className="text-sm text-slate-500 dark:text-gray-400">
+        {new Date(blog.createdAt).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        })}
+      </p>
+    </div>
+  </div>
+);
+
+// TableOfContents component
+const TableOfContents = ({ headings, showToc, setShowToc, scrollToHeading }) => (
+  <motion.div 
+    className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    onClick={() => setShowToc(false)}
+  >
+    <motion.div 
+      className="bg-white dark:bg-gray-800 w-full max-w-xs h-full overflow-y-auto p-6"
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      transition={{ type: 'spring', damping: 25 }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold text-slate-800 dark:text-gray-100">Table of Contents</h3>
+        <button 
+          onClick={() => setShowToc(false)}
+          className="text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-300"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <ul className="space-y-2">
+        {headings.map((heading, index) => (
+          <li key={index} className="ml-4">
+            <a 
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToHeading(heading.id);
+              }}
+              className={`block py-2 text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors ${
+                heading.level === 1 ? 'font-bold text-base' : 
+                heading.level === 2 ? 'font-medium text-base ml-2' : 
+                heading.level >= 3 ? 'text-sm ml-4' : ''
+              }`}
+            >
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </motion.div>
+  </motion.div>
+);
+
 const BlogDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -20,8 +116,7 @@ const BlogDetails = () => {
   const [showToc, setShowToc] = useState(false);
   const [headings, setHeadings] = useState([]);
   const contentRef = useRef(null);
- 
-  
+
   // Toggle theme function
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -76,7 +171,6 @@ const BlogDetails = () => {
       setBlog(blogData);
       
       const commentData = await commentRes.json();
-     
       setComments(Array.isArray(commentData) ? commentData : []);
     } catch (err) {
       console.error('Failed to load blog or comments:', err);
@@ -94,7 +188,6 @@ const BlogDetails = () => {
   // Extract headings for table of contents
   useEffect(() => {
     if (blog && blog.content) {
-      // Create a temporary element to parse the HTML
       const parser = new DOMParser();
       const doc = parser.parseFromString(blog.content, 'text/html');
       const headings = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6'));
@@ -114,11 +207,9 @@ const BlogDetails = () => {
     return { __html: htmlContent };
   };
   
-
   // Handle scroll progress
   useEffect(() => {
     const handleScroll = () => {
-    
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
       const progress = (scrollTop / scrollHeight) * 100;
@@ -128,41 +219,40 @@ const BlogDetails = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  useEffect(() => {
-  if (!blog || !contentRef.current) return;
 
-  // Add copy buttons to all code blocks
-  const codeBlocks = contentRef.current.querySelectorAll('pre');
-  codeBlocks.forEach(block => {
-    // Skip if we've already added a copy button
-    if (block.querySelector('.copy-btn')) return;
-    
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-btn';
-    copyBtn.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" class="copy-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-      </svg>
-      <span class="copy-tooltip">Copy</span>
-    `;
-    
-    copyBtn.addEventListener('click', () => {
-      const code = block.querySelector('code') || block;
-      navigator.clipboard.writeText(code.textContent || '');
+  useEffect(() => {
+    if (!blog || !contentRef.current) return;
+
+    // Add copy buttons to all code blocks
+    const codeBlocks = contentRef.current.querySelectorAll('pre');
+    codeBlocks.forEach(block => {
+      if (block.querySelector('.copy-btn')) return;
       
-      // Show copied feedback
-      const tooltip = copyBtn.querySelector('.copy-tooltip');
-      if (tooltip) {
-        tooltip.textContent = 'Copied!';
-        setTimeout(() => {
-          tooltip.textContent = 'Copy';
-        }, 2000);
-      }
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="copy-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+        <span class="copy-tooltip">Copy</span>
+      `;
+      
+      copyBtn.addEventListener('click', () => {
+        const code = block.querySelector('code') || block;
+        navigator.clipboard.writeText(code.textContent || '');
+        
+        const tooltip = copyBtn.querySelector('.copy-tooltip');
+        if (tooltip) {
+          tooltip.textContent = 'Copied!';
+          setTimeout(() => {
+            tooltip.textContent = 'Copy';
+          }, 2000);
+        }
+      });
+      
+      block.appendChild(copyBtn);
     });
-    
-    block.appendChild(copyBtn);
-  });
-}, [blog]);
+  }, [blog]);
 
   const handleCommentSubmit = async () => {
     if (!newComment.trim()) return;
@@ -199,6 +289,7 @@ const BlogDetails = () => {
       console.error('Failed to post reply:', err);
     }
   };
+
   const checkIfLiked = async() => {
     try {
       const res = await fetch(`http://localhost:3000/blog/${id}/like`, {
@@ -214,9 +305,6 @@ const BlogDetails = () => {
       console.error('Failed to check if liked', err);
     }
   }
-
- 
-
 
   const handleLike = async () => {
     try {
@@ -242,7 +330,6 @@ const BlogDetails = () => {
   };
 
   const scrollToHeading = (id) => {
-
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
@@ -340,9 +427,6 @@ const BlogDetails = () => {
     ));
   };
 
-  // Theme toggle button component
-  
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-gray-900">
@@ -359,7 +443,7 @@ const BlogDetails = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-gray-100 mb-2">Article Not Found</h2>
+        <h2 className="text-3xl font-bold text-slate-800 dark:text-gray-100 mb-2">Article Not Found</h2>
         <p className="text-slate-600 dark:text-gray-400 mb-8 max-w-md">
           The article you're looking for doesn't exist or may have been removed.
         </p>
@@ -398,52 +482,15 @@ const BlogDetails = () => {
       
       {/* Table of Contents */}
       {showToc && (
-        <motion.div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          onClick={() => setShowToc(false)}
-        >
-          <motion.div 
-            className="bg-white dark:bg-gray-800 w-full max-w-xs h-full overflow-y-auto p-6"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            transition={{ type: 'spring', damping: 25 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-800 dark:text-gray-100">Table of Contents</h3>
-              <button 
-                onClick={() => setShowToc(false)}
-                className="text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-300"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <ul className="space-y-2">
-              {headings.map((heading, index) => (
-                <li key={index} className="ml-4">
-                  <a 
-                    onClick={() => scrollToHeading(heading.id)}
-                    className={`block py-2 text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors ${
-                      heading.level === 1 ? 'font-bold text-base' : 
-                      heading.level === 2 ? 'font-medium text-base ml-2' : 
-                      heading.level >= 3 ? 'text-sm ml-4' : ''
-                    }`}
-                  >
-                    {heading.text}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        </motion.div>
+        <TableOfContents 
+          headings={headings} 
+          showToc={showToc} 
+          setShowToc={setShowToc} 
+          scrollToHeading={scrollToHeading} 
+        />
       )}
       
-      <div className="py-12 px-4 sm:px-6 max-w-4xl mx-auto">
+      <div className="py-12 px-4 sm:px-6 max-w-6xl mx-auto">
         {/* Top bar with back button and theme toggle */}
         <div className="flex justify-between items-center mb-8">
           <button
@@ -456,6 +503,7 @@ const BlogDetails = () => {
             Back to articles
           </button>
           
+          <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
         </div>
 
         {/* Blog Header */}
@@ -510,21 +558,7 @@ const BlogDetails = () => {
           )}
           
           <div className="flex flex-wrap items-center gap-4 mb-6">
-            <div className="flex items-center">
-              <div className="bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full w-10 h-10 flex items-center justify-center text-white font-medium">
-                {blog.author?.username?.charAt(0) || 'A'}
-              </div>
-              <div className="ml-3">
-                <p className="font-medium text-slate-800 dark:text-gray-100">{blog.author?.username || 'Anonymous'}</p>
-                <p className="text-sm text-slate-500 dark:text-gray-400">
-                  {new Date(blog.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </p>
-              </div>
-            </div>
+            <AuthorProfile author={blog.author} navigate={navigate} blog = {blog}/>
             
             <div className="flex items-center gap-6">
               <div className="flex items-center text-sm text-slate-500 dark:text-gray-400">
@@ -546,9 +580,7 @@ const BlogDetails = () => {
           
           <div className="flex gap-4 mb-8">
             <button
-              onClick={
-                handleLike
-            }
+              onClick={handleLike}
               className={`flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition-colors ${liked ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-gray-600'}`}
             >
               <svg className={`w-5 h-5 ${liked ? 'fill-indigo-600 dark:fill-indigo-400' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -673,7 +705,6 @@ const BlogDetails = () => {
       
       {/* Custom CSS for TinyMCE content */}
       <style jsx global>{`
-        
         .dark {
           --color-bg-primary: #111827;
           --color-bg-secondary: #1f2937;
@@ -701,6 +732,7 @@ const BlogDetails = () => {
           margin-top: 2.5rem;
           margin-bottom: 1.5rem;
           color: #1f2937;
+          scroll-margin-top: 100px;
         }
         
         .dark .blog-content h1 {
@@ -713,6 +745,7 @@ const BlogDetails = () => {
           margin-top: 2rem;
           margin-bottom: 1.2rem;
           color: #1f2937;
+          scroll-margin-top: 100px;
         }
         
         .dark .blog-content h2 {
@@ -725,6 +758,7 @@ const BlogDetails = () => {
           margin-top: 1.8rem;
           margin-bottom: 1rem;
           color: #1f2937;
+          scroll-margin-top: 100px;
         }
         
         .dark .blog-content h3 {
@@ -783,52 +817,53 @@ const BlogDetails = () => {
           color: #9ca3af;
           border-left-color: #818cf8;
         }
-          .blog-content pre {
-      background: #0f172a;
-      padding: 1.5rem;
-      border-radius: 0.5rem;
-      overflow: auto;
-      margin: 1.5rem 0;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      border: 1px solid #334155;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .dark .blog-content pre {
-      background: #0f172a;
-      border-color: #475569;
-    }
-    
-    .blog-content code {
-      background: #f1f5f9;
-      padding: 0.3rem 0.5rem;
-      border-radius: 0.25rem;
-      font-family: 'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace;
-      font-size: 0.95rem;
-      color: #0f172a;
-      border: 1px solid #e2e8f0;
-    }
-    
-    .dark .blog-content code {
-      background: #1e293b;
-      color: #e2e8f0;
-      border-color: #334155;
-    }
-      .blog-content pre code {
-      background: transparent;
-      padding: 0;
-      border: none;
-      color: #e2e8f0;
-      font-size: 0.9rem;
-    }
-    
-    .dark .blog-content pre code {
-      color: #cbd5e1;
-    }
-
         
-                
+        .blog-content pre {
+          background: #0f172a;
+          padding: 1.5rem;
+          border-radius: 0.5rem;
+          overflow: auto;
+          margin: 1.5rem 0;
+          font-size: 0.95rem;
+          line-height: 1.5;
+          border: 1px solid #334155;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          position: relative;
+        }
+        
+        .dark .blog-content pre {
+          background: #0f172a;
+          border-color: #475569;
+        }
+        
+        .blog-content code {
+          background: #f1f5f9;
+          padding: 0.3rem 0.5rem;
+          border-radius: 0.25rem;
+          font-family: 'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace;
+          font-size: 0.95rem;
+          color: #0f172a;
+          border: 1px solid #e2e8f0;
+        }
+        
+        .dark .blog-content code {
+          background: #1e293b;
+          color: #e2e8f0;
+          border-color: #334155;
+        }
+        
+        .blog-content pre code {
+          background: transparent;
+          padding: 0;
+          border: none;
+          color: #e2e8f0;
+          font-size: 0.9rem;
+        }
+        
+        .dark .blog-content pre code {
+          color: #cbd5e1;
+        }
+        
         .blog-content img {
           max-width: 100%;
           height: auto;
@@ -859,6 +894,36 @@ const BlogDetails = () => {
         
         .dark .blog-content th {
           background-color: #1f2937;
+        }
+        
+        /* Copy button styles */
+        .copy-btn {
+          position: absolute;
+          top: 0.5rem;
+          right: 0.5rem;
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          border-radius: 0.25rem;
+          padding: 0.25rem 0.5rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          color: #e2e8f0;
+          transition: all 0.2s ease;
+        }
+        
+        .copy-btn:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .copy-icon {
+          width: 1rem;
+          height: 1rem;
+          margin-right: 0.25rem;
+        }
+        
+        .copy-tooltip {
+          font-size: 0.75rem;
         }
       `}</style>
     </div>

@@ -9,6 +9,7 @@ exports.logActivity = async (
   type,
   details
 ) => {
+  console.log("Hello from logActivity")
   try {
     const activity = new Activity({
       user: userId,
@@ -19,9 +20,10 @@ exports.logActivity = async (
     });
 
 
-    const saved = await activity.save();
+    const log = await activity.save();
+    console.log(log);
 
-    console.log('Activity saved');
+    console.log('Activity logged');
     
   } catch (err) {
     console.error('Error logging activity:', err);
@@ -31,6 +33,7 @@ exports.logActivity = async (
 
 // Get all activities of a user (optional filters)
 exports.getUserActivities = async (req, res) => {
+  console.log("Hello from getUserActivity")
   try {
    const userId = req.user._id;
    ;
