@@ -1,4 +1,4 @@
-export const handleVerifyContest = async (id) => {
+export const handleVerifyContest = async (id, contests, setContests) => {
     try {
       const response = await fetch(
         `http://localhost:3000/admin/edit-contest/${id}/verify`,

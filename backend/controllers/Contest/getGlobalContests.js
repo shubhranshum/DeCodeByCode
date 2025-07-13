@@ -5,6 +5,7 @@ async function getAllGlobalContests(req, res) {
         console.log("Hello from getAllGlobalContests");
         const contests = await Contest.find({}).populate('creator', 'username'); // Populate user details
         const filteredContests = contests.filter(contest => contest.isGlobal); // Filter out private problems
+        console.log("Contests fetched")
         res.status(200).json(filteredContests);
     } catch (err) {
         console.error('Error fetching problem:', err);
