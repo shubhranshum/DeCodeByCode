@@ -35,8 +35,4 @@ router.get('/contests/:contestId/standings', async (req, res) => {
 
 
 
-//by om vrit
-// router.post('/contest/submit',submitProblem);
-router.get('/upcoming-contests', getGlobalContests);
-
 module.exports = router;

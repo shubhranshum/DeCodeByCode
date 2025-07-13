@@ -409,7 +409,7 @@ export default function AdminDashboard() {
                     contest={item}
                     onView={() => handleViewContest(item._id)}
                     onEdit={() => handleEditContest(item._id)}
-                    onVerify={() => handleVerifyContest(item._id)}
+                    onVerify={() => handleVerifyContest(item._id, contests, setContests)}
                     onDelete={() => handleDeleteContest(item._id)}
                     onToggleGlobal={() =>
                       toggleContestGlobalStatus(item._id, item.isGlobal)
