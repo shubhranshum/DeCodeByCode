@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaArrowUp, FaSearch } from 'react-icons/fa';
 import { FiEdit2, FiTag } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+
 import BlogCard from './BlogUIElements/blogCard';
 import FeaturedBlogCard from './BlogUIElements/featuredBlogCard';
 

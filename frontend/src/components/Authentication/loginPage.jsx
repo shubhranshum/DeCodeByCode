@@ -39,9 +39,10 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
-
+      console.log("Login response:", data);
       if (response.ok) {
         alert("Login successful!");
+        localStorage.setItem('username', data.user.username); // Store username in localStorage
         redirectToHome();
       } else {
         alert(data.message || "Login failed");

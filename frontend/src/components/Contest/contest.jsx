@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { FiClock, FiLock, FiUnlock, FiCalendar, FiList, FiAward, FiBell, FiBarChart2 } from 'react-icons/fi';
+import { useParams, Link, useNavigate, Outlet } from 'react-router-dom';
+import { 
+  FiClock, 
+  FiBarChart2,
+  FiLock,
+  FiCalendar,
+  FiChevronRight,
+  FiCheckCircle,
+  FiXCircle,
+  FiAward,
+  FiUser
+} from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getContestById } from '../Tasks/getContestById';
@@ -10,57 +20,80 @@ import { getContestAttemptedProblems } from '../Tasks/getContestAttemptedProblem
 // Theme configuration
 const themes = {
   light: {
-    bg: 'bg-gray-50',
+    background: 'bg-gray-50',
     card: 'bg-white',
-    text: 'text-gray-900',
-    secondaryText: 'text-gray-600',
     border: 'border-gray-200',
-    hover: 'hover:bg-gray-50',
+    text: 'text-gray-800',
+    secondaryText: 'text-gray-500',
+    hover: 'hover:bg-gray-100',
+    primary: 'text-blue-600',
+    primaryBg: 'bg-blue-50',
+    success: 'text-green-600',
+    successBg: 'bg-green-50',
+    danger: 'text-red-600',
+    dangerBg: 'bg-red-50',
+    accent: 'text-blue-500',
+    accentBg: 'bg-blue-100',
+    tableHeader: 'bg-gray-50',
+    tableRow: 'bg-white',
+    tableRowHighlight: 'bg-blue-50',
+    problemCard: 'bg-white',
+    firstSolveBadge: 'bg-blue-100 text-blue-800',
+    tabActive: 'bg-blue-100 text-blue-700',
+    tabInactive: 'text-gray-500 hover:bg-gray-100'
   },
   dark: {
-    bg: 'bg-gray-900',
+    background: 'bg-gray-900',
     card: 'bg-gray-800',
-    text: 'text-white',
-    secondaryText: 'text-gray-300',
     border: 'border-gray-700',
+    text: 'text-gray-100',
+    secondaryText: 'text-gray-400',
     hover: 'hover:bg-gray-700',
+    primary: 'text-purple-400',
+    primaryBg: 'bg-purple-900',
+    success: 'text-green-400',
+    successBg: 'bg-green-900',
+    danger: 'text-orange-400',
+    dangerBg: 'bg-orange-900',
+    accent: 'text-purple-400',
+    accentBg: 'bg-purple-800',
+    tableHeader: 'bg-gray-800',
+    tableRow: 'bg-gray-800',
+    tableRowHighlight: 'bg-purple-900',
+    problemCard: 'bg-gray-700',
+    firstSolveBadge: 'bg-purple-800 text-purple-200',
+    tabActive: 'bg-purple-900 text-purple-300',
+    tabInactive: 'text-gray-400 hover:bg-gray-700'
   }
 };
 
-// Navigation tabs configuration
-const tabs = [
-  { id: 'problems', name: 'Problems', icon: <FiList /> },
-  { id: 'announcements', name: 'Announcements', icon: <FiBell /> },
-  { id: 'standings', name: 'Standings', icon: <FiBarChart2 /> },
-];
-
 // ContestStats component
 const ContestStats = ({ contest, solvedProblems }) => {
+  const theme = localStorage.getItem('theme') || 'light';
+  
   return (
     <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
       <StatCard
-        icon={<FiList className="h-6 w-6 text-white" />}
-        iconBg="bg-blue-500"
+        icon={
+          <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        }
+        iconBg={themes[theme].primary}
         title="Total Problems"
         value={contest.Problems.length}
       />
       <StatCard
-        icon={
-          <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        }
-        iconBg="bg-green-500"
+        icon={<FiCheckCircle className="h-6 w-6 text-white" />}
+        iconBg={themes[theme].success}
         title="Solved"
         value={solvedProblems.length}
       />
       <StatCard
         icon={<FiClock className="h-6 w-6 text-white" />}
-        iconBg="bg-orange-500"
+        iconBg={themes[theme].danger}
         title="Time Remaining"
-        value={
-          <TimeRemaining endTime={contest.endTime} />
-        }
+        value={<TimeRemaining endTime={contest.endTime} />}
       />
     </div>
   );
@@ -69,15 +102,16 @@ const ContestStats = ({ contest, solvedProblems }) => {
 // StatCard component
 const StatCard = ({ icon, iconBg, title, value }) => {
   const theme = localStorage.getItem('theme') || 'light';
+  
   return (
-    <div className={`${themes[theme].card} overflow-hidden shadow rounded-lg`}>
+    <div className={`${themes[theme].card} overflow-hidden shadow rounded-xl`}>
       <div className="px-4 py-5 sm:p-6">
         <div className="flex items-center">
-          <div className={`flex-shrink-0 ${iconBg} rounded-md p-3`}>
+          <div className={`flex-shrink-0 ${iconBg} rounded-lg p-3`}>
             {icon}
           </div>
           <div className="ml-5 w-0 flex-1">
-            <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
+            <dt className={`text-sm font-medium ${themes[theme].secondaryText} truncate`}>{title}</dt>
             <dd className="flex items-baseline">
               <div className={`text-2xl font-semibold ${themes[theme].text}`}>
                 {value}
@@ -93,6 +127,7 @@ const StatCard = ({ icon, iconBg, title, value }) => {
 // TimeRemaining component
 const TimeRemaining = ({ endTime }) => {
   const [timeLeft, setTimeLeft] = useState('');
+  const theme = localStorage.getItem('theme') || 'light';
 
   useEffect(() => {
     const updateTime = () => {
@@ -118,185 +153,81 @@ const TimeRemaining = ({ endTime }) => {
     return () => clearInterval(interval);
   }, [endTime]);
 
-  return <>{timeLeft}</>;
+  return <span className={themes[theme].text}>{timeLeft}</span>;
 };
 
-// ProblemsList component
-const ProblemsList = ({ contest, contestId, solvedProblems, attemptedProblems }) => {
-  const theme = localStorage.getItem("theme") || "light";
-
-  return (
-    <div className={`${themes[theme].card} shadow rounded-lg overflow-hidden`}>
-      <div className={`px-6 py-4 border-b ${themes[theme].border}`}>
-        <h2 className={`text-xl font-semibold flex items-center ${themes[theme].text}`}>
-          <FiList className="mr-2" /> Problems
-        </h2>
-      </div>
-      <div className={`divide-y ${themes[theme].border}`}>
-        {contest.Problems.map((problem, index) => (
-          <Link
-            key={problem._id}
-            to={`/contests/${contestId}/problems/${problem._id}`}
-            state={{
-              startTime: contest.startTime,
-              verdict: solvedProblems.includes(problem._id)
-                ? "Accepted"
-                : attemptedProblems.includes(problem._id)
-                ? "Attempted"
-                : "Unattempted"
-            }}
-            className={`block ${themes[theme].hover} transition duration-150 ease-in-out`}
-          >
-            <div className="px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 ${
-                    solvedProblems.includes(problem._id)
-                      ? "bg-green-100 text-green-800"
-                      : attemptedProblems.includes(problem._id)
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {/* Show index as A, B, C, ... */}
-                  {String.fromCharCode(65 + index)}
-                </div>
-                <div>
-                  <h3 className={`text-lg font-medium ${themes[theme].text}`}>{problem.title}</h3>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      problem.difficulty === "Easy"
-                        ? "bg-green-100 text-green-800"
-                        : problem.difficulty === "Medium"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {problem.difficulty}
-                  </span>
-                </div>
-              </div>
-              <div className="text-sm">
-                {solvedProblems.includes(problem._id) ? (
-                  <span className="text-green-600">Solved</span>
-                ) : attemptedProblems.includes(problem._id) ? (
-                  <span className="text-yellow-600">Attempted</span>
-                ) : (
-                  <span className={`${themes[theme].secondaryText}`}>Unattempted</span>
-                )}
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Announcements component
-const Announcements = () => {
+// ProblemCard component
+const ProblemCard = ({ problem, index, contestId, isSolved, isAttempted }) => {
   const theme = localStorage.getItem('theme') || 'light';
-  const [announcements, setAnnouncements] = useState([
-    {
-      id: 1,
-      title: 'Contest has started!',
-      content: 'Good luck to all participants!',
-      time: '10 minutes ago',
-    },
-    {
-      id: 2,
-      title: 'Clarification on Problem B',
-      content: 'The output for Problem B should be case-insensitive.',
-      time: '25 minutes ago',
-    },
-  ]);
-
+  
   return (
-    <div className={`${themes[theme].card} shadow rounded-lg overflow-hidden`}>
-      <div className={`px-6 py-4 border-b ${themes[theme].border}`}>
-        <h2 className="text-xl font-semibold flex items-center">
-          <FiBell className="mr-2" /> Announcements
-        </h2>
-      </div>
-      <div className="divide-y divide-gray-200">
-        {announcements.map((announcement) => (
-          <div key={announcement.id} className="px-6 py-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className={`text-lg font-medium ${themes[theme].text}`}>{announcement.title}</h3>
-                <p className={`mt-1 ${themes[theme].secondaryText}`}>{announcement.content}</p>
-              </div>
-              <span className={`text-sm ${themes[theme].secondaryText}`}>{announcement.time}</span>
+    <Link
+      to={`/contests/${contestId}/problems/${problem._id}`}
+      className={`block ${themes[theme].hover} transition duration-150 ease-in-out rounded-xl overflow-hidden shadow-sm ${themes[theme].card} border ${themes[theme].border}`}
+    >
+      <div className="px-6 py-5 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div
+            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              isSolved
+                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                : isAttempted
+                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+            }`}
+          >
+            <span className="font-medium">{String.fromCharCode(65 + index)}</span>
+          </div>
+          <div>
+            <h3 className={`text-lg font-medium ${themes[theme].text}`}>{problem.title}</h3>
+            <div className="flex items-center space-x-2 mt-1">
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  problem.difficulty === "Easy"
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    : problem.difficulty === "Medium"
+                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                }`}
+              >
+                {problem.difficulty}
+              </span>
+              <span className={`text-xs ${themes[theme].secondaryText}`}>
+                {problem.points} points
+              </span>
             </div>
           </div>
-        ))}
+        </div>
+        <div className="flex items-center">
+          {isSolved ? (
+            <FiCheckCircle className="text-green-500 dark:text-green-400" />
+          ) : isAttempted ? (
+            <FiXCircle className="text-yellow-500 dark:text-yellow-400" />
+          ) : (
+            <div className="w-5 h-5"></div>
+          )}
+          <FiChevronRight className={`ml-2 ${themes[theme].secondaryText}`} />
+        </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
-// Standings component
-const Standings = ({ contestId }) => {
+// AnnouncementCard component
+const AnnouncementCard = ({ announcement }) => {
   const theme = localStorage.getItem('theme') || 'light';
-  const [standings, setStandings] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchStandings = async () => {
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const mockStandings = [
-        { rank: 1, username: 'user1', solved: 5, totalTime: 120 },
-        { rank: 2, username: 'user2', solved: 4, totalTime: 180 },
-        { rank: 3, username: 'user3', solved: 4, totalTime: 210 },
-      ];
-      setStandings(mockStandings);
-    } catch (error) {
-      toast.error('Failed to load standings');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStandings();
-    const interval = setInterval(fetchStandings, 15 * 60 * 1000); // Refresh every 15 minutes
-    return () => clearInterval(interval);
-  }, [contestId]);
-
+  
   return (
-    <div className={`${themes[theme].card} shadow rounded-lg overflow-hidden`}>
-      <div className={`px-6 py-4 border-b ${themes[theme].border}`}>
-        <h2 className="text-xl font-semibold flex items-center">
-          <FiBarChart2 className="mr-2" /> Current Standings
-        </h2>
-      </div>
-      {loading ? (
-        <div className="px-6 py-4 text-center">Loading standings...</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className={`${themes[theme].card}`}>
-              <tr>
-                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${themes[theme].secondaryText} uppercase tracking-wider`}>Rank</th>
-                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${themes[theme].secondaryText} uppercase tracking-wider`}>User</th>
-                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${themes[theme].secondaryText} uppercase tracking-wider`}>Solved</th>
-                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${themes[theme].secondaryText} uppercase tracking-wider`}>Total Time</th>
-              </tr>
-            </thead>
-            <tbody className={`${themes[theme].card} divide-y ${themes[theme].border}`}>
-              {standings.map((standing) => (
-                <tr key={standing.username} className={`${themes[theme].hover}`}>
-                  <td className={`px-6 py-4 whitespace-nowrap ${themes[theme].text}`}>{standing.rank}</td>
-                  <td className={`px-6 py-4 whitespace-nowrap ${themes[theme].text}`}>{standing.username}</td>
-                  <td className={`px-6 py-4 whitespace-nowrap ${themes[theme].text}`}>{standing.solved}</td>
-                  <td className={`px-6 py-4 whitespace-nowrap ${themes[theme].text}`}>{standing.totalTime} mins</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className={`rounded-xl overflow-hidden shadow-sm ${themes[theme].card} border ${themes[theme].border}`}>
+      <div className="px-6 py-5">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className={`text-lg font-medium ${themes[theme].text}`}>{announcement.title}</h3>
+            <p className={`mt-2 ${themes[theme].secondaryText}`}>{announcement.content}</p>
+          </div>
+          <span className={`text-sm ${themes[theme].secondaryText}`}>{announcement.time}</span>
         </div>
-      )}
+      </div>
     </div>
   );
 };
@@ -304,6 +235,7 @@ const Standings = ({ contestId }) => {
 // ContestHeader component
 const ContestHeader = ({ contest }) => {
   const theme = localStorage.getItem('theme') || 'light';
+
   
   return (
     <div className={`${themes[theme].card} shadow-sm`}>
@@ -313,21 +245,27 @@ const ContestHeader = ({ contest }) => {
             <h1 className={`text-3xl font-bold ${themes[theme].text}`}>{contest.title}</h1>
             <p className={`mt-2 ${themes[theme].secondaryText}`}>{contest.description}</p>
           </div>
-          <div className="mt-4 md:mt-0 flex space-x-4">
-            <div className={`flex items-center text-sm ${themes[theme].secondaryText}`}>
+          <div className="mt-4 md:mt-0 flex flex-wrap gap-3">
+            <div className={`flex items-center text-sm px-3 py-1 rounded-full ${themes[theme].accentBg}`}>
               <FiCalendar className="mr-1" />
-              {new Date(contest.startTime).toLocaleString()} - {new Date(contest.endTime).toLocaleString()}
+              <span className={themes[theme].text}>
+                {new Date(contest.startTime).toLocaleString()}
+              </span>
             </div>
-            <div className={`flex items-center text-sm ${themes[theme].secondaryText}`}>
+            <div className={`flex items-center text-sm px-3 py-1 rounded-full ${themes[theme].accentBg}`}>
               <FiClock className="mr-1" />
-              {contest.duration} minutes
+              <span className={themes[theme].text}>
+                {contest.duration} minutes
+              </span>
             </div>
-            <div className={`flex items-center text-sm ${themes[theme].secondaryText}`}>
+            <div className={`flex items-center text-sm px-3 py-1 rounded-full ${
+              contest.isPrivate 
+                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
+                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+            }`}>
               {contest.isPrivate ? (
-                <FiLock className="mr-1 text-red-500" />
-              ) : (
-                <FiUnlock className="mr-1 text-green-500" />
-              )}
+                <FiLock className="mr-1" />
+              ) : null}
               {contest.isPrivate ? 'Private' : 'Public'}
             </div>
           </div>
@@ -345,7 +283,22 @@ export default function ContestView() {
   const [solvedProblems, setSolvedProblems] = useState([]);
   const [attemptedProblems, setAttemptedProblems] = useState([]);
   const [activeTab, setActiveTab] = useState('problems');
+  const [announcements, setAnnouncements] = useState([
+    {
+      id: 1,
+      title: 'Contest has started!',
+      content: 'Good luck to all participants! The contest has officially begun. Remember to read all problems carefully and manage your time wisely.',
+      time: '10 minutes ago',
+    },
+    {
+      id: 2,
+      title: 'Clarification on Problem B',
+      content: 'The output for Problem B should be case-insensitive. We apologize for any confusion this may have caused.',
+      time: '25 minutes ago',
+    },
+  ]);
   const theme = localStorage.getItem('theme') || 'light';
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchContest = async () => {
@@ -367,58 +320,113 @@ export default function ContestView() {
     fetchContest();
   }, [contestId]);
 
-  if (loading) return <div className={`text-center py-20 ${themes[theme].text}`}>Loading contest...</div>;
-  if (error) return <div className={`text-center py-20 text-red-500 ${themes[theme].bg}`}>{error}</div>;
-  if (!contest) return <div className={`text-center py-20 ${themes[theme].text}`}>Contest not found</div>;
+  if (loading) return (
+    <div className={`flex items-center justify-center min-h-screen ${themes[theme].background}`}>
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 dark:border-purple-500 mx-auto"></div>
+        <p className={`mt-4 text-lg ${themes[theme].text}`}>Loading contest details...</p>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className={`flex items-center justify-center min-h-screen ${themes[theme].background}`}>
+      <div className={`text-center p-6 rounded-xl ${themes[theme].card} shadow-md`}>
+        <p className={`text-red-500 text-lg`}>{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className={`mt-4 px-4 py-2 rounded-lg ${themes[theme].primaryBg} ${themes[theme].primary} font-medium`}
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  );
+
+  if (!contest) return (
+    <div className={`flex items-center justify-center min-h-screen ${themes[theme].background}`}>
+      <div className={`text-center p-6 rounded-xl ${themes[theme].card} shadow-md`}>
+        <p className={`text-lg ${themes[theme].text}`}>Contest not found</p>
+        <Link 
+          to="/contests"
+          className={`mt-4 inline-block px-4 py-2 rounded-lg ${themes[theme].primaryBg} ${themes[theme].primary} font-medium`}
+        >
+          Back to Contests
+        </Link>
+      </div>
+    </div>
+  );
 
   return (
-    <div className={`min-h-screen ${themes[theme].bg}`}>
+    <div className={`min-h-screen ${themes[theme].background}`}>
       <ContestHeader contest={contest} />
       
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         {/* Navigation Tabs */}
         <div className="mb-6">
-          <nav className="flex space-x-4" aria-label="Tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-2 text-sm font-medium rounded-md flex items-center ${
-                  activeTab === tab.id
-                    ? 'bg-blue-100 text-blue-700'
-                    : `${themes[theme].secondaryText} ${themes[theme].hover}`
-                }`}
-              >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.name}
-              </button>
-            ))}
+          <nav className="flex space-x-2" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab('problems')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center ${
+                activeTab === 'problems'
+                  ? `${themes[theme].tabActive}`
+                  : `${themes[theme].tabInactive}`
+              }`}
+            >
+              Problems
+            </button>
+            <button
+              onClick={() => navigate(`/contests/${contestId}/standings`)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center ${
+                activeTab === 'standings'
+                  ? `${themes[theme].tabActive}`
+                  : `${themes[theme].tabInactive}`
+              }`}
+            >
+              <FiBarChart2 className="mr-2" />
+              Standings
+            </button>
           </nav>
         </div>
 
-        {/* Active Tab Content */}
+        {/* Problems Tab Content */}
         {activeTab === 'problems' && (
-          <>
-            <ProblemsList 
-              contest={contest} 
-              contestId={contestId} 
-              solvedProblems={solvedProblems} 
-              attemptedProblems={attemptedProblems} 
-            />
+          <div className="space-y-6">
             <ContestStats contest={contest} solvedProblems={solvedProblems} />
-          </>
+            
+            <div className="space-y-4">
+              <h2 className={`text-xl font-semibold ${themes[theme].text}`}>Problems</h2>
+              <div className="grid grid-cols-1 gap-4">
+                {contest.Problems.map((problem, index) => (
+                  <ProblemCard
+                    key={problem._id}
+                    problem={problem}
+                    index={index}
+                    contestId={contestId}
+                    isSolved={solvedProblems.includes(problem._id)}
+                    isAttempted={attemptedProblems.includes(problem._id)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Announcements Section */}
+            <div className="mt-8 space-y-4">
+              <h2 className={`text-xl font-semibold ${themes[theme].text}`}>Announcements</h2>
+              <div className="grid grid-cols-1 gap-4">
+                {announcements.map((announcement) => (
+                  <AnnouncementCard 
+                    key={announcement.id} 
+                    announcement={announcement} 
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
         )}
 
-        {activeTab === 'announcements' && (
-          <>
-            <Announcements />
-            <ContestStats contest={contest} solvedProblems={solvedProblems} />
-          </>
-        )}
-
-        {activeTab === 'standings' && (
-          <Standings contestId={contestId} />
-        )}
+        {/* Standings Tab Content - Handled by separate route */}
+        <Outlet />
       </main>
     </div>
   );

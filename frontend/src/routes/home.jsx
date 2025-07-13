@@ -5,10 +5,12 @@ import Navbar from "../components/Navbar/navbar.jsx";
 
 const Home = () => {
     return (
-        <>
+        
+        <div className="pt-15.5">
         <Navbar activePage="Home"/>
             <HomePage />
-        </>
+        
+        </div>
     );
 }
 export default Home;

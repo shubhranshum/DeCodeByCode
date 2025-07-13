@@ -1,5 +1,6 @@
 const Submission = require('../../models/submissionSchema');
 const SolvedProblem = require('../../models/solvedProblemSchema');
+const updateStandingsOnSubmit = require('./submitToContest'); // Assuming you have a function to update standings
 
 async function submitProblem(req, res) {
     const { problemId,contestId } = req.params; // Assuming the contest ID is passed as a URL parameter
@@ -16,7 +17,7 @@ async function submitProblem(req, res) {
             timeTaken,
             memoryTaken,
             submissionTime: new Date(),
-            timeFromStart: Math.floor((Date.now() - new Date(startTime).getTime()) / 1000)// Calculate minutes since contest start
+            timeFromStart: Math.floor((Date.now() - new Date(startTime).getTime()) / 1000)// Calculate second since contest start
         })
         if(verdict == 'Accepted') {
             const alreadySolved = await SolvedProblem.findOne({ userId:req.user._id, problemId });
@@ -31,7 +32,9 @@ async function submitProblem(req, res) {
             });
             console.log('Problem solved successfully');
         }
-
+        // Update standings or any other logic related to contest submission
+        // Assuming you have a function to update standings
+        await updateStandingsOnSubmit(req.user._id, contestId, problemId, verdict, Math.floor((Date.now() - new Date(startTime).getTime()) / (60 * 1000)));
         res.status(200).json({ message: 'Successful submission for the contest'});
     } catch (err) {
         console.error('Error registering for contest:', err);

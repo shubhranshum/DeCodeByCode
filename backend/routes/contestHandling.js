@@ -9,6 +9,7 @@ const getContestUserSolvedProblems = require('../controllers/Contest/getContestS
 const getContestUserAttemptedProblems = require('../controllers/Contest/getContestUserAttemptedProblems.js');
 // //by om vrit
 // const submitProblem = require('../controllers/submitProblemController');
+const Standings = require('../models/contest/standings');
 
 
 
@@ -19,12 +20,23 @@ router.get('/contests/user-submissions/:contestId', getContestUserAttemptedProbl
 router.post('/contests/:contestId/register', register); // Assuming this is to fetch problems of a contest
 router.post('/contests/:contestId/problems/:problemId/submit', submitProblem);
 router.get('/contests/:contestId/submissions/:problemId', submissionsByUser); // Assuming this is to fetch submissions for a specific problem in a contest
+router.get('/contests/:contestId/standings', async (req, res) => {
+    const standings = await Standings.find({ contestId: req.params.contestId })
+      .populate("userId", "username")
+      .populate("problemResults", "problemId")
+      .sort({ totalSolved: -1, totalPenalty: 1 });
+    standings.forEach((user,idx) => {
+      user.rank = idx + 1; // Assign rank based on position in sorted standings
+    });
+    res.json(standings);
+  });
+  
 
 
 
 
 //by om vrit
 // router.post('/contest/submit',submitProblem);
-
+router.get('/upcoming-contests', getGlobalContests);
 
 module.exports = router;

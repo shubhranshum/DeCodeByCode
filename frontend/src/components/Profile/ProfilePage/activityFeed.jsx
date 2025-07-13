@@ -135,7 +135,7 @@ const ActivityFeed = ({
         break;
       case 'PROBLEM_SOLVED':
       case 'PROBLEM_ATTEMPTED':
-        navigate(`/problem/${activity.refId}`);
+        navigate(`/problems/${activity.refId}`);
         break;
       default:
         navigate(`/activity/${activity._id}`);

@@ -8,17 +8,25 @@ const languageOptions = [
   { label: "Python", value: "python" },
 ];
 
-export default function CodeEditor({ onCodeChange }) {
+export default function CodeEditor({ problemId ,onCodeChange }) {
+
   const [language, setLanguage] = useState("cpp");
   const [theme, setTheme] = useState("vs-dark");
   const [code, setCode] = useState("// Write your solution here");
   const [stdin, setStdin] = useState("");
   const [output, setOutput] = useState("");
-
+  useEffect(() => {
+  const savedCode = localStorage.getItem(`code-${problemId}`);
+  if (savedCode) {
+    setCode(savedCode);
+  }
+}, [problemId]);
   const handleCodeChange = (newCode) => {
     setCode(newCode);
+    localStorage.setItem(`code-${problemId}`, newCode);
     if (onCodeChange) onCodeChange(newCode, stdin);
   };
+
 
   const handleStdinChange = (val) => {
     setStdin(val);

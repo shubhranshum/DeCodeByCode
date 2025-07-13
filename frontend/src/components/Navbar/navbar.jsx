@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const navigation = [
   { name: 'Home', href: '/home', icon: HomeIcon, current: false },
-  { name: 'BattleGround', href: 'contests', icon: TrophyIcon, current: false },
+  { name: 'BattleGround', href: '/contests', icon: TrophyIcon, current: false },
   { name: 'Problems', href: '/problems', icon: CodeBracketIcon, current: false },
   { name: 'Learn', href: '/learn', icon: AcademicCapIcon, current: false },
   { name: 'Blogs', href: '/blogs', icon: BookOpenIcon, current: false },
