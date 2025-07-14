@@ -35,6 +35,7 @@ router.get('/google/callback',
       res.redirect('http://localhost:5173/home');
     } catch (err) {
       console.error('OAuth callback error:', err);
+      res.redirect('/login');
       res.status(500).json({ message: 'OAuth failed internally' });
     }
   }
@@ -66,6 +67,7 @@ router.get('/github/callback',
       res.redirect('http://localhost:5173/home');
     } catch (err) {
       console.error('GitHub OAuth callback error:', err);
+      res.redirect('/login');
       res.status(500).json({ message: 'OAuth failed internally' });
     }
   }
