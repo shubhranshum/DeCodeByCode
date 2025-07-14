@@ -13,6 +13,9 @@ async function userLogin(req,res){
     if(!user){
         return res.status(400).json({message: 'User Not found with this email'});
     }
+    if(user.password === undefined){
+        return res.status(400).json({message: 'User found but the signup was done with google'});
+    }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
     const token = jwt.sign({ id: user._id , email: user.email }, JWT_SECRET, { expiresIn: '2d' });

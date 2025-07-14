@@ -1,6 +1,7 @@
 const express = require('express');
+const auth = require('../middlewares/auth');
 const router = express.Router();
-
+const {getAnnouncements} = require('../controllers/Admin/Announcements/getAnnouncements');
 router.get('/home', (req, res) => {
     try {
         if (!req.user) {
@@ -15,5 +16,6 @@ router.get('/home', (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 })
+router.get('/announcements',auth, getAnnouncements);
 
 module.exports = router;

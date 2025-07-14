@@ -25,15 +25,11 @@ async function userSignUp(req,res){
         isAdmin: false // Default to false, can be changed later
     })
 
-    const newProfile = new UserProfile({
-        username,
-        email,
-        college: college
-    });
+    
 
     // console.log("Received data4:", { username, email, password });
     await newUser.save();
-    await newProfile.save();
+    
     // console.log("Received data5:", { username, email, password });
 
     res.status(201).json({message : 'User created successfully', user: newUser});

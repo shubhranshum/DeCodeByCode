@@ -29,6 +29,7 @@ const postToGlobalContests = require('../controllers/Admin/Contests/postToGlobal
 
 //announcement
 const createAnnouncement = require('../controllers/Admin/Announcements/createAnnouncement.js');
+const {getAdminAnnouncements} = require('../controllers/Admin/Announcements/getAdminAnnouncement.js');
 const { getAnnouncements } = require('../controllers/Admin/Announcements/getAnnouncements.js'); 
 const editAnnouncement = require('../controllers/Admin/Announcements/editAnnouncement.js');
 const deleteAnnouncement = require('../controllers/Admin/Announcements/deleteAnnouncement.js');
@@ -60,7 +61,8 @@ router.delete('/deleteContest/:contestId',deleteAdminContestById);
 
 //Announcement 
 
-router.get('/announcements', getAnnouncements);
+router.get('/announcements', getAdminAnnouncements);
+
 router.get('/announcements/:announcementId', getAnnouncementById);
 router.post('/createAnnouncement', createAnnouncement);
 router.post('/edit-announcement/:announcementId/verify', authMiddleware, adminCheck, verifyAnnouncement);

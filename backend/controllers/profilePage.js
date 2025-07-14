@@ -1,14 +1,14 @@
 const UserProfile = require('../models/profile/userProfile');
 const BlogPost = require('../models/blogPost');
-
+const User = require('../models/user');
 const getProfileByUserName = async (req, res) => {
   try {
     const username = req.params.username;
     console.log(username);
     console.log("Hello from getProfileByUsername");
-    const profile = await UserProfile.findOne({ username: username }).
+    const profile = await User.findOne({ username: username })
     
-    populate('userId','isAdmin').lean();
+    
     console.log("Hello from getProfileByUserName");
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
@@ -26,10 +26,10 @@ const getProfile = async (req, res) => {
     const user = req.user.username;
     
 
-    const profile = await UserProfile.findOne({ username: user })
+    const profile = await User.findOne({ username: user })
       
-      .populate('userId','isAdmin')
-      .lean();  // You can also populate DraftBlogs, ArchivedBlogs, LikedBlogs as needed
+      
+        // You can also populate DraftBlogs, ArchivedBlogs, LikedBlogs as needed
     console.log(profile)
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
@@ -49,7 +49,8 @@ const updateProfile = async (req, res) => {
 
     
   
-    const profile = await UserProfile.findOne({ userId: userId });
+    const profile = await User.findOne({ _id: userId });
+    console.log(profile);
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
@@ -64,20 +65,16 @@ const updateProfile = async (req, res) => {
     profile.state = state;
     profile.country = country;
     profile.college = college;
-    // console.log(skills.length);
-    for (const skill of skills) {
-      if (!Array.isArray(profile.Skills)) {
-      profile.Skills = [];
-    }
-    if (!profile.Skills.includes(skill)) {
-    profile.Skills.push(skill);
-    }
+    console.log(skills.length);
+    
+    profile.skills= skills;
 
 
-    }
+    
+    console.log(profile.skills);
 
     await profile.save();
-    const updatedProfile = await UserProfile.findOne({ userId: userId }).populate('userId','isAdmin').lean();
+    const updatedProfile = await User.findOne({ _id: userId });
     res.status(200).json(updatedProfile);
 
     

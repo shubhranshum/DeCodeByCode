@@ -42,7 +42,7 @@ const announcementSchema = new mongoose.Schema({
   },
   audience: {
     type: String,
-    enum: ['all', 'admins', 'users', 'guests'],
+    enum: ['all', 'admins', 'users'],
     default: 'all',
   },
 }, {

@@ -10,7 +10,7 @@ import ConnectionsSection from "./ProfilePage/connectionsSections";
 import ContributionGraph from "./ProfilePage/contributionGraph";
 import EditProfileModal from "./ProfilePage/editProfileModal";
 import ProfileHeader from "./ProfilePage/profileHeader";
-import SettingsTab from "./ProfilePage/settingsTab";
+import SettingsTab from "./ProfilePage/settingPage/UI/settingsTab";
 import SkillsSection from "./ProfilePage/skillsSection";
 import SocialLinks from "./ProfilePage/socialLinks";
 import StatsSection from "./ProfilePage/statsSection";
@@ -531,7 +531,7 @@ const ProfilePage = () => {
               </div>
 
               <SkillsSection
-                skills={profile.Skills || []}
+                skills={profile.skills || []}
                 onEditClick={() => setIsEditModalOpen(true)}
                 allowEdit={isOwnProfile}
                 theme={theme}

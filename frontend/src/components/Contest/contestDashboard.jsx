@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -9,7 +9,12 @@ import {
   Divider,
   Tabs,
   Tab,
-  CircularProgress
+  CircularProgress,
+  Box,
+  useTheme,
+  ThemeProvider,
+  createTheme,
+  Skeleton
 } from '@mui/material';
 import { 
   AccessTime as AccessTimeIcon, 
@@ -17,11 +22,83 @@ import {
   CalendarToday as CalendarIcon,
   Timer as TimerIcon,
   HowToReg as RegisterIcon,
-  Lock as LockIcon
+  Lock as LockIcon,
+  Launch as LaunchIcon
 } from '@mui/icons-material';
-import { formatDistanceToNow} from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { getAllGlobalContests } from '../Tasks/getAllGlobalContests';
 
+// Theme creation
+const getDesignTokens = (mode) => ({
+  palette: {
+    mode,
+    ...(mode === 'light'
+      ? {
+          // Light theme
+          primary: {
+            main: '#7b1fa2', // Violet
+          },
+          secondary: {
+            main: '#ff9800', // Orange
+          },
+          background: {
+            default: '#f5f5f5',
+            paper: '#ffffff',
+          },
+          text: {
+            primary: '#212121',
+            secondary: '#4a4a4a',
+          },
+        }
+      : {
+          // Dark theme
+          primary: {
+            main: '#ab47bc', // Lighter violet
+          },
+          secondary: {
+            main: '#ffb74d', // Light orange
+          },
+          background: {
+            default: '#121212',
+            paper: '#1e1e1e',
+          },
+          text: {
+            primary: '#e0e0e0',
+            secondary: '#b0b0b0',
+          },
+        }),
+  },
+  typography: {
+    fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
+    h4: {
+      fontWeight: 700,
+      letterSpacing: '-0.5px',
+    },
+    h5: {
+      fontWeight: 600,
+    },
+  },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          transition: 'transform 0.2s, box-shadow 0.2s',
+          '&:hover': {
+            transform: 'translateY(-4px)',
+          },
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 500,
+        },
+      },
+    },
+  },
+});
 
 const ContestDashboard = () => {
   const [contests, setContests] = useState([]);
@@ -31,16 +108,18 @@ const ContestDashboard = () => {
   const [upcomingContests, setUpcomingContests] = useState([]);
   const [currentContests, setCurrentContests] = useState([]);
   const [pastContests, setPastContests] = useState([]);
+  
+  // Get theme mode from localStorage or default to 'light'
+  const themeMode = localStorage.getItem('themeMode') || 'light';
+  const theme = useMemo(() => createTheme(getDesignTokens(themeMode)), [themeMode]);
 
-  // Fixed duration formatter
-  // const formatDuration = (durationObj) => {
-  //   const parts = [];
-  //   if (durationObj.days > 0) parts.push(`${durationObj.days}d`);
-  //   if (durationObj.hours > 0) parts.push(`${durationObj.hours}h`);
-  //   if (durationObj.minutes > 0) parts.push(`${durationObj.minutes}m`);
-  //   return parts.join(' ') || '0m';
-  // };
-
+  const formatDuration = (durationObj) => {
+    const parts = [];
+    if (durationObj.days > 0) parts.push(`${durationObj.days}d`);
+    if (durationObj.hours > 0) parts.push(`${durationObj.hours}h`);
+    if (durationObj.minutes > 0) parts.push(`${durationObj.minutes}m`);
+    return parts.join(' ') || '0m';
+  };
 
   const getTimeRemaining = (targetDate) => {
     return formatDistanceToNow(new Date(targetDate), { addSuffix: true });
@@ -49,161 +128,248 @@ const ContestDashboard = () => {
   useEffect(() => {
     const fetchContests = async () => {
       try {
+        // Check localStorage first
+        const cachedContests = localStorage.getItem('cachedContests');
+        const cacheTime = localStorage.getItem('contestsCacheTime');
+        
+        // Use cache if less than 5 minutes old
+        if (cachedContests && cacheTime && Date.now() - parseInt(cacheTime) < 300000) {
+          const data = JSON.parse(cachedContests);
+          processContests(data);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch fresh data
         const data = await getAllGlobalContests();
-        const now = new Date();
-        setUpcomingContests(
-          data.filter(c => new Date(c.startTime) > now)
-        );
-        setCurrentContests(
-          data.filter(c => new Date(c.startTime) <= now && new Date(c.endTime) > now)
-        );
-        setPastContests(
-          data.filter(c => new Date(c.endTime) <= now)
-        );
+        localStorage.setItem('cachedContests', JSON.stringify(data));
+        localStorage.setItem('contestsCacheTime', Date.now().toString());
+        processContests(data);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Failed to load contests');
       } finally {
         setLoading(false);
       }
     };
 
+    const processContests = (data) => {
+      const now = new Date();
+      setContests(data);
+      setUpcomingContests(
+        data.filter(c => new Date(c.startTime) > now)
+      );
+      setCurrentContests(
+        data.filter(c => new Date(c.startTime) <= now && new Date(c.endTime) > now)
+      );
+      setPastContests(
+        data.filter(c => new Date(c.endTime) <= now)
+      );
+    };
+
     fetchContests();
-  }, [setContests, setUpcomingContests, setCurrentContests, setPastContests, setError, setLoading]);
+  }, []);
+
   const handleRegister = async (contestId) => {
-    console.log('Registering for contest:', contestId);
-    await fetch(`http://localhost:3000/contests/${contestId}/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Include cookies for session management
-    })
-    window.location.reload(); // Reload to reflect registration changes
-  }
+    try {
+      // In a real app, this would be an actual API call
+      console.log(`Registering for contest ${contestId}`);
+      
+      // Update local storage to reflect registration
+      const updatedContests = contests.map(c => 
+        c._id === contestId 
+          ? { ...c, Participants: [...c.Participants, 'current-user'] } 
+          : c
+      );
+      
+      localStorage.setItem('cachedContests', JSON.stringify(updatedContests));
+      setContests(updatedContests);
+      
+      // Re-process contests
+      const now = new Date();
+      setUpcomingContests(updatedContests.filter(c => new Date(c.startTime) > now));
+      setCurrentContests(updatedContests.filter(c => new Date(c.startTime) <= now && new Date(c.endTime) > now));
+      setPastContests(updatedContests.filter(c => new Date(c.endTime) <= now));
+      
+    } catch (err) {
+      console.error('Registration failed:', err);
+    }
+  };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
         <CircularProgress />
-      </div>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
         <Typography color="error">{error}</Typography>
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Typography variant="h3" component="h1" className="text-center mb-8 font-bold text-gray-800">
-        Contest Dashboard
-      </Typography>
-
-      <Tabs
-        value={tabValue}
-        onChange={handleTabChange}
-        variant="fullWidth"
-        className="mb-6"
+    <ThemeProvider theme={theme}>
+      <Box 
+        sx={{ 
+          backgroundColor: 'background.default', 
+          minHeight: '100vh',
+          py: 4,
+          px: { xs: 2, sm: 4 }
+        }}
       >
-        <Tab label="Upcoming" />
-        <Tab label="Current" />
-        <Tab label="Past" />
-      </Tabs>
+        <Box maxWidth="1200px" mx="auto">
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            sx={{ 
+              textAlign: 'center', 
+              mb: 4, 
+              fontWeight: 700,
+              color: 'text.primary',
+              fontSize: { xs: '1.8rem', sm: '2.2rem' }
+            }}
+          >
+            Contest Dashboard
+          </Typography>
 
-      <div className="space-y-6">
-        {tabValue === 0 && (
-          <div>
-            <Typography variant="h5" className="mb-4 font-semibold text-gray-700">
-              Upcoming Contests
-            </Typography>
-            {upcomingContests.length === 0 ? (
-              <Typography className="text-center text-gray-500">
-                No upcoming contests found
-              </Typography>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {upcomingContests.map((contest) => (
-                  <ContestCard
-                    key={contest._id}
-                    contest={contest}
-                    status="upcoming"
-                    onRegister={handleRegister}
-                    getTimeRemaining={getTimeRemaining}
-                    getContestDuration={contest.duration}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ 
+              mb: 4,
+              '& .MuiTabs-indicator': {
+                backgroundColor: 'primary.main',
+                height: 3,
+              }
+            }}
+          >
+            <Tab label="Upcoming" sx={{ fontWeight: 600 }} />
+            <Tab label="Current" sx={{ fontWeight: 600 }} />
+            <Tab label="Past" sx={{ fontWeight: 600 }} />
+          </Tabs>
 
-        {tabValue === 1 && (
-          <div>
-            <Typography variant="h5" className="mb-4 font-semibold text-gray-700">
-              Current Contests
-            </Typography>
-            {currentContests.length === 0 ? (
-              <Typography className="text-center text-gray-500">
-                No current contests running
-              </Typography>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {currentContests.map((contest) => (
-                  <ContestCard
-                    key={contest._id}
-                    contest={contest}
-                    status="current"
-                    onRegister={handleRegister}
-                    getTimeRemaining={getTimeRemaining}
-                    getContestDuration={contest.duration}
-                  />
-                ))}
-              </div>
+          <Box sx={{ mb: 4 }}>
+            {tabValue === 0 && (
+              <Box>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'text.primary' }}>
+                  Upcoming Contests
+                </Typography>
+                {upcomingContests.length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
+                    <Typography>No upcoming contests found</Typography>
+                  </Box>
+                ) : (
+                  <Box 
+                    sx={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, 
+                      gap: 3 
+                    }}
+                  >
+                    {upcomingContests.map((contest) => (
+                      <ContestCard
+                        key={contest._id}
+                        contest={contest}
+                        status="upcoming"
+                        onRegister={handleRegister}
+                        getTimeRemaining={getTimeRemaining}
+                        formatDuration={formatDuration}
+                      />
+                    ))}
+                  </Box>
+                )}
+              </Box>
             )}
-          </div>
-        )}
 
-        {tabValue === 2 && (
-          <div>
-            <Typography variant="h5" className="mb-4 font-semibold text-gray-700">
-              Past Contests
-            </Typography>
-            {pastContests.length === 0 ? (
-              <Typography className="text-center text-gray-500">
-                No past contests available
-              </Typography>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pastContests.map((contest) => (
-                  <ContestCard
-                    key={contest._id}
-                    contest={contest}
-                    status="past"
-                    getTimeRemaining={getTimeRemaining}
-                    getContestDuration={contest.duration}
-                  />
-                ))}
-              </div>
+            {tabValue === 1 && (
+              <Box>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'text.primary' }}>
+                  Current Contests
+                </Typography>
+                {currentContests.length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
+                    <Typography>No current contests running</Typography>
+                  </Box>
+                ) : (
+                  <Box 
+                    sx={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, 
+                      gap: 3 
+                    }}
+                  >
+                    {currentContests.map((contest) => (
+                      <ContestCard
+                        key={contest._id}
+                        contest={contest}
+                        status="current"
+                        onRegister={handleRegister}
+                        getTimeRemaining={getTimeRemaining}
+                        formatDuration={formatDuration}
+                      />
+                    ))}
+                  </Box>
+                )}
+              </Box>
             )}
-          </div>
-        )}
-      </div>
-    </div>
+
+            {tabValue === 2 && (
+              <Box>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'text.primary' }}>
+                  Past Contests
+                </Typography>
+                {pastContests.length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
+                    <Typography>No past contests available</Typography>
+                  </Box>
+                ) : (
+                  <Box 
+                    sx={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, 
+                      gap: 3 
+                    }}
+                  >
+                    {pastContests.map((contest) => (
+                      <ContestCard
+                        key={contest._id}
+                        contest={contest}
+                        status="past"
+                        getTimeRemaining={getTimeRemaining}
+                        formatDuration={formatDuration}
+                      />
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            )}
+          </Box>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 
-const ContestCard = ({ contest, status, onRegister, getTimeRemaining}) => {
+const ContestCard = ({ contest, status, onRegister, getTimeRemaining, formatDuration }) => {
+  const theme = useTheme();
   const [isRegistered, setIsRegistered] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setIsRegistered(contest.Participants.includes('current-user'));
+    // Simulate current user from localStorage
+    const currentUser = localStorage.getItem('currentUser') || 'current-user';
+    setIsRegistered(contest.Participants.includes(currentUser));
+    setLoading(false);
   }, [contest.Participants]);
 
   const getStatusBadge = () => {
@@ -215,7 +381,7 @@ const ContestCard = ({ contest, status, onRegister, getTimeRemaining}) => {
             color="warning" 
             size="small"
             icon={<AccessTimeIcon fontSize="small" />}
-            className="mb-2"
+            sx={{ mb: 1 }}
           />
         );
       case 'current':
@@ -225,7 +391,7 @@ const ContestCard = ({ contest, status, onRegister, getTimeRemaining}) => {
             color="success"
             size="small"
             icon={<TimerIcon fontSize="small" />}
-            className="mb-2"
+            sx={{ mb: 1 }}
           />
         );
       case 'past':
@@ -234,7 +400,7 @@ const ContestCard = ({ contest, status, onRegister, getTimeRemaining}) => {
             label="Completed"
             color="default"
             size="small"
-            className="mb-2"
+            sx={{ mb: 1 }}
           />
         );
       default:
@@ -242,10 +408,103 @@ const ContestCard = ({ contest, status, onRegister, getTimeRemaining}) => {
     }
   };
 
+  const renderButtons = () => {
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Skeleton variant="rounded" width={90} height={36} />
+          <Skeleton variant="rounded" width={70} height={36} />
+        </Box>
+      );
+    }
+    
+    switch (status) {
+      case 'upcoming':
+        return (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {contest.registrationOpen && !isRegistered ? (
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<RegisterIcon />}
+                onClick={() => onRegister(contest._id)}
+                sx={{ flexShrink: 0 }}
+              >
+                Register
+              </Button>
+            ) : isRegistered ? (
+              <Chip
+                label="Registered"
+                color="success"
+                size="small"
+                variant="outlined"
+                sx={{ height: '100%' }}
+              />
+            ) : null}
+          </Box>
+        );
+      
+      case 'current':
+        return (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {contest.registrationOpen && !isRegistered && (
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<RegisterIcon />}
+                onClick={() => onRegister(contest._id)}
+                sx={{ flexShrink: 0 }}
+              >
+                Register
+              </Button>
+            )}
+            {isRegistered && (
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                href={`/contests/${contest._id}`}
+                startIcon={<LaunchIcon />}
+              >
+                Enter
+              </Button>
+            )}
+          </Box>
+        );
+      
+      case 'past':
+        return (
+          <Button
+            variant="outlined"
+            size="small"
+            href={`/contests/${contest._id}`}
+            startIcon={<LaunchIcon />}
+            sx={{ 
+              borderColor: theme.palette.mode === 'light' ? '#7b1fa2' : '#ffb74d',
+              color: theme.palette.mode === 'light' ? '#7b1fa2' : '#ffb74d'
+            }}
+          >
+            View
+          </Button>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300">
-      <CardContent className="space-y-3">
-        <div className="flex justify-between items-start">
+    <Card 
+      sx={{ 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: 'column',
+        backgroundColor: 'background.paper',
+        border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #e0e0e0',
+      }}
+    >
+      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           {getStatusBadge()}
           {contest.isPrivate && (
             <Chip 
@@ -253,112 +512,151 @@ const ContestCard = ({ contest, status, onRegister, getTimeRemaining}) => {
               color="secondary" 
               size="small"
               icon={<LockIcon fontSize="small" />}
-              className="mb-2"
+              sx={{ mb: 1 }}
             />
           )}
-        </div>
+        </Box>
 
-        <Typography variant="h5" component="h2" className="font-bold">
+        <Typography 
+          variant="h6" 
+          component="h2" 
+          sx={{ 
+            fontWeight: 700, 
+            mb: 1.5,
+            color: 'text.primary',
+            minHeight: '3.5rem'
+          }}
+        >
           {contest.title}
         </Typography>
 
-        <div className="flex items-center space-x-2 text-gray-600">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: 'text.secondary' }}>
           <PersonIcon fontSize="small" />
           <Typography
             variant="body2"
             component="a"
             href={`/profile/user/${contest.creator.username}`}
-            className="hover:text-blue-600 hover:underline cursor-pointer"
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                color: 'primary.main',
+                textDecoration: 'underline',
+                cursor: 'pointer'
+              },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
           >
             {contest.creator.username}
           </Typography>
-        </div>
+        </Box>
 
-        <Divider className="my-2" />
+        <Divider sx={{ my: 1.5 }} />
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex items-center space-x-2">
-            <CalendarIcon fontSize="small" className="text-gray-500" />
-            <div>
-              <Typography variant="caption" className="text-gray-500">
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+            <CalendarIcon fontSize="small" sx={{ color: 'text.secondary', mt: '2px' }} />
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                 Starts
               </Typography>
-              <Typography variant="body2">
-                {new Date(contest.startTime).toLocaleString()}
+              <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                {new Date(contest.startTime).toLocaleString([], { 
+                  month: 'short', 
+                  day: 'numeric', 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
               </Typography>
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="flex items-center space-x-2">
-            <CalendarIcon fontSize="small" className="text-gray-500" />
-            <div>
-              <Typography variant="caption" className="text-gray-500">
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+            <CalendarIcon fontSize="small" sx={{ color: 'text.secondary', mt: '2px' }} />
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                 Ends
               </Typography>
-              <Typography variant="body2">
-              {new Date(contest.startTime).toLocaleString()}
+              <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                {new Date(contest.endTime).toLocaleString([], { 
+                  month: 'short', 
+                  day: 'numeric', 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
               </Typography>
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
-        <div className="flex items-center space-x-2">
-          <AccessTimeIcon fontSize="small" className="text-gray-500" />
-          <Typography variant="body2">
-            Duration: {contest.duration}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <AccessTimeIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+          <Typography variant="body2" sx={{ color: 'text.primary' }}>
+            <Typography component="span" variant="body2" sx={{ color: 'text.secondary' }}>Duration: </Typography> 
+            {formatDuration(contest.duration)}
           </Typography>
-        </div>
+        </Box>
 
         {status !== 'past' && (
-          <div className="flex items-center space-x-2">
-            <TimerIcon fontSize="small" className="text-gray-500" />
-            <Typography variant="body2" className={status === 'current' ? 'text-green-600' : 'text-amber-600'}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1, 
+            mb: 2,
+            p: 1,
+            borderRadius: 1,
+            backgroundColor: status === 'current' ? 
+              theme.palette.mode === 'light' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.2)' :
+              theme.palette.mode === 'light' ? 'rgba(255, 152, 0, 0.1)' : 'rgba(255, 152, 0, 0.2)'
+          }}>
+            <TimerIcon fontSize="small" sx={{ 
+              color: status === 'current' ? 'success.main' : 'warning.main' 
+            }} />
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontWeight: 500,
+                color: status === 'current' ? 'success.main' : 'warning.main'
+              }}
+            >
               {status === 'current'
                 ? `Ends ${getTimeRemaining(contest.endTime)}`
                 : `Starts ${getTimeRemaining(contest.startTime)}`}
             </Typography>
-          </div>
+          </Box>
         )}
 
-        <div className="flex justify-between items-center pt-2">
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mt: 'auto', 
+          pt: 2 
+        }}>
           <Chip
             label={`${contest.Participants.length} Participants`}
             variant="outlined"
             size="small"
-            avatar={<Avatar>{contest.Participants.length}</Avatar>}
+            avatar={
+              <Avatar sx={{ 
+                width: 24, 
+                height: 24,
+                backgroundColor: theme.palette.mode === 'light' ? '#e0d8f0' : '#3a2b45',
+                color: 'text.primary'
+              }}>
+                {contest.Participants.length}
+              </Avatar>
+            }
+            sx={{
+              borderColor: theme.palette.mode === 'light' ? '#e0d8f0' : '#3a2b45',
+              backgroundColor: theme.palette.mode === 'light' ? '#f5f2fa' : '#2a1e35',
+              color: 'text.secondary'
+            }}
           />
-
-          {status !== 'past' && (
-            <div className="space-x-2">
-              {contest.registrationOpen && !isRegistered && (
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<RegisterIcon />}
-                  onClick={() => onRegister(contest._id)}
-                  // disabled={status === 'current'}
-                >
-                  Register
-                </Button>
-              )}
-              {isRegistered && (
-                <Chip
-                  label="Registered"
-                  color="success"
-                  size="small"
-                  variant="outlined"
-                />
-              )}
-              <Button
-                variant="outlined"
-                size="small"
-                href={`/contests/${contest._id}`}
-              >
-                {status === 'current' ? 'Enter' : 'View'}
-              </Button>
-            </div>
-          )}
-        </div>
+          
+          {renderButtons()}
+        </Box> 
       </CardContent>
     </Card>
   );

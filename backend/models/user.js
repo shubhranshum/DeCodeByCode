@@ -1,39 +1,121 @@
 const mongoose = require('mongoose');
-const { prependListener } = require('./blogPost');
 
 const userSchema = new mongoose.Schema({
-    username: {
-        type: String,
-        required: true,
+  // ====== Auth Fields ======
+  username: {
+    type: String,
+    required: false, // May be missing in OAuth
+    index: true
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true
+  },
+  password: {
+    type: String,
+    required: false // optional for OAuth users
+  },
+  oauthProvider: {
+    type: String,
+    enum: ['google', 'github', 'facebook', null],
+    default: null
+  },
+  oauthId: {
+    type: String,
+    default: null,
+    index: true
+  },
 
-        index: true
-
-       // Ensure usernames are unique
-
+  // ====== Basic Profile ======
+  firstName: { type: String, default: '' },
+  lastName: { type: String, default: '' },
+  age: { type: String },
+  skills:{
+        type: [String],
+        default: []
     },
-    email: {
-        type: String,
-        required: true,
-
-        index: true
-
-    },
-    password:{
-        type: String,
-        required: true,
-    },
-    college: {
+    
+    about:{
         type: String,
         default: ''
     },
-    isAdmin: {
-        type: Boolean,
-        default: true
-    },
-    
-    
-},{timestamps: true});
+  profilePicture: {
+    type: String,
+    default: 'data:image/png;base64,...' // Default avatar as before
+  },
+  college: { type: String, default: '' },
+  city: { type: String },
+  state: { type: String },
+  country: { type: String },
+  about: { type: String },
+  isAdmin: { type: Boolean, default: false },
 
+  // ====== Social Links ======
+  socialLinks: {
+    github: { type: String },
+    twitter: { type: String },
+    linkedin: { type: String },
+    instagram: { type: String },
+    facebook: { type: String }
+  },
+
+  // ====== Stats ======
+  stats: {
+    problemsSolved: { type: Number, default: 0 },
+    blogCount: { type: Number, default: 0 },
+    blogViews: { type: Number, default: 0 },
+    followers: { type: Number, default: 0 },
+    following: { type: Number, default: 0 },
+    solutionsAccepted: { type: Number, default: 0 },
+    ranking: { type: Number, default: 0 }
+  },
+
+  // ====== Preferences ======
+  preferences: {
+    theme: { type: String, default: 'light' },
+    notifications: {
+      email: { type: Boolean, default: true },
+      push: { type: Boolean, default: true },
+      blogUpdates: { type: Boolean, default: true }
+    }
+  },
+
+  // ====== History & Timestamps ======
+  lastSeenAt: { type: Date, default: Date.now },
+  joinedAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+
+  // ====== Problem History ======
+  ProblemHistory: [
+    {
+      problemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Problem' },
+      status: { type: String, enum: ['Solved', 'Attempted'], required: true },
+      solvedAt: { type: Date },
+      lastTriedAt: { type: Date, required: true }
+    }
+  ],
+  accountStatus: {
+  type: String,
+  enum: ['active', 'suspended', 'banned'],
+  default: 'active'
+},
+notifications: [
+  {
+    type: String,
+    message: String,
+    isRead: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now },
+    link: String
+  }
+],
+bookmarkedProblems: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Problem', default: [] }],
+bookmarkedBlogs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Blog' , default: [] }],
+
+
+
+}, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
