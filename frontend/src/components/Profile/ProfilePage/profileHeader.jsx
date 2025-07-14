@@ -54,12 +54,12 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
                 <span
                   className={`text-xs px-2 py-1 rounded-full
                 ${
-                  profile.userId.isAdmin
+                  profile.isAdmin
                     ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
                     : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
                 }`}
                 >
-                  {profile.userId.isAdmin ? "Admin" : "User"}
+                  {profile.isAdmin ? "Admin" : "User"}
                 </span>
               </div>
 

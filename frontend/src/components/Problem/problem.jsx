@@ -6,6 +6,7 @@ import MathjaxRenderer from "../MathjaxRenderer";
 
 export default function Problem() {
   const { problemId } = useParams();
+  const[language, setLanguage] = useState("cpp");
   const [problem, setProblem] = useState(null);
   const [code, setCode] = useState("// Write your solution here");
   const [verdict, setVerdict] = useState(null);
@@ -489,6 +490,7 @@ export default function Problem() {
                         ? "bg-gray-700 hover:bg-gray-600"
                         : "bg-slate-200 hover:bg-slate-300"
                     }`}
+                    onClick={() => setLanguage("cpp")}
                   >
                     C++
                   </button>
@@ -498,18 +500,31 @@ export default function Problem() {
                         ? "bg-gray-700 hover:bg-gray-600"
                         : "bg-slate-200 hover:bg-slate-300"
                     }`}
+                    onClick={() => setLanguage("python")}
                   >
                     Python
                   </button>
+                  <button
+                  className={`px-3 py-1 text-xs rounded font-medium ${
+                      isDark
+                        ? "bg-gray-700 hover:bg-gray-600"
+                        : "bg-slate-200 hover:bg-slate-300"
+                    }`}
+                    onClick={() => setLanguage("java")}
+                  >
+                    Java
+                  </button>
+                  
                 </div>
               </div>
             </div>
             <div className="h-[500px]">
               <SubmissionCodeEditor
                 initialCode={code}
-                language="cpp"
+                language={language}
                 onCodeChange={setCode}
-                theme={isDark ? "vs-dark" : "light"}
+                problemId={problemId}
+                
               />
             </div>
           </div>

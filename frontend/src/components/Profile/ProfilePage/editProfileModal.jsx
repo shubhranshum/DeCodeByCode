@@ -11,7 +11,7 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
     state: profile.state || "",
     country: profile.country || "",
     college: profile.college || "",
-    skills: profile.Skills || [],
+    skills: profile.skills || [],
     email: profile.email || "",
     firstName: profile.firstName || "",
     lastName: profile.lastName || "",

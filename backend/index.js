@@ -4,7 +4,7 @@ const PORT = 3000;
 const mongoose = require('mongoose');
 const dotenv = require('dotenv').config();
 const auth = require('./middlewares/auth');
-
+const oauthRouter = require('./routes/oauth.js')
 const router = require('./routes/auth.js');
 const homeRouter = require('./routes/home.js');
 const logoutRouter = require('./routes/logout.js');
@@ -17,8 +17,13 @@ const blogRouter = require('./routes/blog');
 const profile = require('./routes/profile');
 const adminRouter = require('./routes/admin.js');
 
+const passport = require('passport');
+require('./config/passport'); // register Google strategy
+
+
 
 const app = express();
+app.use(passport.initialize());
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 app.use(cors({
@@ -38,7 +43,7 @@ mongoose.connect(url).then(()=>{
 }).catch((err)=>{
     console.error('Error connecting to MongoDB:', err);
 })
-
+app.use('/api/auth', oauthRouter);
 app.use('/', router);
 app.use('/', blogRouter);
 app.use('/', profile);
@@ -54,3 +59,4 @@ app.listen(PORT,'0.0.0.0',(err)=>{
         console.log(`Server is running on http://localhost:${PORT}`);
     }
 })
+

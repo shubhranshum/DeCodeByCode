@@ -75,7 +75,7 @@ export default function SubmissionCodeEditor({
 
   // Load code and listen for theme changes
   useEffect(() => {
-    const savedCode = localStorage.getItem(`code-${problemId}`);
+    const savedCode = localStorage.getItem(`code-${problemId}-${language}`);
     if (savedCode) setCode(savedCode);
 
     const handleStorageChange = () => {
@@ -191,18 +191,32 @@ export default function SubmissionCodeEditor({
       cursorBlinking: "smooth",
       cursorSmoothCaretAnimation: true,
       cursorStyle: "line-thin",
-      smoothScrolling: true
+      smoothScrolling: true,
+      accessibilitySupport: "auto",
+      scrollBeyondLastLine: true,
+      minimap: {
+        enabled: false,
+      },
+      lineNumbersMinChars: 3,
+      scrollbar: {
+        verticalScrollbarSize: 8,
+        horizontalScrollbarSize: 8,
+      },
+      glyphMargin: true,
+
     });
   };
 
   const handleCodeChange = (newCode) => {
     setCode(newCode);
-    localStorage.setItem(`code-${problemId}`, newCode);
+    localStorage.setItem(`code-${problemId}-${language}`, newCode);
     if (onCodeChange) onCodeChange(newCode);
   };
 
   return (
+    
     <div className="rounded-xl overflow-hidden border height-full  border-gray-200 dark:border-gray-700 shadow-xl bg-white dark:bg-gray-900 transition-all duration-300">
+      
       <div className="relative h-full">
         <Editor
           height="75vh"
@@ -220,11 +234,13 @@ export default function SubmissionCodeEditor({
           }
           options={{
             fontSize: 15,
-            fontFamily: "'Fira Code', 'JetBrains Mono', 'Menlo', monospace",
+            automaticLayout: true,
+            glyphMargin: true,
+            fontFamily: "'JetBrains Mono', 'Menlo', monospace",
             fontLigatures: true,
             lineHeight: 24,
             letterSpacing: 0.3,
-            minimap: { enabled: false },
+            minimap: { enabled: true },
             scrollBeyondLastLine: false,
             automaticLayout: true,
             renderWhitespace: "boundary",
