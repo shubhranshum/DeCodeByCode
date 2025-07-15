@@ -22,7 +22,6 @@ export default function Problem() {
  useEffect(() => {
   let isMounted = true;
   setIsLoading(true);
-  
   fetch(`http://localhost:3000/problems/${problemId}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },

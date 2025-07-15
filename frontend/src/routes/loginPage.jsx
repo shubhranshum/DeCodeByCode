@@ -1,9 +1,10 @@
 import LoginPage from '../components/Authentication/loginPage.jsx';
 import Navbar from "../components/Navbar/navbar.jsx";
-import {useUser} from "../context/userContext.jsx";
+import {useContext} from "react";
+import {UserContext} from "../context/userContext.jsx";
 
 const Login = () => {
-    const {user} = useUser();
+    const {user} = useContext(UserContext);
     if (user) {
         window.location.href = "/"; // Redirect to home if user is already logged in
     }

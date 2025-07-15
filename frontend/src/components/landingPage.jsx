@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import Navbar from "./Navbar/navbar";
-import { useUser } from "../context/userContext";
-import { useEffect, useState } from "react";
+import { UserContext } from "../context/userContext";
+import { useEffect, useState, useContext} from "react";
 import { FaTrophy, FaCode, FaUsers, FaChartLine, FaLightbulb, FaGithub, FaDiscord } from "react-icons/fa";
 
 export default function LandingPage() {
   window.href = "/";
-  const { user } = useUser();
+  const { user } = useContext(UserContext);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   
   const goToSignUp = () => {

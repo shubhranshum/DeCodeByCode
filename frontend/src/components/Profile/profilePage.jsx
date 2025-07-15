@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext } from "react";
+import {UserContext} from "../../context/UserContext";
 import { useParams } from "react-router-dom";
 import { getTheme } from "../../utils/theme";
 import AchievementsSection from "./ProfilePage/achievementsSection";
@@ -16,11 +17,12 @@ import SocialLinks from "./ProfilePage/socialLinks";
 import StatsSection from "./ProfilePage/statsSection";
 import RecentAttempts from "./ProfilePage/recentAttempts";
 import RecentSolvedProblems from "./ProfilePage/recentSolvedProblems";
-import { useUser } from "../../context/userContext";
+// import { useUser } from "../../context/userContext";
 
 const ProfilePage = () => {
+  const { user: currentUser} = useContext(UserContext);
   const { username: urlUsername } = useParams();
-  const { user: currentUser } = useUser();
+  // const { user: currentUser } = useUser();
   const isOwnProfile = currentUser && currentUser.username === urlUsername;
 
   // Track mounted state to prevent state updates on unmounted component

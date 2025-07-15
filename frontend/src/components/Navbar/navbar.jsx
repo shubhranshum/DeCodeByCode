@@ -12,8 +12,8 @@ import {
   ShieldCheckIcon,
   UserCircleIcon
 } from '@heroicons/react/24/outline'
-import { useUser } from '../../context/UserContext.jsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
+import {UserContext} from '../../context/UserContext.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navigation = [
@@ -154,7 +154,7 @@ export default function Navbar({ activePage }) {
     }
   });
   
-  const { user, setUser } = useUser();
+  const { user, setUser } = useContext(UserContext);
   const [hasNotifications, setHasNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
