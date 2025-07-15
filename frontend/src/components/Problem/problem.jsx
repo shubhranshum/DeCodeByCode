@@ -1,4 +1,4 @@
-import { useParams, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import SubmissionCodeEditor from "../Tasks/submissionCodeEditor.jsx";
 import codeOutput from "../Tasks/output.jsx";
@@ -30,7 +30,6 @@ const ProblemNotFound = ({ isDark }) => (
 );
 
 function formatDuration(ms) {
-  console.log("Formatting duration for ms:", ms);
   const totalSeconds = Math.max(0, ms);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -39,9 +38,7 @@ function formatDuration(ms) {
 }
 
 export default function ContestProblem() {
-  const { problemId } = useParams();
-  const location = useLocation();
-
+  const { problemId, contestId } = useParams();
   // status priority map
   const STATUS_RANK = { Unattempted: 0, Attempted: 1, Accepted: 2 };
   const STORAGE_KEY = `status-${problemId}`;
@@ -81,9 +78,6 @@ export default function ContestProblem() {
   const [customInput, setCustomInput] = useState("");
   const [customOutput, setCustomOutput] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [solutions, setSolutions] = useState([]);
-  const [isSolutionsLoading, setIsSolutionsLoading] = useState(false);
-  const [selectedSolution, setSelectedSolution] = useState(null);
 
   const theme = "dark";
   const isDark = theme === "dark";
@@ -104,13 +98,13 @@ export default function ContestProblem() {
 
     fetchSubmissions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [problemId]);
+  }, [contestId,problemId]);
 
   const fetchSubmissions = useCallback(async () => {
     setIsSubmissionsLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:3000/problems/${problemId}/submissions`,
+        `http://localhost:3000/contests/${contestId}/submissions/${problemId}`,
         { credentials: "include" }
       );
       const data = await res.json();
@@ -129,27 +123,7 @@ export default function ContestProblem() {
     } finally {
       setIsSubmissionsLoading(false);
     }
-  }, [problemId, updateStatus]);
-
-  // NEW: Function to fetch accepted solutions
-  const fetchAllSolutions = useCallback(async () => {
-    setIsSolutionsLoading(true);
-    try {
-      // This would be replaced with your actual API endpoint
-      const res = await fetch(
-        `http://localhost:3000/problems/${problemId}/solutions`,
-        { 
-          method: "GET",
-          credentials: "include" }
-      );
-      const data = await res.json();
-      setSolutions(data);
-    } catch (err) {
-      console.error("Failed to load solutions:", err);
-    } finally {
-      setIsSolutionsLoading(false);
-    }
-  }, [problemId]);
+  }, [contestId, problemId, updateStatus]);
 
   const handleCodeSubmit = useCallback(async (code) => {
     let isCorrect = true;
@@ -179,7 +153,7 @@ export default function ContestProblem() {
 
     // post submission
     await fetch(
-      `http://localhost:3000/problems/${problemId}/submit`,
+      `http://localhost:3000/contests/${contestId}/problems/${problemId}/submit`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -195,7 +169,7 @@ export default function ContestProblem() {
     );
 
     fetchSubmissions();
-  }, [problemId, problem, updateStatus, fetchSubmissions]);
+  }, [contestId, problemId, problem, updateStatus, fetchSubmissions]);
 
   const handleRunCustomInput = async () => {
     setIsRunning(true);
@@ -274,20 +248,6 @@ export default function ContestProblem() {
                 onClick={() => setActiveTab("submissions")}
               >
                 Submissions
-              </button>
-              {/* NEW: Solutions tab */}
-              <button
-                className={`px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === "solutions"
-                    ? isDark ? "text-orange-500 border-b-2 border-orange-500" : "text-indigo-600 border-b-2 border-indigo-600"
-                    : isDark ? "text-gray-400 hover:text-gray-300" : "text-slate-500 hover:text-slate-700"
-                }`}
-                onClick={() => {
-                  setActiveTab("solutions");
-                  if (solutions.length === 0) fetchAllSolutions();
-                }}
-              >
-                Solutions
               </button>
               <button
                 className={`px-4 py-3 text-sm font-medium transition-colors ${
@@ -396,17 +356,6 @@ export default function ContestProblem() {
                 />
               )}
 
-              {/* NEW: Solutions Tab */}
-              {activeTab === "solutions" && (
-                <ContestSolutionsTab
-                  solutions={solutions}
-                  isLoading={isSolutionsLoading}
-                  isDark={isDark}
-                  onSelectSolution={setSelectedSolution}
-                  selectedSolution={selectedSolution}
-                />
-              )}
-
               {activeTab === "run-code" && (
                 <div className="space-y-4">
                   <div>
@@ -512,8 +461,7 @@ export default function ContestProblem() {
             </div>
             <div className="flex-1">
               <SubmissionCodeEditor
-                initialCode={code}
-                // language={language}
+                language="cpp"
                 onCodeChange={setCode}
                 theme={isDark ? "vs-dark" : "light"}
               />
@@ -600,19 +548,19 @@ function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
             </div>
           </div>
           
-          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
+          {/* <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
             <div className="text-xs text-gray-400">Runtime</div>
             <div className="font-medium">
-              {selectedSubmission.timeTaken} ms
+              {selectedSubmission.timetaken} ms
             </div>
           </div>
           
           <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
             <div className="text-xs text-gray-400">Memory</div>
             <div className="font-medium">
-              {selectedSubmission.memoryTaken} KB
+              {selectedSubmission.memorytaken} KB
             </div>
-          </div>
+          </div> */}
         </div>
         
         <div className="mb-3">
@@ -683,14 +631,10 @@ function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
               }`}
             >
               <td className="py-3 px-4">
-              {sub.submissionTime
-                ? new Date(sub.submissionTime).toLocaleString('en-US', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short'
-                  })
-                : "N/A"}
-            </td>
-
+                {sub.submissionTime
+                  ? formatDuration(sub.timeFromStart)
+                  : "N/A"}
+              </td>
               <td className="py-3 px-4">
                 <span className={`px-2 py-1 rounded-full text-xs ${
                   sub.verdict === "Accepted"
@@ -705,10 +649,10 @@ function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
                 </span>
               </td>
               <td className={`py-3 px-4 ${isDark ? "text-gray-400" : "text-slate-600"}`}>
-                {sub.timeTaken ? `${sub.timeTaken} ms` : "N/A"}
+                {sub.timetaken ? `${sub.timetaken} ms` : "N/A"}
               </td>
               <td className={`py-3 px-4 ${isDark ? "text-gray-400" : "text-slate-600"}`}>
-                {sub.memoryTaken ? `${sub.memoryTaken} KB` : "N/A"}
+                {sub.memorytaken ? `${sub.memorytaken} KB` : "N/A"}
               </td>
               <td className="py-3 px-4">
                 <button
@@ -720,158 +664,6 @@ function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
                   }`}
                 >
                   View Code
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// NEW: Solutions Tab Component
-function ContestSolutionsTab({ solutions, isLoading, isDark, onSelectSolution, selectedSolution }) {
-  if (isLoading) {
-    return (
-      <div className="py-6 flex items-center justify-center">
-        <div className={`w-8 h-8 border-2 ${isDark ? "border-orange-500" : "border-indigo-600"} border-t-transparent rounded-full animate-spin`}></div>
-      </div>
-    );
-  }
-
-  if (selectedSolution) {
-    return (
-      <div className="p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-medium">Submission Details</h3>
-          <button 
-            onClick={() => onSelectSolution(null)}
-            className={`text-xs px-3 py-1 rounded ${
-              isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-slate-200 hover:bg-slate-300"
-            }`}
-          >
-            Back to list
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
-            <div className="text-xs text-gray-400">Status</div>
-            <div className={`font-medium ${
-              selectedSolution.verdict === "Accepted" ? "text-green-500" : "text-red-500"
-            }`}>
-              {selectedSolution.verdict}
-            </div>
-          </div>
-          
-          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
-            <div className="text-xs text-gray-400">Runtime</div>
-            <div className="font-medium">
-              {selectedSolution.timeTaken} ms
-            </div>
-          </div>
-          
-          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
-            <div className="text-xs text-gray-400">Memory</div>
-            <div className="font-medium">
-              {selectedSolution.memoryTaken} KB
-            </div>
-          </div>
-        </div>
-        
-        <div className="mb-3">
-          <div className="text-sm font-medium mb-2">Submitted Code</div>
-          <pre className={`p-4 rounded-lg overflow-x-auto text-sm ${
-            isDark ? "bg-gray-900" : "bg-slate-100"
-          }`}>
-            {selectedSolution.code}
-          </pre>
-        </div>
-        
-        <div className="text-xs text-gray-400">
-          Submitted at: {new Date(selectedSolution.submissionTime).toLocaleString()}
-        </div>
-      </div>
-    );
-  }
-
-  if (solutions.length === 0) {
-    return (
-      <div className={`py-6 text-center ${isDark ? "bg-gray-800/30" : "bg-slate-50"}`}>
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 ${
-          isDark ? "bg-gray-700" : "bg-slate-200"
-        }`}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-slate-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-            />
-          </svg>
-        </div>
-        <h3 className="text-sm font-medium">No Solutions Available</h3>
-        <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-slate-500"}`}>
-          Be the first to solve this problem!
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 250px)" }}>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className={`border-b ${isDark ? "border-gray-700" : "border-slate-200"}`}>
-            <th className="text-left py-2 px-4">User</th>
-            <th className="text-left py-2 px-4">Language</th>
-            <th className="text-left py-2 px-4">Runtime</th>
-            <th className="text-left py-2 px-4">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {solutions.map((solution, index) => (
-            <tr
-              key={index}
-              className={`border-b ${
-                isDark
-                  ? "border-gray-700 hover:bg-gray-700/30"
-                  : "border-slate-200 hover:bg-slate-50"
-              }`}
-            >
-              <td className="py-3 px-4">
-                <div className="flex items-center">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${isDark ? "bg-gray-700" : "bg-slate-200"}`}>
-                    <span className="text-xs font-bold">
-                      {solution.userId.username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <span>{solution.userId.username}</span>
-                </div>
-              </td>
-              <td className={`py-3 px-4 ${isDark ? "text-gray-400" : "text-slate-600"}`}>
-                {solution.language}
-              </td>
-              <td className={`py-3 px-4 ${isDark ? "text-gray-400" : "text-slate-600"}`}>
-                {solution.timeTaken} ms
-              </td>
-              <td className="py-3 px-4">
-                <button
-                  onClick={() => onSelectSolution(solution)}
-                  className={`text-xs px-3 py-1 rounded ${
-                    isDark
-                      ? "bg-gray-700 hover:bg-gray-600"
-                      : "bg-slate-200 hover:bg-slate-300"
-                  }`}
-                >
-                  View Solution
                 </button>
               </td>
             </tr>
