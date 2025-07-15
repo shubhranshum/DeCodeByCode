@@ -1,9 +1,10 @@
 const ProblemStats = require('../../models/profile/problemStatsSchema');
+const Submission = require('../../models/submissionSchema');
 
 const getProblemSubmissionsByUser = async (req, res) => {
   try {
     const userId = req.user._id;
-    const problemId = req.params.id;
+    const problemId = req.params.problemId;
 
     const submissions = await ProblemStats.find({
       user: userId,

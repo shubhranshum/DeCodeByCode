@@ -157,14 +157,15 @@ const TimeRemaining = ({ endTime }) => {
 };
 
 // ProblemCard component
-const ProblemCard = ({ problem, index, contestId, isSolved, isAttempted }) => {
+const ProblemCard = ({ problem, index, contestId, isSolved, isAttempted, startTime }) => {
   const theme = localStorage.getItem('theme') || 'light';
   
   return (
     <Link
-      to={`/contests/${contestId}/problems/${problem._id}`}
-      className={`block ${themes[theme].hover} transition duration-150 ease-in-out rounded-xl overflow-hidden shadow-sm ${themes[theme].card} border ${themes[theme].border}`}
-    >
+    to={`/contests/${contestId}/problems/${problem._id}`}
+    state={{ startTime }}
+    className={`block ${themes[theme].hover} transition duration-150 ease-in-out rounded-xl overflow-hidden shadow-sm ${themes[theme].card} border ${themes[theme].border}`}
+  >
       <div className="px-6 py-5 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div
@@ -405,6 +406,7 @@ export default function ContestView() {
                     contestId={contestId}
                     isSolved={solvedProblems.includes(problem._id)}
                     isAttempted={attemptedProblems.includes(problem._id)}
+                    startTime={contest.startTime}
                   />
                 ))}
               </div>

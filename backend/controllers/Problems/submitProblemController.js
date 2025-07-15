@@ -8,9 +8,9 @@ const { logActivity } = require('../activityController.js');
 
 const submitProblem = async (req, res) => {
     try {
-        const { problemid, solution, status, timetaken, memorytaken } = req.body;
+        const { problemId, solution, status, timeTaken, memoryTaken } = req.body;
 
-        const problem = await Problem.findById(problemid);
+        const problem = await Problem.findById(problemId);
         
         if (!problem) return res.status(404).json({ message: "Problem not found" });
 
@@ -28,8 +28,8 @@ const submitProblem = async (req, res) => {
             solution,
             solvedAt: new Date(),
             status,
-            timetaken,
-            memorytaken
+            timeTaken,
+            memoryTaken
         });
         
         
@@ -55,7 +55,7 @@ const submitProblem = async (req, res) => {
                 });
 
                 profile.stats.problemsSolved += 1;
-                await logActivity(user._id, problemid, "Problem", "PROBLEM_SOLVED", problem.title);
+                await logActivity(user._id, problemId, "Problem", "PROBLEM_SOLVED", problem.title);
             } else {
                 const entry = profile.ProblemHistory[existingEntryIndex];
 
@@ -66,7 +66,7 @@ const submitProblem = async (req, res) => {
                     entry.lastTriedAt = now;
 
                     profile.stats.problemsSolved += 1;
-                    await logActivity(user._id, problemid, "Problem", "PROBLEM_SOLVED", problem.title);
+                    await logActivity(user._id, problemId, "Problem", "PROBLEM_SOLVED", problem.title);
                 } else {
                     // Already solved — just update lastTriedAt
                     entry.lastTriedAt = now;
@@ -83,16 +83,18 @@ const submitProblem = async (req, res) => {
                     status: "Attempted",
                     lastTriedAt: now
                 });
-                logActivity(user._id, problemid, "Problem", "PROBLEM_ATTEMPTED", problem.title);
+                logActivity(user._id, problemId, "Problem", "PROBLEM_ATTEMPTED", problem.title);
             } else {
                 // Update only lastTriedAt if already attempted or solved
                 profile.ProblemHistory[existingEntryIndex].lastTriedAt = now;
-                logActivity(user._id, problemid, "Problem", "PROBLEM_ATTEMPTED", problem.title);
+                logActivity(user._id, problemId, "Problem", "PROBLEM_ATTEMPTED", problem.title);
             }
         }
         await problem.save();
         await problemStat.save();
         await profile.save();
+
+
 
         res.status(200).json({ message: "Problem submitted successfully" });
     } catch (error) {

@@ -1,4 +1,4 @@
-import { useParams, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import SubmissionCodeEditor from "../Tasks/submissionCodeEditor.jsx";
 import codeOutput from "../Tasks/output.jsx";
@@ -39,9 +39,6 @@ function formatDuration(ms) {
 
 export default function ContestProblem() {
   const { problemId, contestId } = useParams();
-  const location = useLocation();
-  const startTime = location.state?.startTime;
-
   // status priority map
   const STATUS_RANK = { Unattempted: 0, Attempted: 1, Accepted: 2 };
   const STORAGE_KEY = `status-${problemId}`;
@@ -101,7 +98,7 @@ export default function ContestProblem() {
 
     fetchSubmissions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [problemId]);
+  }, [contestId,problemId]);
 
   const fetchSubmissions = useCallback(async () => {
     setIsSubmissionsLoading(true);
@@ -167,13 +164,12 @@ export default function ContestProblem() {
           verdict: finalVerdict,
           timeTaken: maxTime,
           memoryTaken: maxMem,
-          startTime
         })
       }
     );
 
     fetchSubmissions();
-  }, [contestId, problemId, problem, startTime, updateStatus, fetchSubmissions]);
+  }, [contestId, problemId, problem, updateStatus, fetchSubmissions]);
 
   const handleRunCustomInput = async () => {
     setIsRunning(true);
