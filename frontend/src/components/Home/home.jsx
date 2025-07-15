@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../Navbar/navbar.jsx";
 import { formatDate } from "date-fns";
-
+import ContestCard from "./Contest/contestCard.jsx";
+import AnnouncementCard from "./Announcement/announceMentCard.jsx";
+import SectionHeader from "./sectionsHeader.jsx";
+import BlogCard from "./Blog/blogCard.jsx";
+import SkeletonLoader from "./skeletonLoader.jsx";
 // Custom hooks for better modularity
 const useFeaturedBlogs = () => {
   const [blogs, setBlogs] = useState([]);
@@ -62,26 +66,7 @@ const useUpcomingContests = () => {
 
   return { contests, loading };
 };
-function formatDateToDMY(isoDateStr) {
-  const date = new Date(isoDateStr);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
 
-
-  return `${day}/${month}/${year}`;
-}
-function formatDateToDMYHM(isoDateStr) {
-  const date = new Date(isoDateStr);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  
-
-  return `${day}/${month}/${year} - ${hours}:${minutes}`;
-}
 
 
 const useAnnouncements = () => {
@@ -92,33 +77,17 @@ const useAnnouncements = () => {
     // Simulated API call with mock data
     const fetchAnnouncements = async () => {
       try {
-        // In a real app, this would be an actual API call
-        setTimeout(() => {
-          setAnnouncements([
-            {
-              id: 1,
-              title: "System Maintenance Scheduled",
-              content: "The platform will be down for maintenance on July 20th from 2:00 AM to 4:00 AM UTC.",
-              date: "2 days ago",
-              importance: "medium"
-            },
-            {
-              id: 2,
-              title: "New Problem Categories Added",
-              content: "We've added 3 new problem categories: Dynamic Programming Advanced, Graph Theory, and Bit Manipulation.",
-              date: "1 week ago",
-              importance: "high"
-            },
-            {
-              id: 3,
-              title: "Community Contest Winners",
-              content: "Congratulations to the winners of our June community contest! Prizes will be distributed within 7 days.",
-              date: "2 weeks ago",
-              importance: "low"
-            }
-          ]);
-          setLoading(false);
-        }, 500);
+        console.log("fetching announcements");
+         const res = await fetch("http://localhost:3000/announcements", {
+           method: "GET",
+           credentials: "include",
+         });
+         const data = await res.json();
+         
+         setAnnouncements(data);
+         setLoading(false);
+       
+           
       } catch (err) {
         console.error("Error fetching announcements:", err);
         setLoading(false);
@@ -148,135 +117,6 @@ const useTheme = () => {
 
   return { isDarkMode };
 };
-
-// Blog Card Component with improved UI
-const BlogCard = ({ blog }) => (
-  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/70 hover:from-gray-700/50 hover:to-gray-800/70 transition-all rounded-xl p-5 border border-gray-700 hover:border-orange-500/30 shadow-lg hover:shadow-orange-500/10">
-    <div className="flex justify-between items-start gap-3">
-      <Link
-        to={`/blog/${blog?._id}`}
-        className="text-orange-300 hover:text-orange-400 font-medium text-lg line-clamp-2"
-      >
-        {blog?.title || "Untitled Blog"}
-      </Link>
-      <div className="flex items-center gap-1 text-gray-400">
-        <span className="text-xs">♡</span>
-        <span className="text-sm">{blog?.likedBy.length || 0}</span>
-      </div>
-    </div>
-    <p className="mt-2 text-gray-300 text-sm line-clamp-2">
-      {blog?.summary || "Read this insightful blog post about competitive programming..."}
-    </p>
-    {blog?.tags && (
-      <div className="mt-3 flex flex-wrap gap-2">
-        {blog.tags.slice(0, 3).map((tag, index) => (
-          <span 
-            key={index} 
-            className="text-xs bg-gray-700 hover:bg-orange-500/20 px-2 py-1 rounded transition-colors"
-          >
-            #{tag}
-          </span>
-        ))}
-      </div>
-    )}
-    <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
-      <span> {blog?.author.username || "Anonymous"}</span>
-      <span>{formatDateToDMY(blog?.createdAt) || "Recently"}</span>
-    </div>
-  </div>
-);
-
-// Contest Card Component
-const ContestCard = ({ contest }) => (
-
-  <div className="bg-gray-800/50 hover:bg-gray-700/50 transition-all rounded-lg p-4 border border-gray-700 hover:border-orange-500/30">
-    <div className="flex justify-between items-start gap-2">
-      <div>
-        <h3 className="font-medium text-orange-300 hover:underline">
-          <a href={`/contests/${contest._id}`}target="_blank" rel="noopener noreferrer">
-            {contest.title}
-          </a>
-        </h3>
-        <div className="flex items-center gap-2 mt-1 text-sm text-gray-300">
-          {/* <span>{contest.platform}</span> */}
-          <span className="text-gray-500">•</span>
-          <span>{contest.duration} minutes</span>
-        </div>
-      </div>
-      <div className="text-right">
-        <div className="text-sm font-small font-mono">{formatDateToDMYHM(contest.startTime)}</div>
-        <div className="text-xs text-gray-400">{contest.creator.username}</div>
-      </div>
-    </div>
-    <div className="mt-3 flex justify-between items-center text-xs">
-      <button className="bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 px-3 py-1 rounded transition-colors">
-        Remind Me
-      </button>
-      <a 
-        href={`/contest/${contest._id}`}
-
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="text-blue-400 hover:text-blue-300 hover:underline"
-      >
-        Visit Site →
-      </a>
-    </div>
-  </div>
-);
-
-// Announcement Card Component
-const AnnouncementCard = ({ announcement }) => (
-  <div className={`p-4 rounded-lg border ${
-    announcement.importance === 'high' 
-      ? 'bg-red-900/10 border-red-900/30' 
-      : announcement.importance === 'medium'
-        ? 'bg-orange-900/10 border-orange-900/30'
-        : 'bg-gray-800/50 border-gray-700'
-  }`}>
-    <div className="flex justify-between items-start">
-      <h3 className="font-medium text-white">{announcement.title}</h3>
-      <span className="text-xs text-gray-400">{announcement.date}</span>
-    </div>
-    <p className="mt-2 text-sm text-gray-300">{announcement.content}</p>
-  </div>
-);
-
-// Section Header Component
-const SectionHeader = ({ title, action, icon }) => (
-  <div className="flex justify-between items-center mb-4">
-    <h2 className="text-xl font-bold flex items-center gap-2">
-      {icon && <span>{icon}</span>}
-      {title}
-    </h2>
-    {action && (
-      <Link
-        to={action.link || "#"}
-        className="text-orange-300 hover:underline text-sm flex items-center gap-1"
-      >
-        {action.text}
-        <span>→</span>
-      </Link>
-    )}
-  </div>
-);
-
-// Skeleton Loader Component
-const SkeletonLoader = ({ count = 3 }) => (
-  <div className="space-y-4">
-    {Array.from({ length: count }).map((_, index) => (
-      <div key={index} className="bg-gray-800/50 rounded-xl p-4 animate-pulse">
-        <div className="h-5 bg-gray-700 rounded w-3/4 mb-3"></div>
-        <div className="h-3 bg-gray-700 rounded w-full mb-2"></div>
-        <div className="h-3 bg-gray-700 rounded w-2/3 mb-3"></div>
-        <div className="flex gap-2">
-          <div className="h-6 bg-gray-700 rounded w-16"></div>
-          <div className="h-6 bg-gray-700 rounded w-16"></div>
-        </div>
-      </div>
-    ))}
-  </div>
-);
 
 // Main HomePage Component
 export default function HomePage() {

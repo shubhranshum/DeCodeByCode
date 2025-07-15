@@ -1,5 +1,5 @@
 const Announcement = require('../../../models/home/announcement/announcemnt');
-const getAnnouncements = async (req, res) => {
+const getAdminAnnouncements = async (req, res) => {
     try {
         console.log("Hello from GetAnnouncements");
         const userId = req.user._id;
@@ -9,7 +9,7 @@ const getAnnouncements = async (req, res) => {
             res.status(200).json(announcements);
         }
        
-        const finalAnnouncements = announcements.filter((announcement) => announcement.visibleFrom <= Date.now() && announcement.visibleTill >= Date.now());
+        const finalAnnouncements = announcements.filter((announcement) => announcement.createdBy && announcement.createdBy._id.toString() === userId.toString());
         console.log("finalAnnouncements",finalAnnouncements);
 
         res.status(200).json(finalAnnouncements);
@@ -19,4 +19,4 @@ const getAnnouncements = async (req, res) => {
     }
 }
 
-module.exports = { getAnnouncements }; // Export the getAnnouncements
+module.exports = { getAdminAnnouncements }; // Export the getAnnouncements

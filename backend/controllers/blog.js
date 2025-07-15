@@ -87,7 +87,9 @@ exports.createBlog = async (req, res) => {
 // Get all blog posts
 exports.getAllBlogs = async (req, res) => {
   try {
+    console.log("Hello from getAllBlogs");
     const blogs = await Blog.find().populate('author', 'username email');
+    console.log(blogs);
     res.json(blogs);
   } catch (err) {
     res.status(500).json({ error: err.message });

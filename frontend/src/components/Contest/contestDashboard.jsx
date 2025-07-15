@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { UserContext } from '../../context/UserContext';
+import {UserContext} from '../../context/UserContext';
 import { 
   Card, 
   CardContent, 
@@ -58,7 +58,7 @@ const StatusBadge = styled(Chip)(({ theme, status }) => ({
 }));
 
 const ContestDashboard = () => {
-  const { user } = useContext(UserContext);
+  const {user} = useContext(UserContext);
   const [contests, setContests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -110,39 +110,40 @@ const ContestDashboard = () => {
 
   const handleRegister = async (contestId) => {
     try {
-      const userId = user?._id; // get from your auth context
-      // console.log(userId);
-      if (!userId) throw new Error('User not logged in');
-  
-      const res = await fetch(`http://localhost:3000/contests/${contestId}/register`, {
+      // Get actual userId (from localStorage, Context, etc.)
+      const userId = user._id;
+      // if (!userId) {
+      //   console.error("User not logged in.");
+      //   return;
+      // }
+      const response = await fetch(`http://localhost:3000/contests/${contestId}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
+        credentials: 'include', // include cookies if needed
         body: JSON.stringify({ userId }),
       });
   
-      if (!res.ok) throw new Error('Failed to register');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Registration failed on the server');
+      }
   
-      const updateContestParticipants = setter => {
-        setter(prev => prev.map(c => 
-          c._id === contestId 
-            ? {
-                ...c,
-                Participants: c.Participants.includes(userId)
-                  ? c.Participants
-                  : [...c.Participants, userId]
-              }
+      // Update local state optimistically
+      const updateParticipants = (prev) =>
+        prev.map(c =>
+          c._id === contestId && !c.Participants.includes(userId)
+            ? { ...c, Participants: [...c.Participants, userId] }
             : c
-        ));
-      };
-      updateContestParticipants(setContests);
-      updateContestParticipants(setUpcomingContests);
-      updateContestParticipants(setCurrentContests);
+        );
+  
+      setContests(updateParticipants);
+      setUpcomingContests(updateParticipants);
+      setCurrentContests(updateParticipants);
       window.location.reload(); // Reload to reflect changes in the UI
     } catch (err) {
-      console.error('Registration failed:', err);
+      console.error('Registration failed:', err.message);
     }
   };
   
@@ -408,12 +409,12 @@ const ContestDashboard = () => {
 };
 
 const ContestCard = ({ contest, status, onRegister, getTimeRemaining, formatDate }) => {
-  const { user } = useContext(UserContext);
   const theme = useTheme();
   const [isHovered, setIsHovered] = useState(false);
+  const {user} = useContext(UserContext); // Get user from context or default to empty object
   // In a real app, you would check against the actual logged-in user
   const [isRegistered, setIsRegistered] = useState(
-    contest.Participants.includes(user?._id)
+    contest.Participants.includes(user._id || '')
   );
 
   const handleRegisterClick = (e) => {
@@ -678,6 +679,7 @@ const ContestCard = ({ contest, status, onRegister, getTimeRemaining, formatDate
                     Register
                   </Button>
                 )}
+                
                 {isRegistered && (
                   <Button
                     variant="outlined"

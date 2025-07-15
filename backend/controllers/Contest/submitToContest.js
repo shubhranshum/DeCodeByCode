@@ -2,7 +2,7 @@ const Standings = require("../../models/contest/standings");
 
 async function updateStandingsOnSubmit(userId, contestId, problemId, verdict, timeFromStart) {
   let standing = await Standings.findOne({ contestId, userId });
-
+  console.log("Updating standings for user:", userId, "contest:", contestId, "problem:", problemId, "verdict:", verdict, "timeFromStart:", timeFromStart);
   if (!standing) {
     // First submission by the user in this contest
     const newProblemResult = {

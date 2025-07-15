@@ -7,7 +7,7 @@ async function getProblemSubmissionsByUser(req, res) {
     try {
         // Fetching submissions for the specific user, contest, and problem
         const submissions = await Submission.find({problemId,userId}).sort({ submissionTime: -1 }); // Sorting by submission time in descending order
-
+        console.log('Submissions fetched:', submissions); // Logging the fetched submissions
         res.status(200).json(submissions); // Sending the submissions as a JSON response
     } catch (err) {
         console.error('Error fetching submissions:', err);
@@ -20,7 +20,7 @@ async function getProblemSolvedSubmissions(req, res) {
     const {problemId} = req.params
     try {
         // Fetching submissions for the specific user, contest, and problem
-        const submissions = await SolvedProblem.find({problemId}).sort({ solvedAt: -1 }); // Sorting by submission time in descending order
+        const submissions = await Submission.find({problemId,verdict:"Accepted"}).populate('userId','username').sort({ submissionTime: -1 }); // Sorting by submission time in descending order
 
         res.status(200).json(submissions); // Sending the submissions as a JSON response
     } catch (err) {

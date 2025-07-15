@@ -21,6 +21,11 @@ const problemResultSchema = new mongoose.Schema({
 });
 
 const standingsSchema = new mongoose.Schema({
+  rank:{
+    type: Number,
+    // required: true,
+    // unique: true, // Ensure ranks are unique
+  },
   contestId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Contest",
