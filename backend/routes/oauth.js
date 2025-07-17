@@ -19,6 +19,7 @@ router.get('/google/callback',
   async (req, res) => {
     try {
       const user = req.user;
+      console.log(user);
 
       // Generate JWT token
       const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '2d' });

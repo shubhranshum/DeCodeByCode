@@ -349,56 +349,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Quick Links Section */}
-            <div className="mt-8 bg-gray-800/50 p-5 rounded-xl border border-gray-700">
-              <SectionHeader title="Quick Links" icon="🔗" />
-              <ul className="space-y-3 mt-4">
-                <li>
-                  <Link
-                    to="/leaderboard"
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
-                  >
-                    <span className="bg-orange-500/10 p-2 rounded-lg">
-                      🏆
-                    </span>
-                    <span className="font-medium">Leaderboard</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/problems"
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
-                  >
-                    <span className="bg-blue-500/10 p-2 rounded-lg">
-                      💻
-                    </span>
-                    <span className="font-medium">Practice Problems</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/discuss"
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
-                  >
-                    <span className="bg-green-500/10 p-2 rounded-lg">
-                      💬
-                    </span>
-                    <span className="font-medium">Discussion Forum</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/resources"
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
-                  >
-                    <span className="bg-purple-500/10 p-2 rounded-lg">
-                      📚
-                    </span>
-                    <span className="font-medium">Learning Resources</span>
-                  </Link>
-                </li>
-              </ul>
-            </div>
+           
           </div>
         </div>
       </main>

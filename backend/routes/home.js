@@ -8,9 +8,9 @@ router.get('/home', (req, res) => {
             return res.status(401).json({ message: 'Unauthorized' });
         }
         // Send user data excluding sensitive information
-        const { _id, username, email, college, isAdmin } = req.user;
+        const { _id, username, email, college, isAdmin, profilePicture } = req.user;
         // console.log("User data:", { _id, username, email, college });
-        res.status(200).json({ _id, username, email, college, isAdmin});
+        res.status(200).json({ _id, username, email, college, isAdmin, profilePicture });
     } catch (error) {
         console.error('Error fetching user:', error);
         res.status(500).json({ message: 'Internal server error' });

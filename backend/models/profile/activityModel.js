@@ -12,7 +12,7 @@ const activitySchema = new Schema({
   refModel: {
     type: String,
     required: true,
-    enum: ['Problem', 'BlogPost', 'Comment'] // Add any model names you want to support
+    enum: ['Problem', 'BlogPost', 'Comment' , 'Connection','USER'] // Add any model names you want to support
   },
 
   type: {
@@ -26,15 +26,10 @@ const activitySchema = new Schema({
       'BLOG_DELETED',
       'COMMENT_ADDED',
       'LIKE_GIVEN',
-      
-
-      'FOLLOW_GIVEN',
-      'FOLLOW_ACCEPTED',
-      'FOLLOW_REJECTED',
-      'FOLLOW_REQUESTED',
-
-      
-    ],
+      'FOLLOWED',
+      'UNFOLLOWED',
+      'PROFILE_UPDATED'
+],
     required: true
   },
 

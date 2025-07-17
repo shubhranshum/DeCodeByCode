@@ -1,8 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 
-const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile }) => {
+const ProfileHeader = ({ profile, isFollowing , setIsFollowing, onEditClick, theme, toggleTheme, isOwnProfile,isFollowingAllowed }) => {
+  
+  
+  const handleFollow = async() =>{
+    const url = isFollowing ? `http://localhost:3000/profile/unfollow/${profile.username}` : `http://localhost:3000/profile/follow/${profile.username}`;
+    await fetch(url, {
+      method: "POST",
+      credentials: "include",
+    });
+    setIsFollowing(!isFollowing);
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-md p-6 mb-8 transition-colors border border-slate-100 dark:border-gray-700">
+    <div className={`rounded-xl shadow-sm p-6 mb-8 transition-colors border ${
+      theme === "dark" 
+        ? "bg-gray-800 border-gray-700" 
+        : "bg-white border-gray-200"
+    }`}>
       <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
         {/* Profile Image */}
         <div className="relative shrink-0">
@@ -10,10 +25,20 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
             <img
               src={profile?.profilePicture || "https://via.placeholder.com/150"}
               alt="Profile"
-              className="w-36 h-36 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg"
+              className="w-36 h-36 rounded-full object-cover border-4 shadow-lg"
+              style={{
+                borderColor: theme === "dark" ? "#374151" : "#f3f4f6"
+              }}
             />
             {isOwnProfile && (
-              <div className="absolute bottom-2 right-2 bg-indigo-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-colors cursor-pointer">
+              <div 
+                className={`absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+                  theme === "dark" 
+                    ? "bg-indigo-600 hover:bg-indigo-700" 
+                    : "bg-indigo-500 hover:bg-indigo-600"
+                } text-white`}
+                onClick={onEditClick}
+              >
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -32,7 +57,11 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
           </div>
 
           {/* Rank Badge */}
-          <div className="absolute -top-2 -right-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+          <div className={`absolute -top-2 -right-2 text-xs font-bold px-3 py-1 rounded-full shadow-md ${
+            theme === "dark" 
+              ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white" 
+              : "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+          }`}>
             #{profile?.stats?.ranking || "N/A"} Rank
           </div>
         </div>
@@ -42,22 +71,29 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
           <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
             <div>
               {/* Full Name */}
-              <h1 className="text-3xl font-bold text-slate-800 dark:text-gray-100 mb-1">
+              <h1 className={`text-3xl font-bold mb-1 ${
+                theme === "dark" ? "text-gray-100" : "text-gray-900"
+              }`}>
                 {profile?.firstName} {profile?.lastName}
               </h1>
 
               {/* Username */}
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-slate-600 dark:text-gray-300 font-medium">
+                <span className={`font-medium ${
+                  theme === "dark" ? "text-gray-300" : "text-gray-600"
+                }`}>
                   @{profile?.username}
                 </span>
                 <span
-                  className={`text-xs px-2 py-1 rounded-full
-                ${
-                  profile.isAdmin
-                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
-                    : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                }`}
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    profile.isAdmin
+                      ? theme === "dark" 
+                          ? "bg-yellow-900/30 text-yellow-300" 
+                          : "bg-yellow-100 text-yellow-800"
+                      : theme === "dark" 
+                          ? "bg-green-900/30 text-green-300" 
+                          : "bg-green-100 text-green-800"
+                  }`}
                 >
                   {profile.isAdmin ? "Admin" : "User"}
                 </span>
@@ -67,7 +103,9 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div className="flex items-start">
                   <svg
-                    className="w-5 h-5 text-slate-400 dark:text-gray-500 mr-2 mt-0.5 flex-shrink-0"
+                    className={`w-5 h-5 mr-2 mt-0.5 flex-shrink-0 ${
+                      theme === "dark" ? "text-gray-500" : "text-gray-400"
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -80,10 +118,12 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
                     />
                   </svg>
                   <div>
-                    <div className="text-xs text-slate-500 dark:text-gray-400">
+                    <div className={`text-xs ${
+                      theme === "dark" ? "text-gray-400" : "text-gray-500"
+                    }`}>
                       Age
                     </div>
-                    <div className="text-slate-700 dark:text-gray-200">
+                    <div className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
                       {profile?.age || "Not specified"}
                     </div>
                   </div>
@@ -91,7 +131,9 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
 
                 <div className="flex items-start">
                   <svg
-                    className="w-5 h-5 text-slate-400 dark:text-gray-500 mr-2 mt-0.5 flex-shrink-0"
+                    className={`w-5 h-5 mr-2 mt-0.5 flex-shrink-0 ${
+                      theme === "dark" ? "text-gray-500" : "text-gray-400"
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -104,10 +146,12 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
                     />
                   </svg>
                   <div>
-                    <div className="text-xs text-slate-500 dark:text-gray-400">
+                    <div className={`text-xs ${
+                      theme === "dark" ? "text-gray-400" : "text-gray-500"
+                    }`}>
                       Email
                     </div>
-                    <div className="text-slate-700 dark:text-gray-200">
+                    <div className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
                       {profile?.email}
                     </div>
                   </div>
@@ -115,7 +159,9 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
 
                 <div className="flex items-start">
                   <svg
-                    className="w-5 h-5 text-slate-400 dark:text-gray-500 mr-2 mt-0.5 flex-shrink-0"
+                    className={`w-5 h-5 mr-2 mt-0.5 flex-shrink-0 ${
+                      theme === "dark" ? "text-gray-500" : "text-gray-400"
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -128,10 +174,12 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
                     />
                   </svg>
                   <div>
-                    <div className="text-xs text-slate-500 dark:text-gray-400">
+                    <div className={`text-xs ${
+                      theme === "dark" ? "text-gray-400" : "text-gray-500"
+                    }`}>
                       College
                     </div>
-                    <div className="text-slate-700 dark:text-gray-200">
+                    <div className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
                       {profile?.college || "Not specified"}
                     </div>
                   </div>
@@ -139,7 +187,9 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
 
                 <div className="flex items-start">
                   <svg
-                    className="w-5 h-5 text-slate-400 dark:text-gray-500 mr-2 mt-0.5 flex-shrink-0"
+                    className={`w-5 h-5 mr-2 mt-0.5 flex-shrink-0 ${
+                      theme === "dark" ? "text-gray-500" : "text-gray-400"
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -158,10 +208,12 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
                     />
                   </svg>
                   <div>
-                    <div className="text-xs text-slate-500 dark:text-gray-400">
+                    <div className={`text-xs ${
+                      theme === "dark" ? "text-gray-400" : "text-gray-500"
+                    }`}>
                       Location
                     </div>
-                    <div className="text-slate-700 dark:text-gray-200">
+                    <div className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
                       {profile?.city
                         ? `${profile.city}, ${profile.state}, ${profile.country}`
                         : "Not specified"}
@@ -175,7 +227,11 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
             <div className="flex items-center gap-3">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-full bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-gray-600 transition-colors"
+                className={`p-2 rounded-full transition-colors ${
+                  theme === "dark" 
+                    ? "bg-gray-700 hover:bg-gray-600 text-gray-300" 
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
                 aria-label="Toggle theme"
               >
                 {theme === "light" ? (
@@ -203,10 +259,14 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
                 )}
               </button>
 
-              {isOwnProfile && (
+              {isOwnProfile ? (
                 <button
                   onClick={onEditClick}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-md hover:shadow-lg"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg ${
+                    theme === "dark" 
+                      ? "bg-indigo-600 hover:bg-indigo-700 text-white" 
+                      : "bg-indigo-500 hover:bg-indigo-600 text-white"
+                  }`}
                 >
                   <svg
                     className="w-5 h-5"
@@ -223,16 +283,72 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
                   </svg>
                   Edit Profile
                 </button>
-              )}
+              ) : isFollowingAllowed ?(
+                <button
+                  onClick={handleFollow}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg ${
+                    isFollowing
+                      ? theme === "dark" 
+                          ? "bg-gray-700 hover:bg-gray-600 text-gray-200" 
+                          : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                      : theme === "dark" 
+                          ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white" 
+                          : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
+                  }`}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    style={{ display: isFollowing ? 'none' : 'block' }}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                    />
+                  </svg>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    style={{ display: isFollowing ? 'block' : 'none' }}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  {isFollowing ? "Following" : "Follow"}
+                </button>
+              ):
+               ""
+              }
             </div>
           </div>
 
           {/* Additional Info */}
-          <div className="flex flex-wrap gap-4 border-t border-slate-100 dark:border-gray-700 pt-4">
+          <div className="flex flex-wrap gap-4 border-t pt-4"
+            style={{
+              borderColor: theme === "dark" ? "#374151" : "#e5e7eb"
+            }}>
             <div className="flex items-center">
-              <div className="bg-indigo-100 dark:bg-indigo-900/20 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                theme === "dark" 
+                  ? "bg-indigo-900/30" 
+                  : "bg-indigo-100"
+              }`}>
                 <svg
-                  className="w-5 h-5 text-indigo-600 dark:text-indigo-400"
+                  className={`w-5 h-5 ${
+                    theme === "dark" 
+                      ? "text-indigo-400" 
+                      : "text-indigo-600"
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -246,10 +362,14 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
                 </svg>
               </div>
               <div>
-                <div className="text-xs text-slate-500 dark:text-gray-400">
+                <div className={`text-xs ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-500"
+                }`}>
                   Member since
                 </div>
-                <div className="font-medium text-slate-800 dark:text-gray-200">
+                <div className={`font-medium ${
+                  theme === "dark" ? "text-gray-200" : "text-gray-800"
+                }`}>
                   {profile &&
                     new Date(profile.joinedAt).toLocaleDateString("en-US", {
                       year: "numeric",
@@ -260,9 +380,17 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
             </div>
 
             <div className="flex items-center">
-              <div className="bg-green-100 dark:bg-green-900/20 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                theme === "dark" 
+                  ? "bg-green-900/30" 
+                  : "bg-green-100"
+              }`}>
                 <svg
-                  className="w-5 h-5 text-green-600 dark:text-green-400"
+                  className={`w-5 h-5 ${
+                    theme === "dark" 
+                      ? "text-green-400" 
+                      : "text-green-600"
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -276,10 +404,14 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
                 </svg>
               </div>
               <div>
-                <div className="text-xs text-slate-500 dark:text-gray-400">
+                <div className={`text-xs ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-500"
+                }`}>
                   Last active
                 </div>
-                <div className="font-medium text-slate-800 dark:text-gray-200">
+                <div className={`font-medium ${
+                  theme === "dark" ? "text-gray-200" : "text-gray-800"
+                }`}>
                   {profile &&
                     new Date(profile.lastSeenAt).toLocaleDateString("en-US", {
                       month: "short",
@@ -291,9 +423,17 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
 
             {profile?.company && (
               <div className="flex items-center">
-                <div className="bg-purple-100 dark:bg-purple-900/20 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                  theme === "dark" 
+                    ? "bg-purple-900/30" 
+                    : "bg-purple-100"
+                }`}>
                   <svg
-                    className="w-5 h-5 text-purple-600 dark:text-purple-400"
+                    className={`w-5 h-5 ${
+                      theme === "dark" 
+                        ? "text-purple-400" 
+                        : "text-purple-600"
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -307,10 +447,14 @@ const ProfileHeader = ({ profile, onEditClick, theme, toggleTheme, isOwnProfile 
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500 dark:text-gray-400">
+                  <div className={`text-xs ${
+                    theme === "dark" ? "text-gray-400" : "text-gray-500"
+                  }`}>
                     Company
                   </div>
-                  <div className="font-medium text-slate-800 dark:text-gray-200">
+                  <div className={`font-medium ${
+                    theme === "dark" ? "text-gray-200" : "text-gray-800"
+                  }`}>
                     {profile?.company}
                   </div>
                 </div>
