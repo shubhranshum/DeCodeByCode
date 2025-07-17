@@ -125,6 +125,7 @@ const followProfile = async (req, res) => {
       sender: userId,
       reciever: recipient._id,
     });
+    console.log(connection);
 
     await connection.save();
     await logActivity(userId, recipient._id, 'Connection', 'FOLLOWED', "You Followed " + recipient.username);

@@ -22,6 +22,6 @@ const ConnectionSchema = new Schema({
 );
 
 // Optional: Add unique compound index to avoid duplicate connections
-ConnectionSchema.index({ requester: 1, recipient: 1 }, { unique: true });
+ConnectionSchema.index({ sender: 1, reciever: 1 }, { unique: true });
 
 module.exports = mongoose.model('Connection', ConnectionSchema);
