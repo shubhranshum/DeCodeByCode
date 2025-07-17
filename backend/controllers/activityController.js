@@ -31,7 +31,7 @@ exports.logActivity = async (
   }
 };
 
-// Get all activities of a user (optional filters)
+
 exports.getUserActivities = async (req, res) => {
   console.log("Hello from getUserActivity")
   try {
@@ -41,8 +41,8 @@ exports.getUserActivities = async (req, res) => {
 
     
   
-    const activities = await Activity.find(query);
-    console.log('Activities fetched');
+    const activities = await Activity.find(query).populate('refId', 'username');
+    console.log(activities);
 
     res.status(200).json({ success: true, activities });
   } catch (err) {

@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  // ====== Auth Fields ======
+  
   username: {
     type: String,
-    required: false, // May be missing in OAuth
+    required: false, 
     index: true
   },
   email: {

@@ -9,7 +9,7 @@ import FeaturedBlogCard from './BlogUIElements/featuredBlogCard';
 
 // Theme management hook
 const useTheme = () => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark'); // Default to dark
+  const [theme, setTheme] = useState('dark'); // Default to dark
 
   useEffect(() => {
     // Get theme from localStorage or use system preference
@@ -18,17 +18,21 @@ const useTheme = () => {
     
     const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
     setTheme(initialTheme);
-    localStorage.setItem('theme', initialTheme);
-    document.documentElement.className = initialTheme;
+    applyTheme(initialTheme);
   }, []);
 
-  // Apply theme whenever it changes
-  useEffect(() => {
-    localStorage.setItem('theme', theme);
-    document.documentElement.className = theme;
+  const applyTheme = (themeName) => {
+    localStorage.setItem('theme', themeName);
+    document.documentElement.classList.toggle('dark', themeName === 'dark');
+  };
+
+  const toggleTheme = useCallback(() => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    applyTheme(newTheme);
   }, [theme]);
 
-  return theme;
+  return { theme, toggleTheme };
 };
 
 // Blog data fetching hook
@@ -188,7 +192,7 @@ const useBlogFilters = (blogs, search, selectedTag) => {
 // UI COMPONENTS
 // ==============
 
-const BlogHeader = ({ handleCreateBlog }) => (
+const BlogHeader = ({ handleCreateBlog, theme }) => (
   <motion.div 
     className="flex flex-col md:flex-row md:justify-between md:items-center mb-12"
     initial={{ opacity: 0, y: 20 }}
@@ -197,15 +201,15 @@ const BlogHeader = ({ handleCreateBlog }) => (
   >
     <div className="mb-6 md:mb-0">
       <motion.h1 
-        className="text-3xl md:text-4xl font-bold mb-2 text-white dark:text-gray-900"
+        className="text-3xl md:text-4xl font-bold mb-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        Stories & <span className="text-orange-400 dark:text-blue-500">Insights</span>
+        Stories & <span className={theme === 'dark' ? "text-violet-400" : "text-purple-600"}>Insights</span>
       </motion.h1>
       <motion.p 
-        className="text-gray-400 dark:text-gray-600 font-light max-w-2xl"
+        className="font-light max-w-2xl"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
@@ -215,7 +219,11 @@ const BlogHeader = ({ handleCreateBlog }) => (
     </div>
     <motion.button
       onClick={handleCreateBlog}
-      className="bg-orange-500 dark:bg-blue-500 hover:bg-orange-600 dark:hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-lg shadow-orange-500/20 dark:shadow-blue-500/20 flex items-center justify-center gap-2"
+      className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-lg flex items-center justify-center gap-2 ${
+        theme === 'dark' 
+          ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20" 
+          : "bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/20"
+      }`}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       initial={{ opacity: 0 }}
@@ -228,7 +236,7 @@ const BlogHeader = ({ handleCreateBlog }) => (
   </motion.div>
 );
 
-const SearchFilter = ({ search, setSearch, selectedTag, setSelectedTag, allTags }) => (
+const SearchFilter = ({ search, setSearch, selectedTag, setSelectedTag, allTags, theme }) => (
   <motion.div 
     className="flex flex-col md:flex-row gap-4 mb-12"
     initial={{ opacity: 0, y: 20 }}
@@ -236,11 +244,17 @@ const SearchFilter = ({ search, setSearch, selectedTag, setSelectedTag, allTags 
     transition={{ duration: 0.5, delay: 0.1 }}
   >
     <div className="flex-1 relative">
-      <FaSearch className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+      <FaSearch className={`w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 ${
+        theme === 'dark' ? "text-gray-400" : "text-gray-500"
+      }`} />
       <motion.input
         type="text"
         placeholder="Search articles..."
-        className="w-full pl-12 pr-4 py-3 bg-[#1e293b] dark:bg-white border border-white/10 dark:border-gray-300 rounded-lg text-white dark:text-gray-900 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-blue-500 focus:border-transparent font-light"
+        className={`w-full pl-12 pr-4 py-3 border rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-transparent font-light ${
+          theme === 'dark' 
+            ? "bg-gray-800 border-gray-700 text-white focus:ring-indigo-500" 
+            : "bg-white border-gray-300 text-gray-900 focus:ring-purple-500"
+        }`}
         value={search}
         onChange={e => setSearch(e.target.value)}
         whileFocus={{ scale: 1.01 }}
@@ -248,9 +262,15 @@ const SearchFilter = ({ search, setSearch, selectedTag, setSelectedTag, allTags 
     </div>
     <div className="md:w-48">
       <div className="relative">
-        <FiTag className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+        <FiTag className={`w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 ${
+          theme === 'dark' ? "text-gray-400" : "text-gray-500"
+        }`} />
         <select
-          className="w-full pl-12 pr-4 py-3 bg-[#1e293b] dark:bg-white border border-white/10 dark:border-gray-300 rounded-lg text-white dark:text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-blue-500 focus:border-transparent font-light appearance-none"
+          className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent font-light appearance-none ${
+            theme === 'dark' 
+              ? "bg-gray-800 border-gray-700 text-white focus:ring-indigo-500" 
+              : "bg-white border-gray-300 text-gray-900 focus:ring-purple-500"
+          }`}
           value={selectedTag}
           onChange={e => setSelectedTag(e.target.value)}
         >
@@ -264,7 +284,7 @@ const SearchFilter = ({ search, setSearch, selectedTag, setSelectedTag, allTags 
   </motion.div>
 );
 
-const TagCloud = ({ allTags, selectedTag, setSelectedTag }) => (
+const TagCloud = ({ allTags, selectedTag, setSelectedTag, theme }) => (
   <motion.div 
     className="flex flex-wrap gap-2 mb-12"
     initial={{ opacity: 0 }}
@@ -275,8 +295,10 @@ const TagCloud = ({ allTags, selectedTag, setSelectedTag }) => (
       onClick={() => setSelectedTag('')}
       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
         selectedTag === '' 
-          ? 'bg-orange-500 dark:bg-blue-500 text-white' 
-          : 'bg-[#1e293b] dark:bg-gray-100 text-gray-300 dark:text-gray-700 hover:bg-orange-500/20 dark:hover:bg-blue-500/20'
+          ? (theme === 'dark' ? 'bg-indigo-600 text-white' : 'bg-purple-600 text-white')
+          : (theme === 'dark' 
+              ? 'bg-gray-800 text-gray-300 hover:bg-indigo-500/20' 
+              : 'bg-gray-100 text-gray-700 hover:bg-purple-500/20')
       }`}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
@@ -289,8 +311,10 @@ const TagCloud = ({ allTags, selectedTag, setSelectedTag }) => (
         onClick={() => setSelectedTag(tag)}
         className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
           selectedTag === tag 
-            ? 'bg-orange-500 dark:bg-blue-500 text-white' 
-            : 'bg-[#1e293b] dark:bg-gray-100 text-gray-300 dark:text-gray-700 hover:bg-orange-500/20 dark:hover:bg-blue-500/20'
+            ? (theme === 'dark' ? 'bg-indigo-600 text-white' : 'bg-purple-600 text-white')
+            : (theme === 'dark' 
+                ? 'bg-gray-800 text-gray-300 hover:bg-indigo-500/20' 
+                : 'bg-gray-100 text-gray-700 hover:bg-purple-500/20')
         }`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -304,30 +328,34 @@ const TagCloud = ({ allTags, selectedTag, setSelectedTag }) => (
   </motion.div>
 );
 
-const LoadingSkeleton = () => (
+const LoadingSkeleton = ({ theme }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
     {[1, 2, 3].map((item) => (
       <motion.div
         key={item}
-        className="bg-[#1e293b] dark:bg-gray-100 rounded-xl shadow-sm border border-white/5 dark:border-gray-300 overflow-hidden"
+        className={`rounded-xl shadow-sm border overflow-hidden ${
+          theme === 'dark' 
+            ? "bg-gray-800 border-gray-700" 
+            : "bg-white border-gray-200"
+        }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: item * 0.1 }}
       >
         <div className="animate-pulse">
-          <div className="bg-gray-700 dark:bg-gray-300 h-48 w-full"></div>
+          <div className={theme === 'dark' ? "bg-gray-700 h-48 w-full" : "bg-gray-300 h-48 w-full"}></div>
           <div className="p-6">
-            <div className="h-4 bg-gray-700 dark:bg-gray-300 rounded w-3/4 mb-4"></div>
-            <div className="h-3 bg-gray-700 dark:bg-gray-300 rounded w-full mb-2"></div>
-            <div className="h-3 bg-gray-700 dark:bg-gray-300 rounded w-5/6 mb-4"></div>
+            <div className={theme === 'dark' ? "bg-gray-700 rounded w-3/4 mb-4 h-4" : "bg-gray-300 rounded w-3/4 mb-4 h-4"}></div>
+            <div className={theme === 'dark' ? "bg-gray-700 rounded w-full mb-2 h-3" : "bg-gray-300 rounded w-full mb-2 h-3"}></div>
+            <div className={theme === 'dark' ? "bg-gray-700 rounded w-5/6 mb-4 h-3" : "bg-gray-300 rounded w-5/6 mb-4 h-3"}></div>
             <div className="flex gap-2 mb-4">
               {[1, 2].map(i => (
-                <div key={i} className="h-6 bg-gray-700 dark:bg-gray-300 rounded-full w-16"></div>
+                <div key={i} className={theme === 'dark' ? "h-6 bg-gray-700 rounded-full w-16" : "h-6 bg-gray-300 rounded-full w-16"}></div>
               ))}
             </div>
             <div className="flex justify-between items-center mt-4">
-              <div className="h-3 bg-gray-700 dark:bg-gray-300 rounded w-16"></div>
-              <div className="h-8 bg-gray-700 dark:bg-gray-300 rounded w-20"></div>
+              <div className={theme === 'dark' ? "h-3 bg-gray-700 rounded w-16" : "h-3 bg-gray-300 rounded w-16"}></div>
+              <div className={theme === 'dark' ? "h-8 bg-gray-700 rounded w-20" : "h-8 bg-gray-300 rounded w-20"}></div>
             </div>
           </div>
         </div>
@@ -336,26 +364,30 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const ErrorState = ({ error }) => (
+const ErrorState = ({ error, theme }) => (
   <motion.div 
-    className="bg-red-500/10 border border-red-500/30 text-red-300 dark:text-red-500 px-6 py-4 rounded-lg mb-10 flex items-start gap-3"
+    className={`px-6 py-4 rounded-lg mb-10 flex items-start gap-3 ${
+      theme === 'dark' 
+        ? "bg-red-500/10 border border-red-500/30 text-red-300" 
+        : "bg-red-100 border border-red-200 text-red-700"
+    }`}
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ type: 'spring', stiffness: 300 }}
   >
-    <div className="bg-red-500/20 dark:bg-red-500/10 p-2 rounded-full">
-      <svg className="w-6 h-6 text-red-400 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className={theme === 'dark' ? "bg-red-500/20 p-2 rounded-full" : "bg-red-500/10 p-2 rounded-full"}>
+      <svg className={theme === 'dark' ? "w-6 h-6 text-red-400" : "w-6 h-6 text-red-500"} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     </div>
     <div>
-      <h3 className="font-medium text-white dark:text-gray-900">Something went wrong</h3>
+      <h3 className={theme === 'dark' ? "font-medium text-white" : "font-medium text-gray-900"}>Something went wrong</h3>
       <p className="mt-1 text-sm">{error}</p>
     </div>
   </motion.div>
 );
 
-const NoResultsState = ({ setSearch, setSelectedTag }) => (
+const NoResultsState = ({ setSearch, setSelectedTag, theme }) => (
   <motion.div 
     className="text-center py-20"
     initial={{ opacity: 0 }}
@@ -363,16 +395,22 @@ const NoResultsState = ({ setSearch, setSelectedTag }) => (
     transition={{ duration: 0.5 }}
   >
     <motion.div 
-      className="bg-orange-500/10 dark:bg-blue-500/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+      className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
+        theme === 'dark' 
+          ? "bg-indigo-500/10" 
+          : "bg-purple-500/10"
+      }`}
       animate={{ rotate: [0, 10, 0] }}
       transition={{ repeat: Infinity, duration: 2 }}
     >
-      <svg className="w-10 h-10 text-orange-500 dark:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className={theme === 'dark' ? "w-10 h-10 text-indigo-500" : "w-10 h-10 text-purple-500"} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     </motion.div>
-    <h3 className="text-xl font-medium text-white dark:text-gray-900 mb-2">No articles found</h3>
-    <p className="text-gray-400 dark:text-gray-600 mb-6 max-w-md mx-auto">
+    <h3 className={`text-xl font-medium mb-2 ${theme === 'dark' ? "text-white" : "text-gray-900"}`}>No articles found</h3>
+    <p className={`mb-6 max-w-md mx-auto ${
+      theme === 'dark' ? "text-gray-400" : "text-gray-600"
+    }`}>
       Try different search terms or filters
     </p>
     <motion.button
@@ -380,7 +418,11 @@ const NoResultsState = ({ setSearch, setSelectedTag }) => (
         setSearch('');
         setSelectedTag('');
       }}
-      className="bg-orange-500 dark:bg-blue-500 hover:bg-orange-600 dark:hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-lg shadow-orange-500/20 dark:shadow-blue-500/20"
+      className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-lg ${
+        theme === 'dark' 
+          ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20" 
+          : "bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/20"
+      }`}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
@@ -389,23 +431,31 @@ const NoResultsState = ({ setSearch, setSelectedTag }) => (
   </motion.div>
 );
 
-const EndOfContent = ({ scrollToTop }) => (
+const EndOfContent = ({ scrollToTop, theme }) => (
   <motion.div 
-    className="text-center py-12 border-t border-white/10 dark:border-gray-300"
+    className={`text-center py-12 border-t ${
+      theme === 'dark' ? "border-gray-700" : "border-gray-200"
+    }`}
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
   >
     <motion.div 
-      className="text-gray-500 font-light mb-2"
+      className={`font-light mb-2 ${
+        theme === 'dark' ? "text-gray-500" : "text-gray-400"
+      }`}
       animate={{ y: [0, -5, 0] }}
       transition={{ repeat: Infinity, duration: 2 }}
     >
       You've reached the end
     </motion.div>
-    <p className="text-gray-600 text-sm mb-4">No more articles to load</p>
+    <p className={`text-sm mb-4 ${
+      theme === 'dark' ? "text-gray-600" : "text-gray-500"
+    }`}>No more articles to load</p>
     <motion.button 
       onClick={scrollToTop}
-      className="text-orange-500 dark:text-blue-500 hover:text-orange-400 dark:hover:text-blue-400 font-medium flex items-center justify-center gap-2 mx-auto"
+      className={`font-medium flex items-center justify-center gap-2 mx-auto ${
+        theme === 'dark' ? "text-indigo-400 hover:text-indigo-300" : "text-purple-600 hover:text-purple-700"
+      }`}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
     >
@@ -420,7 +470,7 @@ const EndOfContent = ({ scrollToTop }) => (
 // ================
 
 const Blog = () => {
-  const theme = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const [search, setSearch] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   
@@ -437,20 +487,24 @@ const Blog = () => {
   }, [hasMore, loading]);
 
   return (
-    <div className="min-h-screen pt-0 bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-gray-100 dark:to-gray-200 text-white dark:text-gray-900">
+    <div className={`min-h-screen pt-0 text-gray-900 dark:text-gray-100 ${
+      theme === 'dark' 
+        ? "bg-gradient-to-br from-gray-900 via-indigo-900 to-violet-900" 
+        : "bg-gradient-to-br from-white via-purple-50 to-white"
+    }`}>
       {/* Floating Back to Top Button */}
       <AnimatePresence>
         {showScrollTop && (
           <motion.button
             onClick={scrollToTop}
-            className="fixed bottom-6 right-6 z-50 p-3 rounded-full shadow-lg hover:bg-orange-600 dark:hover:bg-blue-600 transition-colors"
+            className="fixed bottom-6 right-6 z-50 p-3 rounded-full shadow-lg transition-colors"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
             style={{
-              backgroundColor: theme === 'dark' ? '#f97316' : '#3b82f6',
+              backgroundColor: theme === 'dark' ? '#6366f1' : '#8b5cf6',
               color: 'white'
             }}
             aria-label="Scroll to top"
@@ -478,7 +532,10 @@ const Blog = () => {
       </AnimatePresence>
 
       <div className="max-w-6xl mx-auto px-4 py-12">
-        <BlogHeader handleCreateBlog={handleCreateBlog} />
+        <BlogHeader 
+          handleCreateBlog={handleCreateBlog} 
+          theme={theme}
+        />
         
         <SearchFilter 
           search={search}
@@ -486,19 +543,21 @@ const Blog = () => {
           selectedTag={selectedTag}
           setSelectedTag={setSelectedTag}
           allTags={allTags}
+          theme={theme}
         />
         
         <TagCloud 
           allTags={allTags}
           selectedTag={selectedTag}
           setSelectedTag={setSelectedTag}
+          theme={theme}
         />
 
         {/* Error State */}
-        {error && <ErrorState error={error} />}
+        {error && <ErrorState error={error} theme={theme} />}
 
         {/* Loading State */}
-        {loading && blogs.length === 0 && <LoadingSkeleton />}
+        {loading && blogs.length === 0 && <LoadingSkeleton theme={theme} />}
 
         {/* Blog Cards */}
         <AnimatePresence>
@@ -520,7 +579,7 @@ const Blog = () => {
 
         {/* End of Content */}
         {!hasMore && filteredBlogs.length > 0 && (
-          <EndOfContent scrollToTop={scrollToTop} />
+          <EndOfContent scrollToTop={scrollToTop} theme={theme} />
         )}
 
         {/* No Results */}
@@ -528,6 +587,7 @@ const Blog = () => {
           <NoResultsState 
             setSearch={setSearch} 
             setSelectedTag={setSelectedTag} 
+            theme={theme}
           />
         )}
       </div>
