@@ -16,8 +16,8 @@ import {
   ChevronDownIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline'
-import { useUser } from '../../context/UserContext.jsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
+import {UserContext} from '../../context/UserContext.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navigation = [
@@ -293,6 +293,11 @@ export default function Navbar({ activePage }) {
       item.current = false;
     }
   });
+
+  const { user, setUser } = useContext(UserContext);
+  const [hasNotifications, setHasNotifications] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
 
   // Calculate unread notifications count
   const unreadCount = notifications.filter(n => !n.isRead).length;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useUser } from "../../context/UserContext";
+// import { useUser } from "../../context/UserContext";
 import Navbar from "../Navbar/navbar.jsx";
 
 export default function LoginPage() {

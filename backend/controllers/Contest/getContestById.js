@@ -6,7 +6,7 @@ async function getContestById(req, res) {
     try {
         const contest = await Contest.findById(contestId)
             .populate('creator', 'username')
-            .populate('Problems','title _id');  // only include title and _id
+            .populate('Problems','title _id difficulty points');  // only include title and _id
         if (!contest) {
             return res.status(404).json({ message: 'Contest not found' });
         }
