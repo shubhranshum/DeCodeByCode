@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useContext } from 'react';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { 
   Bars3Icon, 
@@ -20,7 +20,7 @@ import {
   CircleStackIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUser } from '../../context/UserContext.jsx';
+import { UserContext } from '../../context/UserContext.jsx';
 
 // --- HELPERS (UI LOGIC) ---
 
@@ -267,7 +267,7 @@ const ProfileDropdown = ({ user, onSignOut }) => {
 
 // --- MAIN NAVBAR COMPONENT ---
 export default function Navbar({ activePage }) {
-    const { user, setUser } = useUser();
+    const { user, setUser } = useContext(UserContext);
     const notificationsHook = useNotifications();
     const [notificationsOpen, setNotificationsOpen] = useState(false);
 

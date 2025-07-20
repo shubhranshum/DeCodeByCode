@@ -1,10 +1,8 @@
-
 import { useParams, useLocation } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import SubmissionCodeEditor from "../Tasks/submissionCodeEditor.jsx";
 import codeOutput from "../Tasks/output.jsx"; // Assuming this is an external utility for running code
 import MathjaxRenderer from "../MathjaxRenderer"; // Assuming this is an external utility for rendering MathJax
-// Removed getContestBySlug as this component is no longer contest-specific
 import { getProblemBySlug } from '../Tasks/getProblemBySlug'; // Utility to fetch problem by slug
 
 // --- Loading and Error Components ---
@@ -44,10 +42,6 @@ function formatDuration(ms) {
 // Move STATUS_RANK outside the component to make it a true constant
 const STATUS_RANK = { Unattempted: 0, Attempted: 1, Accepted: 2 };
 
-export default function ContestProblem() {
-  const { problemId, contestId } = useParams();
-  const STORAGE_KEY = `status-${problemId}`;
-
 // --- Main GlobalProblem Component ---
 export default function GlobalProblem() {
   // Get problemSlug from the URL parameters
@@ -56,7 +50,6 @@ export default function GlobalProblem() {
 
   // Internal state to store problem ID, derived from the slug
   const [problemId, setProblemId] = useState(null);
-  // contestId is no longer relevant for a global problem page
 
   // Local storage key for problem status, dependent on problemId
   const STORAGE_KEY = useRef(null);
@@ -79,9 +72,6 @@ export default function GlobalProblem() {
   const [solutions, setSolutions] = useState([]);
   const [isSolutionsLoading, setIsSolutionsLoading] = useState(false);
   const [selectedSolution, setSelectedSolution] = useState(null);
-  const [customInput, setCustomInput] = useState("");
-  const [customOutput, setCustomOutput] = useState(null);
-  const [isRunning, setIsRunning] = useState(false);
 
   // State for custom input/output
   const [customInput, setCustomInput] = useState("");
@@ -101,23 +91,6 @@ export default function GlobalProblem() {
   const updateStatus = useCallback((newStatus) => {
     // Ensure STORAGE_KEY.current is set before attempting to use localStorage
     if (!problemId || !STORAGE_KEY.current) return;
-  // fetch problem + submissions on mount or problemId change
-  useEffect(() => {
-    setIsLoading(true);
-    fetch(`http://localhost:3000/problems/${problemId}`, {
-      credentials: "include"
-    })
-      .then(res => res.json())
-      .then(data => setProblem(data))
-      .catch(err => {
-        console.error("Failed to load problem:", err);
-        setProblem(null);
-      })
-      .finally(() => setIsLoading(false));
-
-    fetchSubmissions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contestId,problemId]);
 
     const prev = localStorage.getItem(STORAGE_KEY.current) || "Unattempted";
     if (STATUS_RANK[newStatus] > STATUS_RANK[prev]) {
@@ -138,7 +111,7 @@ export default function GlobalProblem() {
     try {
       // API endpoint for global problem submissions
       const res = await fetch(
-        `http://localhost:3000/contests/${contestId}/submissions/${problemId}`,
+        `http://localhost:3000/problems/${problemId}/submissions`, // Changed API endpoint
         { credentials: "include" }
       );
       const data = await res.json();
@@ -216,11 +189,11 @@ export default function GlobalProblem() {
       } catch (err) {
         console.error("Error loading problem:", err);
         setProblem(null); // Set problem to null to trigger ProblemNotFound component
-      } finally {
-        // isLoading will be set to false in the next useEffect once problemId is set
-        // or if problem wasn't found.
-        if (!problem) setIsLoading(false);
+        setIsLoading(false); // Set loading to false immediately if problem not found
       }
+      // isLoading will be set to false in the next useEffect once problemId is set
+      // or if problem wasn't found.
+      // Removed the problematic conditional setIsLoading(false) from finally block
     };
 
     fetchProblemData();
@@ -251,7 +224,6 @@ export default function GlobalProblem() {
 
       // Fetch submissions once problemId is available
       fetchSubmissions();
-      // fetchAllSolutions(); // Only fetch when solutions tab is active to avoid unnecessary calls
       setIsLoading(false); // Stop overall loading here, as essential data is now available
     }
   }, [problemId, fetchSubmissions]); // fetchAllSolutions is intentionally excluded here
@@ -264,7 +236,6 @@ export default function GlobalProblem() {
       setVerdict("Error: Problem ID not available for submission.");
       return;
     }
-  }, [contestId, problemId, updateStatus]);
 
     let isCorrect = true;
     let finalVerdict = "Accepted";
@@ -277,15 +248,15 @@ export default function GlobalProblem() {
       // Assuming codeOutput simulates execution and returns status/output
       const out = await codeOutput(codeToSubmit, tc.input, tc.output.stdout);
       maxTime = Math.max(maxTime, Number(out.time || 0));
-      maxMem  = Math.max(maxMem, Number(out.memory || 0));
+      maxMem = Math.max(maxMem, Number(out.memory || 0));
 
       if (out.status_id !== 3) { // Assuming status_id 3 means Accepted
         isCorrect = false;
         finalVerdict = out.stderr
-          ? `Runtime Error on Test ${i+1}: ${out.stderr}`
+          ? `Runtime Error on Test ${i + 1}: ${out.stderr}`
           : out.compile_output
-            ? `Compilation Error on Test ${i+1}: ${out.compile_output}`
-            : `${out.status?.description || "Unknown Error"} on Test ${i+1}`;
+            ? `Compilation Error on Test ${i + 1}: ${out.compile_output}`
+            : `${out.status?.description || "Unknown Error"} on Test ${i + 1}`;
         break;
       }
     }
@@ -297,7 +268,7 @@ export default function GlobalProblem() {
     // Post the submission to the backend using problemId
     try {
       await fetch(
-        `http://localhost:3000/problems/${problemId}/submit`,
+        `http://localhost:3000/problems/${problemId}/submit`, // Changed API endpoint
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -316,7 +287,7 @@ export default function GlobalProblem() {
       console.error("Failed to submit code:", error);
       setVerdict("Submission failed due to network error.");
     }
-  }, [problemId, problem, updateStatus, fetchSubmissions]); // Dependencies for useCallback
+  }, [problemId, problem, updateStatus, fetchSubmissions]); // Removed contestId from dependencies
 
 
   // --- Callback: Handle Running Custom Input ---
@@ -331,7 +302,7 @@ export default function GlobalProblem() {
       // Run user's code with custom input
       const userOut = await codeOutput(code, customInput);
       // Run problem's solution code with custom input to get expected output
-      const expectedOut = await codeOutput(problem.codeSolution, customInput);
+      const expectedOut = await codeOutput(problem.codeSolution, customInput); // Assuming problem.codeSolution is runnable
 
       setCustomOutput({
         userOutput: userOut.stdout || userOut.stderr || userOut.compile_output || "No output",
@@ -372,9 +343,9 @@ export default function GlobalProblem() {
                 status === "Accepted"
                   ? isDark ? "bg-green-900/30 text-green-400 border-green-600" : "bg-green-100 text-green-700 border-green-300"
                   : status === "Attempted"
-                  ? isDark ? "bg-yellow-900/20 text-yellow-400 border-yellow-600" : "bg-yellow-100 text-yellow-700 border-yellow-300"
-                  : isDark ? "bg-gray-800 text-gray-400 border-gray-600" : "bg-slate-100 text-slate-500 border-slate-300"
-              }`}>
+                    ? isDark ? "bg-yellow-900/20 text-yellow-400 border-yellow-600" : "bg-yellow-100 text-yellow-700 border-yellow-300"
+                    : isDark ? "bg-gray-800 text-gray-400 border-gray-600" : "bg-slate-100 text-slate-500 border-slate-300"
+                }`}>
                 {status}
               </span>
             </div>
@@ -383,9 +354,9 @@ export default function GlobalProblem() {
             Difficulty:{" "}
             <span className={`font-medium ${
               problem.difficulty === "Easy" ? "text-green-500"
-              : problem.difficulty === "Medium" ? "text-yellow-500"
-              : "text-red-500"
-            }`}>
+                : problem.difficulty === "Medium" ? "text-yellow-500"
+                  : "text-red-500"
+              }`}>
               {problem.difficulty || "Unknown"}
             </span>
           </div>
@@ -397,7 +368,7 @@ export default function GlobalProblem() {
         <div className="lg:w-1/2 flex flex-col gap-4 h-full">
           <div className={`flex-1 rounded-lg border overflow-hidden flex flex-col ${
             isDark ? "bg-gray-800 border-gray-700" : "bg-white border-slate-200"
-          }`}>
+            }`}>
             {/* Tab Navigation */}
             <div className={`flex border-b ${isDark ? "border-gray-700" : "border-slate-200"}`}>
               <button
@@ -405,7 +376,7 @@ export default function GlobalProblem() {
                   activeTab === "problem"
                     ? isDark ? "text-orange-500 border-b-2 border-orange-500" : "text-indigo-600 border-b-2 border-indigo-600"
                     : isDark ? "text-gray-400 hover:text-gray-300" : "text-slate-500 hover:text-slate-700"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("problem")}
               >
                 Description
@@ -415,7 +386,7 @@ export default function GlobalProblem() {
                   activeTab === "submissions"
                     ? isDark ? "text-orange-500 border-b-2 border-orange-500" : "text-indigo-600 border-b-2 border-indigo-600"
                     : isDark ? "text-gray-400 hover:text-gray-300" : "text-slate-500 hover:text-slate-700"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("submissions")}
               >
                 Submissions
@@ -426,7 +397,7 @@ export default function GlobalProblem() {
                   activeTab === "solutions"
                     ? isDark ? "text-orange-500 border-b-2 border-orange-500" : "text-indigo-600 border-b-2 border-indigo-600"
                     : isDark ? "text-gray-400 hover:text-gray-300" : "text-slate-500 hover:text-slate-700"
-                }`}
+                  }`}
                 onClick={() => {
                   setActiveTab("solutions");
                   // Only fetch solutions if the tab is activated and solutions haven't been loaded yet
@@ -440,7 +411,7 @@ export default function GlobalProblem() {
                   activeTab === "run-code"
                     ? isDark ? "text-orange-500 border-b-2 border-orange-500" : "text-indigo-600 border-b-2 border-indigo-600"
                     : isDark ? "text-gray-400 hover:text-gray-300" : "text-slate-500 hover:text-slate-700"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("run-code")}
               >
                 Run Code
@@ -465,7 +436,7 @@ export default function GlobalProblem() {
                       <h2 className="text-xl font-bold">Input Format</h2>
                       <div className={`p-3 rounded-md font-mono text-sm ${
                         isDark ? "bg-gray-700 text-gray-200" : "bg-slate-100 text-slate-800"
-                      }`}>
+                        }`}>
                         <MathjaxRenderer html={problem.inputFormat} />
                       </div>
                     </div>
@@ -473,7 +444,7 @@ export default function GlobalProblem() {
                       <h2 className="text-xl font-bold">Output Format</h2>
                       <div className={`p-3 rounded-md font-mono text-sm ${
                         isDark ? "bg-gray-700 text-gray-200" : "bg-slate-100 text-slate-800"
-                      }`}>
+                        }`}>
                         <MathjaxRenderer html={problem.outputFormat} />
                       </div>
                     </div>
@@ -486,7 +457,7 @@ export default function GlobalProblem() {
                       {problem.testCases.filter(tc => tc.visible).map((testCase, index) => (
                         <div key={index} className={`rounded-lg overflow-hidden ${
                           isDark ? "bg-gray-700/50" : "bg-slate-100"
-                        }`}>
+                          }`}>
                           <div className={`px-4 py-2 ${isDark ? "bg-gray-700" : "bg-slate-200"}`}>
                             <h3 className="font-medium">Sample {index + 1}</h3>
                             {testCase.explanation && (
@@ -500,7 +471,7 @@ export default function GlobalProblem() {
                               <h4 className="text-sm font-medium mb-1">Input</h4>
                               <pre className={`p-2 rounded font-mono text-sm whitespace-pre-wrap ${
                                 isDark ? "bg-gray-800" : "bg-white border border-slate-200"
-                              }`}>
+                                }`}>
                                 {testCase.input || "No input provided"}
                               </pre>
                             </div>
@@ -508,7 +479,7 @@ export default function GlobalProblem() {
                               <h4 className="text-sm font-medium mb-1">Output</h4>
                               <pre className={`p-2 rounded font-mono text-sm whitespace-pre-wrap ${
                                 isDark ? "bg-gray-800" : "bg-white border border-slate-200"
-                              }`}>
+                                }`}>
                                 {testCase.output?.stdout || "No expected output"}
                               </pre>
                             </div>
@@ -524,7 +495,7 @@ export default function GlobalProblem() {
                       <h2 className="text-xl font-bold">Notes</h2>
                       <div className={`p-3 rounded-md ${
                         isDark ? "bg-gray-700 text-gray-200" : "bg-slate-100 text-slate-800"
-                      }`}>
+                        }`}>
                         <MathjaxRenderer html={problem.notes} />
                       </div>
                     </div>
@@ -533,7 +504,7 @@ export default function GlobalProblem() {
               )}
 
               {activeTab === "submissions" && (
-                <ProblemSubmissionsTab // Renamed component
+                <ProblemSubmissionsTab
                   submissions={submissions}
                   isLoading={isSubmissionsLoading}
                   isDark={isDark}
@@ -544,7 +515,7 @@ export default function GlobalProblem() {
 
               {/* Solutions Tab */}
               {activeTab === "solutions" && (
-                <ProblemSolutionsTab // Renamed component
+                <ProblemSolutionsTab
                   solutions={solutions}
                   isLoading={isSolutionsLoading}
                   isDark={isDark}
@@ -564,7 +535,7 @@ export default function GlobalProblem() {
                           isDark
                             ? "bg-blue-600 hover:bg-blue-700 text-white"
                             : "bg-blue-500 hover:bg-blue-600 text-white"
-                        } ${isRunning ? "opacity-50 cursor-not-allowed" : ""}`}
+                          } ${isRunning ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
                         {isRunning ? (
                           <>
@@ -579,12 +550,12 @@ export default function GlobalProblem() {
                     </div>
                     <div className={`rounded-lg overflow-hidden border ${
                       isDark ? "border-gray-600" : "border-slate-300"
-                    }`}>
+                      }`}>
                       <textarea
                         rows={5}
                         className={`w-full p-3 font-mono text-sm resize-none focus:outline-none ${
                           isDark ? "bg-gray-700 text-gray-100" : "bg-white text-slate-800"
-                        }`}
+                          }`}
                         value={customInput}
                         onChange={(e) => setCustomInput(e.target.value)}
                         placeholder="Enter your custom test case input here..."
@@ -597,11 +568,11 @@ export default function GlobalProblem() {
                       <label className="text-sm font-medium block mb-2">Your Output</label>
                       <div className={`rounded-lg overflow-hidden border ${
                         isDark ? "border-gray-600 bg-gray-700" : "border-slate-300 bg-slate-100"
-                      }`}>
-                        <pre className={`p-3 font-mono text-sm min-h-[100px] max-h-[200px] overflow-auto ${
-                        isDark ? "text-gray-200" : "text-slate-800"
                         }`}>
-                        {customOutput?.userOutput
+                        <pre className={`p-3 font-mono text-sm min-h-[100px] max-h-[200px] overflow-auto ${
+                          isDark ? "text-gray-200" : "text-slate-800"
+                          }`}>
+                          {customOutput?.userOutput
                             ? customOutput.userOutput // Display directly
                             : "Run code to see your output"}
                         </pre>
@@ -612,11 +583,11 @@ export default function GlobalProblem() {
                       <label className="text-sm font-medium block mb-2">Expected Output</label>
                       <div className={`rounded-lg overflow-hidden border ${
                         isDark ? "border-gray-600 bg-gray-700" : "border-slate-300 bg-slate-100"
-                      }`}>
-                        <pre className={`p-3 font-mono text-sm min-h-[100px] max-h-[200px] overflow-auto ${
-                        isDark ? "text-gray-200" : "text-slate-800"
                         }`}>
-                        {customOutput?.expectedOutput
+                        <pre className={`p-3 font-mono text-sm min-h-[100px] max-h-[200px] overflow-auto ${
+                          isDark ? "text-gray-200" : "text-slate-800"
+                          }`}>
+                          {customOutput?.expectedOutput
                             ? customOutput.expectedOutput // Display directly
                             : "Run code to see Expected Output"}
                         </pre>
@@ -635,21 +606,21 @@ export default function GlobalProblem() {
           {/* Code Editor */}
           <div className={`flex-1 rounded-lg border overflow-hidden flex flex-col ${
             isDark ? "bg-gray-800 border-gray-700" : "bg-white border-slate-200"
-          }`}>
+            }`}>
             <div className={`px-4 py-2 border-b ${
               isDark ? "border-gray-700 bg-gray-800" : "border-slate-200 bg-slate-50"
-            }`}>
+              }`}>
               <div className="flex justify-between items-center">
                 <h2 className="font-medium">Code Editor</h2>
                 <div className="flex gap-2">
                   <button className={`px-3 py-1 text-xs rounded font-medium ${
                     isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-slate-200 hover:bg-slate-300"
-                  }`}>
+                    }`}>
                     C++
                   </button>
                   <button className={`px-3 py-1 text-xs rounded font-medium ${
                     isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-slate-200 hover:bg-slate-300"
-                  }`}>
+                    }`}>
                     Python
                   </button>
                 </div>
@@ -669,10 +640,10 @@ export default function GlobalProblem() {
           {/* Submit Panel */}
           <div className={`rounded-lg border overflow-hidden ${
             isDark ? "bg-gray-800 border-gray-700" : "bg-white border-slate-200"
-          }`}>
+            }`}>
             <div className={`px-4 py-3 border-b flex justify-between items-center ${
               isDark ? "border-gray-700 bg-gray-800" : "border-slate-200 bg-slate-50"
-            }`}>
+              }`}>
               <h2 className="font-medium">Submit Solution</h2>
               <button
                 onClick={() => handleCodeSubmit(code)}
@@ -680,30 +651,30 @@ export default function GlobalProblem() {
                   isDark
                     ? "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600"
                     : "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700"
-                }`}
+                  }`}
               >
                 Submit
               </button>
             </div>
             <div className={`p-4 font-mono text-sm min-h-24 ${
               isDark ? "bg-gray-900/30" : "bg-slate-50"
-            }`}>
+              }`}>
               {verdict ? (
                 <div className={`p-3 rounded ${
                   verdict === "Accepted"
                     ? "bg-green-100 text-green-800"
                     : verdict.includes("Wrong") || verdict.includes("Error") || verdict.includes("Limit Exceeded")
-                    ? "bg-red-100 text-red-800"
-                    : isDark
-                    ? "bg-gray-700"
-                    : "bg-slate-200"
-                }`}>
+                      ? "bg-red-100 text-red-800"
+                      : isDark
+                        ? "bg-gray-700"
+                        : "bg-slate-200"
+                  }`}>
                   {verdict}
                 </div>
               ) : (
                 <div className={`flex items-center justify-center h-full ${
                   isDark ? "text-gray-500" : "text-slate-400"
-                }`}>
+                  }`}>
                   Submit your code to see the verdict...
                 </div>
               )}
@@ -730,7 +701,7 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
             onClick={() => onSelectSubmission(null)}
             className={`text-xs px-3 py-1 rounded ${
               isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-slate-200 hover:bg-slate-300"
-            }`}
+              }`}
           >
             Back to list
           </button>
@@ -741,7 +712,7 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
             <div className="text-xs text-gray-400">Status</div>
             <div className={`font-medium ${
               selectedSubmission.verdict === "Accepted" ? "text-green-500" : "text-red-500"
-            }`}>
+              }`}>
               {selectedSubmission.verdict}
             </div>
           </div>
@@ -759,14 +730,14 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
             <div className="font-medium">
               {selectedSubmission.memorytaken} KB
             </div>
-          </div> */}
+          </div>
         </div>
 
         <div className="mb-3">
           <div className="text-sm font-medium mb-2">Submitted Code</div>
           <pre className={`p-4 rounded-lg overflow-x-auto text-sm ${
             isDark ? "bg-gray-900" : "bg-slate-100"
-          }`}>
+            }`}>
             {selectedSubmission.code}
           </pre>
         </div>
@@ -783,7 +754,7 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
       <div className={`py-6 text-center ${isDark ? "bg-gray-800/30" : "bg-slate-50"}`}>
         <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 ${
           isDark ? "bg-gray-700" : "bg-slate-200"
-        }`}>
+          }`}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5 text-slate-400"
@@ -827,7 +798,7 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
                 isDark
                   ? "border-gray-700 hover:bg-gray-700/30"
                   : "border-slate-200 hover:bg-slate-50"
-              }`}
+                }`}
             >
               <td className="py-3 px-4">
                 {sub.submissionTime
@@ -841,9 +812,9 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
                       ? "bg-green-900/30 text-green-400"
                       : "bg-green-100 text-green-800"
                     : isDark
-                    ? "bg-red-900/30 text-red-400"
-                    : "bg-red-100 text-red-800"
-                }`}>
+                      ? "bg-red-900/30 text-red-400"
+                      : "bg-red-100 text-red-800"
+                  }`}>
                   {sub.verdict || "Error"}
                 </span>
               </td>
@@ -860,7 +831,7 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
                     isDark
                       ? "bg-gray-700 hover:bg-gray-600"
                       : "bg-slate-200 hover:bg-slate-300"
-                  }`}
+                    }`}
                 >
                   View Code
                 </button>
@@ -893,7 +864,7 @@ function ProblemSolutionsTab({ solutions, isLoading, isDark, onSelectSolution, s
             onClick={() => onSelectSolution(null)}
             className={`text-xs px-3 py-1 rounded ${
               isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-slate-200 hover:bg-slate-300"
-            }`}
+              }`}
           >
             Back to list
           </button>
@@ -904,7 +875,7 @@ function ProblemSolutionsTab({ solutions, isLoading, isDark, onSelectSolution, s
             <div className="text-xs text-gray-400">Status</div>
             <div className={`font-medium ${
               selectedSolution.verdict === "Accepted" ? "text-green-500" : "text-red-500"
-            }`}>
+              }`}>
               {selectedSolution.verdict}
             </div>
           </div>
@@ -928,7 +899,7 @@ function ProblemSolutionsTab({ solutions, isLoading, isDark, onSelectSolution, s
           <div className="text-sm font-medium mb-2">Solution Code</div>
           <pre className={`p-4 rounded-lg overflow-x-auto text-sm ${
             isDark ? "bg-gray-900" : "bg-slate-100"
-          }`}>
+            }`}>
             {selectedSolution.code}
           </pre>
         </div>
@@ -945,7 +916,7 @@ function ProblemSolutionsTab({ solutions, isLoading, isDark, onSelectSolution, s
       <div className={`py-6 text-center ${isDark ? "bg-gray-800/30" : "bg-slate-50"}`}>
         <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 ${
           isDark ? "bg-gray-700" : "bg-slate-200"
-        }`}>
+          }`}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5 text-slate-400"
@@ -988,7 +959,7 @@ function ProblemSolutionsTab({ solutions, isLoading, isDark, onSelectSolution, s
                 isDark
                   ? "border-gray-700 hover:bg-gray-700/30"
                   : "border-slate-200 hover:bg-slate-50"
-              }`}
+                }`}
             >
               <td className="py-3 px-4">
                 <div className="flex items-center">
@@ -1013,7 +984,7 @@ function ProblemSolutionsTab({ solutions, isLoading, isDark, onSelectSolution, s
                     isDark
                       ? "bg-gray-700 hover:bg-gray-600"
                       : "bg-slate-200 hover:bg-slate-300"
-                  }`}
+                    }`}
                 >
                   View Solution
                 </button>
