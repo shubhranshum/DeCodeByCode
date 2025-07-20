@@ -3,6 +3,12 @@ const mongoose = require("mongoose");
 // contest.model.js
 const contestSchema = new mongoose.Schema({
     title: { type: String, required: true , unique: true},
+    slug: {
+      type: String,
+      unique: true,
+      required: true,
+      lowercase: true,
+    },
     description: String,
     startTime: { type: Date },
     endTime: { type: Date },
@@ -16,5 +22,7 @@ const contestSchema = new mongoose.Schema({
     isVerified: { type: Boolean, default: false }, // Default to false
     isGlobal: { type: Boolean, default: false }, // Default to false
   }, { timestamps: true });
+
+
 
 module.exports = mongoose.model("Contest", contestSchema);

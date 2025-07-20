@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const getProblemById = require('../controllers/Problems/getProblemById');
+const getProblemBySlug = require('../controllers/Problems/getProblemBySlug.js');
 const getGlobalProblems = require('../controllers/Problems/getGlobalProblems');
 
 const {getProblemSubmissionsByUser, getProblemSolvedSubmissions} = require('../controllers/Problems/getProblemSubmissionByUser');
@@ -12,6 +13,7 @@ const submitProblemByOmVrit = require('../controllers/Problems/submitProblemCont
 
 router.get('/problems', getGlobalProblems);
 router.get('/problems/:problemId', getProblemById);
+router.get('/problems/slug/:problemSlug', getProblemBySlug); // Assuming this is to fetch a problem by its slug
 
 
 

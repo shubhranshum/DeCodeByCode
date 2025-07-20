@@ -1,5 +1,6 @@
 
 export async function getContestById(id) {
+  console.log("Fetching contest with slug:", id);
     const response = await fetch(`http://localhost:3000/contests/${id}`, {
       method: "GET",
       headers: {

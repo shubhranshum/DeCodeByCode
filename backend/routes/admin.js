@@ -21,6 +21,7 @@ const getAdminContests = require('../controllers/Admin/Contests/getAdminContests
 const createContest = require('../controllers/Admin/Contests/createContest.js');
 const deleteAdminContestById = require('../controllers/Admin/Contests/deleteAdminContestById.js');
 const getAdminContestById = require('../controllers/Contest/getContestById.js');
+const getAdminContestBySlug = require('../controllers/Contest/getContestBySlug.js');
 const editContest = require('../controllers/Admin/Contests/editContest.js');
 const verifyContest = require('../controllers/Admin/Contests/verify.js');
 const postToGlobalContests = require('../controllers/Admin/Contests/postToGlobalContests.js');
@@ -52,6 +53,7 @@ router.post('/postToGlobalProblems/:problemId', postToGlobalProblems);
 
 router.get('/contests', getAdminContests);
 router.get('/contests/:contestId', getAdminContestById);
+router.get('/contests/slug/:contestSlug', getAdminContestBySlug); // Assuming this is to fetch a contest by its slug
 router.post('/edit-contest/:contestId/verify', authMiddleware, adminCheck, verifyContest);
 router.post('/createContest', authMiddleware, adminCheck,createContest);
 router.post('/edit-contest/:contestId', authMiddleware, adminCheck, editContest);

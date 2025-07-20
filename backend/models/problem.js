@@ -59,6 +59,13 @@ const testCaseSchema = new mongoose.Schema({
 
 
 const problemSchema = new mongoose.Schema({
+  slug:{
+    type: String,
+    required: true,
+    unique: true, // to ensure no duplicates
+    lowercase: true, // to ensure uniformity
+    trim: true, // to remove any leading/trailing spaces
+  },
   title: {
     type: String,
     required: true,
