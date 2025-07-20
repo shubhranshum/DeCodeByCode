@@ -1,4 +1,5 @@
 const Activity = require('../models/profile/activityModel');
+const User = require('../models/user');
  // If needed for population
 
 // Log a new activity
@@ -41,6 +42,25 @@ exports.getUserActivities = async (req, res) => {
 
     
   
+    const activities = await Activity.find(query).populate('refId', 'username');
+    console.log(activities);
+
+    res.status(200).json({ success: true, activities });
+  } catch (err) {
+    console.error('Error fetching activities:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch activities' });
+  }
+};
+exports.getUserActivitiesByUsername = async (req, res) => {
+  console.log("Hello from getUserActivitiesByUsername")
+  try {
+   const username = req.params.username;
+   const user = await User.findOne({ username });
+   const userId = user._id;
+   
+    const query = { user: userId };
+    
+
     const activities = await Activity.find(query).populate('refId', 'username');
     console.log(activities);
 

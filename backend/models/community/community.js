@@ -20,6 +20,37 @@ const CommunitySchema = new Schema({
     type: Number,
     default: 0
   },
+  numberOfProblems:{
+    type: Number,
+    default: 0
+  },
+  numberOfContests:{
+    type: Number,
+    default: 0
+  },
+  numberOfBlogs: {
+    type: Number,
+    default: 0
+  },
+  numberOfSubmissions:{
+    type: Number,
+    default: 0
+  },
+  numberOfComments: {
+    type: Number,
+    default: 0
+  },
+  numberOfLikes: {
+    type: Number,
+    default: 0
+  },
+  numberOfViews: {
+    type: Number,
+    default: 0
+  },
+  
+
+
 
   
 
@@ -27,29 +58,7 @@ const CommunitySchema = new Schema({
 
   
 
-  // Community Stats
-  totalBlogs: {
-    type: Number,
-    default: 0
-  },
-  totalProblems: {
-    type: Number,
-    default: 0
-  },
-  totalLikes: {
-    type: Number,
-    default: 0
-  },
-  totalViews: {
-    type: Number,
-    default: 0
-  },
-  totalComments: {
-    type: Number,
-    default: 0
-  },
 
-  // Optional tagging or topics
   
 
   

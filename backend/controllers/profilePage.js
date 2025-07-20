@@ -128,7 +128,7 @@ const followProfile = async (req, res) => {
     console.log(connection);
 
     await connection.save();
-    await logActivity(userId, recipient._id, 'Connection', 'FOLLOWED', "You Followed " + recipient.username);
+    // await logActivity(userId, recipient._id, 'Connection', 'FOLLOWED', "You Followed " + recipient.username);
     //will create notification
     const notification = new Notification({
       sender: userId,
@@ -136,7 +136,7 @@ const followProfile = async (req, res) => {
       type: 'FOLLOW',
       isRead: false,
       message: user.username + " Followed you",
-      link: '/profile/u' + user.username
+      link: '/profile/u/' + user.username
     });
 
     await notification.save();
@@ -175,7 +175,7 @@ const unfollowProfile = async (req, res) => {
     }
 
     await Connection.deleteOne({ $and: [{ sender: userId }, { reciever: recipient._id }] });
-    await logActivity(userId, recipient._id, 'Connection', 'UNFOLLOWED', "You Unfollowed " + recipient.username);
+    // await logActivity(userId, recipient._id, 'Connection', 'UNFOLLOWED', "You Unfollowed " + recipient.username);
     res.status(200).json({ message: 'Profile unfollowed successfully' });
   }
   catch (error) {
@@ -187,7 +187,7 @@ const getFollowers = async (req, res) => {
   try {
     console.log("Hello from getFollowers");
     const user = req.user._id;
-    const followers = await Connection.find({ reciever: user }).populate('sender', '_id username email profilePicture firstName lastName age ');
+    const followers = await Connection.find({ reciever: user }).populate('sender', '_id username email profilePicture firstName lastName age ' );
     res.json(followers);
   } catch (error) {
     console.error('Error fetching followers:', error);

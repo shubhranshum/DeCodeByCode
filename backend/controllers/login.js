@@ -5,7 +5,7 @@ const JWT_SECRET="shubh@123#1234#12345#";
 // const auth = require('../middlewares/auth');
 
 async function userLogin(req,res){
-    // console.log("In userLogin controller");
+   
     const {email, password} = req.body;
     try{
         const user = await User.findOne({email});
@@ -16,13 +16,14 @@ async function userLogin(req,res){
     if(user.password === undefined){
         return res.status(400).json({message: 'User found but the signup was done with google'});
     }
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
     const token = jwt.sign({ id: user._id , email: user.email }, JWT_SECRET, { expiresIn: '2d' });
     // req._id = token;
     console.log('Token generated:', token);
     await res.cookie('token',token,
-        {httpOnly: true,      // Prevent JS from accessing it (recommended for security)
+        {
+            httpOnly: true,      // Prevent JS from accessing it (recommended for security)
             secure: false,       // Set to true in production if using HTTPS
             sameSite: 'lax',
             maxAge: 24 * 60 * 60 * 1000}

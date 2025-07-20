@@ -1,4 +1,5 @@
 const passport = require('passport');
+const Community = require('../models/community/community');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../models/user'); // <-- your User model
 const GitHubStrategy = require('passport-github2').Strategy;
@@ -28,8 +29,14 @@ passport.use(new GoogleStrategy({
         profilePicture: profile.photos?.[0]?.value || undefined,
         accountStatus: 'active'
       });
+     const community = await Community.findOne();
+     console.log(community);
+      community.numberOfUsers += 1;
+      await community.save();
 
+            
       await newUser.save();
+
       return done(null, newUser);
     } catch (error) {
       console.error("Google Strategy Error:", error);
@@ -67,6 +74,13 @@ passport.use(new GitHubStrategy({
       oauthId: profile.id,
       profilePicture: profile.photos?.[0]?.value || ''
     });
+    const community = await Community.findOne();
+    console.log(community);
+    community.numberOfUsers += 1;
+    await community.save();
+
+
+
 
     return done(null, newUser);
   } catch (err) {

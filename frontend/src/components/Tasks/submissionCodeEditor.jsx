@@ -234,7 +234,7 @@ export default function SubmissionCodeEditor({
           }
           options={{
             fontSize: 15,
-            automaticLayout: true,
+            
             glyphMargin: true,
             fontFamily: "'JetBrains Mono', 'Menlo', monospace",
             fontLigatures: true,

@@ -17,8 +17,7 @@ const submitProblem = async (req, res) => {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        const profile = await Profile.findOne({ userId: req.user._id });
-        if (!profile) return res.status(404).json({ message: "Profile not found" });
+       
 
         // Save submission to ProblemStat history
         const problemStat = new ProblemStat({
@@ -33,66 +32,25 @@ const submitProblem = async (req, res) => {
         });
         
         
+        
 
 
-        const now = new Date();
-        const existingEntryIndex = profile.ProblemHistory.findIndex(entry =>
-            entry.problemId.equals(problem._id)
-        );
+       
+       
 
 
         problem.attemptCount++;
-        if (status === "Accepted") {
+        if(status === "Accepted") {
             problem.solvedCount++;
-            problem.solvedBy.push(user._id);
-            if (existingEntryIndex === -1) {
-                // First time solving correctly
-                profile.ProblemHistory.push({
-                    problemId: problem._id,
-                    status: "Solved",
-                    solvedAt: now,
-                    lastTriedAt: now
-                });
-
-                profile.stats.problemsSolved += 1;
-                await logActivity(user._id, problemid, "Problem", "PROBLEM_SOLVED", problem.title);
-            } else {
-                const entry = profile.ProblemHistory[existingEntryIndex];
-
-                if (entry.status === "Attempted") {
-                    // Upgrade status to Solved
-                    entry.status = "Solved";
-                    entry.solvedAt = now;
-                    entry.lastTriedAt = now;
-
-                    profile.stats.problemsSolved += 1;
-                    await logActivity(user._id, problemid, "Problem", "PROBLEM_SOLVED", problem.title);
-                } else {
-                    // Already solved — just update lastTriedAt
-                    entry.lastTriedAt = now;
-                }
-            }
-
-            profile.stats.solutionsAccepted += 1;
-        } else {
-            // status !== "Accepted"
-            if (existingEntryIndex === -1) {
-                // First time attempting
-                profile.ProblemHistory.push({
-                    problemId: problem._id,
-                    status: "Attempted",
-                    lastTriedAt: now
-                });
-                logActivity(user._id, problemid, "Problem", "PROBLEM_ATTEMPTED", problem.title);
-            } else {
-                // Update only lastTriedAt if already attempted or solved
-                profile.ProblemHistory[existingEntryIndex].lastTriedAt = now;
-                logActivity(user._id, problemid, "Problem", "PROBLEM_ATTEMPTED", problem.title);
-            }
+            await logActivity(user._id, problemid, "Problem", "PROBLEM_SOLVED", problem.title)
         }
+        else{
+            await logActivity(user._id, problemid, "Problem", "PROBLEM_ATTEMPTED", problem.title);
+        }
+        
         await problem.save();
         await problemStat.save();
-        await profile.save();
+        
 
         res.status(200).json({ message: "Problem submitted successfully" });
     } catch (error) {

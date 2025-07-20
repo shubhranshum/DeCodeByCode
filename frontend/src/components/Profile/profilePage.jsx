@@ -53,7 +53,7 @@ const ProfilePage = () => {
 
   // Apply theme on initial load
   useEffect(() => {
-    console.log("hello",isOwnProfile);
+    
     const savedTheme = getTheme();
     setTheme(savedTheme);
     localStorage.setItem("theme", savedTheme);
@@ -92,7 +92,7 @@ const ProfilePage = () => {
       });
 
       const data = await res.json();
-      console.log(data.blogs);
+      
 
       setBlogs(data.blogs);
     } catch (error) {
@@ -134,7 +134,7 @@ const ProfilePage = () => {
 
   const fetchProfile = async () => {
     try {
-      if (isMounted.current) setLoading(true);
+      
       const url = `http://localhost:3000/profile/user/${urlUsername}`;
       const res = await fetch(url, {
         method: "GET",
@@ -160,22 +160,18 @@ const ProfilePage = () => {
     } catch (err) {
       console.error("Error fetching profile:", err);
     } finally {
-      if (isMounted.current) setLoading(false);
+      
     }
   };
 
   const fetchActivities = async () => {
-    // Compute isOwnProfile inside the function using latest context
-    const isOwn = currentUser?.username === urlUsername;
 
-    if (!isOwn) {
-      if (isMounted.current) setActivityLoading(false);
-      return;
-    }
+
+   
 
     try {
       if (isMounted.current) setActivityLoading(true);
-      const res = await fetch(`http://localhost:3000/profile/user-activities`, {
+      const res = await fetch(`http://localhost:3000/profile/user-activities/${urlUsername}`, {
         method: "GET",
         credentials: "include",
       });
@@ -197,16 +193,18 @@ const ProfilePage = () => {
 
     // In fetchAllData
     const fetchAllData = async () => {
+      if (isMounted.current) setLoading(true);
       await fetchProfile();
-
+      await fetchActivities();
       // Only fetch activities if it's the user's own profile
       if (currentUser?.username === urlUsername) {
-        await fetchActivities();
+        
         await fetchRecentAttempts();
         await fetchBlogs();
       }
 
       await fetchSolvedProblems();
+      if (isMounted.current) setLoading(false);
     };
 
     fetchAllData();
@@ -349,7 +347,8 @@ const ProfilePage = () => {
           
           <div className="overflow-x-auto p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
             <ContributionGraph
-              data={profile.activityData || []}
+              data={activities || []}
+              stats = {stats}
               theme={theme}
             />
           </div>
@@ -537,22 +536,7 @@ const ProfilePage = () => {
                 />
               </div>
 
-              {/* Stats Card */}
-              <div
-                className={`rounded-xl shadow-lg p-6 transition-colors ${
-                  theme === "dark" ? "bg-gray-800" : "bg-white"
-                }`}
-              >
-                <h2
-                  className={`text-xl font-bold mb-4 ${
-                    theme === "dark" ? "text-orange-300" : "text-purple-700"
-                  }`}
-                >
-                  Statistics
-                </h2>
-                <StatsSection stats={stats} theme={theme} />
-              </div>
-
+              
               {/* Skills Card */}
               <SkillsSection
                 skills={profile.skills || []}

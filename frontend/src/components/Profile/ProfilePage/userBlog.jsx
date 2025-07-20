@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -9,7 +9,8 @@ import {
   FiSearch, 
   FiPlus,
   FiMoon,
-  FiSun
+  FiSun,
+  FiFileText
 } from 'react-icons/fi';
 
 const UserBlogs = () => {
@@ -23,10 +24,7 @@ const UserBlogs = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   
   // Theme state management
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
-    return savedTheme || 'light';
-  });
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
   // Apply theme on initial load and when theme changes
   useEffect(() => {
@@ -38,12 +36,13 @@ const UserBlogs = () => {
     localStorage.setItem('theme', theme);
   }, [theme]);
   
-  // Toggle between dark/light themes
-  const toggleTheme = () => {
+  // Toggle between dark/light themes using useCallback for performance
+  const toggleTheme = useCallback(() => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  }, []);
 
-  const fetchUserBlogs = async () => {
+  // Fetch user blogs from the API
+  const fetchUserBlogs = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch('http://localhost:3000/profile/user-blogs', {
@@ -51,43 +50,48 @@ const UserBlogs = () => {
         credentials: 'include'
       });
       const data = await res.json();
-      setAllBlogs(data);
+      setAllBlogs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching user blogs:', err);
+      setAllBlogs([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUserBlogs();
-  }, [username]);
+  }, [fetchUserBlogs]);
 
-  const filteredByStatus = allBlogs.filter(blog => {
-    if (activeTab === 'Blog') return blog.status === 'Published';
-    if (activeTab === 'DraftBlogs') return blog.status === 'Draft';
-    if (activeTab === 'ArchivedBlogs') return blog.status === 'Archived';
-    return false;
-  });
+  // Performance Tweak: Memoize the filtering logic to prevent re-calculation on every render.
+  const filteredBlogs = useMemo(() => {
+    return allBlogs
+      .filter(blog => {
+        if (activeTab === 'Blog') return blog.status === 'Published';
+        if (activeTab === 'DraftBlogs') return blog.status === 'Draft';
+        if (activeTab === 'ArchivedBlogs') return blog.status === 'Archived';
+        return false;
+      })
+      .filter(blog => 
+        blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (blog.summary && blog.summary.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+  }, [allBlogs, activeTab, searchQuery]);
 
-  // Apply search filter
-  const filteredBlogs = filteredByStatus.filter(blog => 
-    blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (blog.summary && blog.summary.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  const tabs = [
+  // Memoize tabs data to prevent recalculating counts unnecessarily
+  const tabs = useMemo(() => [
     { key: 'Blog', label: 'Published', count: allBlogs.filter(b => b.status === 'Published').length },
     { key: 'DraftBlogs', label: 'Drafts', count: allBlogs.filter(b => b.status === 'Draft').length },
     { key: 'ArchivedBlogs', label: 'Archived', count: allBlogs.filter(b => b.status === 'Archived').length },
-  ];
+  ], [allBlogs]);
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const handleDeleteBlog = async (blogId) => {
+  // Performance Tweak: useCallback to memoize the delete function.
+  const handleDeleteBlog = useCallback(async (blogId) => {
     setDeletingId(blogId);
     try {
       const res = await fetch(`http://localhost:3000/blog/${blogId}`, {
@@ -106,41 +110,40 @@ const UserBlogs = () => {
       setDeletingId(null);
       setShowDeleteConfirm(null);
     }
-  };
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Published': return { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-200' };
-      case 'Draft': return { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-200' };
-      case 'Archived': return { bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-800 dark:text-slate-200' };
-      default: return { bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-800 dark:text-slate-200' };
+      case 'Published': return { bg: 'bg-emerald-100 dark:bg-emerald-900/40', text: 'text-emerald-800 dark:text-emerald-300' };
+      case 'Draft': return { bg: 'bg-amber-100 dark:bg-amber-900/40', text: 'text-amber-800 dark:text-amber-300' };
+      case 'Archived': return { bg: 'bg-slate-200 dark:bg-slate-700', text: 'text-slate-800 dark:text-slate-200' };
+      default: return { bg: 'bg-slate-200 dark:bg-slate-700', text: 'text-slate-800 dark:text-slate-200' };
     }
   };
 
+  // Loading Skeleton with updated, classier colors
   if (loading) {
     return (
-      <div className="min-h-screen py-12 px-4 bg-gradient-to-b from-indigo-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen py-12 px-4 bg-slate-50 dark:bg-gray-900">
         <div className="max-w-5xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-10 bg-indigo-200 dark:bg-gray-700 rounded w-1/4 mb-8"></div>
+            <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-1/4 mb-10"></div>
             <div className="flex gap-4 mb-8">
-              <div className="h-10 bg-indigo-200 dark:bg-gray-700 rounded-full w-24"></div>
-              <div className="h-10 bg-indigo-200 dark:bg-gray-700 rounded-full w-24"></div>
-              <div className="h-10 bg-indigo-200 dark:bg-gray-700 rounded-full w-24"></div>
+              <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-full w-28"></div>
+              <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-full w-24"></div>
+              <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-full w-28"></div>
             </div>
-            <div className="h-10 bg-indigo-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+            <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl w-48 mb-10"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="border rounded-xl p-6 bg-white dark:bg-gray-800">
-                  <div className="h-6 bg-indigo-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-indigo-200 dark:bg-gray-700 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-indigo-200 dark:bg-gray-700 rounded w-5/6 mb-6"></div>
-                  <div className="flex justify-between">
-                    <div className="h-4 bg-indigo-200 dark:bg-gray-700 rounded w-32"></div>
-                    <div className="flex gap-2">
-                      <div className="h-8 bg-indigo-200 dark:bg-gray-700 rounded w-16"></div>
-                      <div className="h-8 bg-indigo-200 dark:bg-gray-700 rounded w-16"></div>
-                    </div>
+                <div key={i} className="border rounded-xl p-6 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+                  <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-4"></div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full mb-2"></div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-5/6 mb-6"></div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3 mb-6"></div>
+                  <div className="border-t border-slate-200/80 dark:border-slate-800 pt-4 flex justify-end gap-2">
+                    <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-20"></div>
+                    <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-20"></div>
                   </div>
                 </div>
               ))}
@@ -152,25 +155,26 @@ const UserBlogs = () => {
   }
 
   return (
-    <div className="min-h-screen py-12 px-4 bg-gradient-to-b from-indigo-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen py-12 px-4 bg-slate-50 dark:bg-gray-900 transition-colors duration-300">
       <div className="max-w-5xl mx-auto">
         {/* Header with theme toggle */}
         <div className="flex justify-between items-center mb-10">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-indigo-900 dark:text-orange-300 mb-1">
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-100 mb-1">
               Your Content Hub
             </h1>
-            <p className="text-indigo-700/90 dark:text-orange-300/80">
-              Manage all your blog content in one place
+            <p className="text-slate-600 dark:text-slate-400">
+              Manage all your blog content in one place.
             </p>
           </div>
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9, rotate: 15 }}
             onClick={toggleTheme}
-            className="p-3 rounded-full bg-indigo-100 dark:bg-orange-900/20 text-indigo-700 dark:text-orange-300 hover:bg-indigo-200 dark:hover:bg-orange-800/30 transition-all shadow-sm"
+            className="p-3 rounded-full bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             aria-label="Toggle theme"
           >
             {theme === 'light' ? <FiMoon className="w-5 h-5" /> : <FiSun className="w-5 h-5" />}
-          </button>
+          </motion.button>
         </div>
 
         {/* Tabs and Search */}
@@ -180,18 +184,18 @@ const UserBlogs = () => {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 transition-all ${
+                className={`relative px-5 py-2.5 rounded-full text-sm font-semibold flex items-center gap-2 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 focus-visible:ring-slate-500 ${
                   activeTab === tab.key
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-orange-600 dark:to-amber-600 text-white shadow-md'
-                    : 'bg-white dark:bg-gray-800 text-indigo-700 dark:text-orange-300 hover:bg-indigo-50 dark:hover:bg-gray-700 border border-indigo-200 dark:border-orange-900/30'
+                    ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 shadow-md'
+                    : 'bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'
                 }`}
               >
                 {tab.label}
                 {tab.count > 0 && (
                   <span className={`px-2 py-0.5 rounded-full text-xs ${
                     activeTab === tab.key 
-                      ? 'bg-white/20 text-white' 
-                      : 'bg-indigo-100 dark:bg-orange-900/30 text-indigo-800 dark:text-orange-300'
+                      ? 'bg-white/20 text-white dark:bg-black/20 dark:text-slate-100' 
+                      : 'bg-slate-200 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300'
                   }`}>
                     {tab.count}
                   </span>
@@ -201,13 +205,13 @@ const UserBlogs = () => {
           </div>
           
           <div className="relative w-full md:w-72">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <FiSearch className="w-5 h-5 text-indigo-400 dark:text-orange-400" />
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+              <FiSearch className="w-5 h-5 text-slate-400" />
             </div>
             <input
               type="text"
               placeholder="Search your blogs..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-orange-900/30 rounded-full text-indigo-900 dark:text-orange-200 placeholder:text-indigo-400 dark:placeholder:text-orange-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-orange-500 focus:border-transparent transition-all"
+              className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-full text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 dark:focus:ring-slate-400 focus:border-transparent transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -217,10 +221,10 @@ const UserBlogs = () => {
         {/* Create New Blog Button */}
         <div className="mb-10">
           <motion.button
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.03, y: -2 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/create-blog')}
-            className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-orange-600 dark:to-amber-600 hover:from-indigo-700 hover:to-purple-700 dark:hover:from-orange-700 dark:hover:to-amber-700 text-white px-6 py-3.5 rounded-xl font-medium transition-all shadow-lg hover:shadow-xl"
+            className="flex items-center gap-2 bg-slate-800 dark:bg-slate-200 hover:bg-slate-900 dark:hover:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl"
           >
             <FiPlus className="w-5 h-5" />
             Create New Blog
@@ -232,124 +236,84 @@ const UserBlogs = () => {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center border border-indigo-100 dark:border-orange-900/30"
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-12 text-center border border-slate-200/80 dark:border-slate-800"
           >
-            <div className="bg-indigo-50 dark:bg-orange-900/20 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-              <div className="bg-indigo-100 dark:bg-orange-800/30 w-16 h-16 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-indigo-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                </svg>
-              </div>
+            <div className="bg-slate-100 dark:bg-slate-800/50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FiFileText className="w-10 h-10 text-slate-500 dark:text-slate-400" />
             </div>
-            <h3 className="text-xl font-semibold text-indigo-900 dark:text-orange-300 mb-2">
+            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
               {searchQuery ? "No matches found" : "Your creative space is empty"}
             </h3>
-            <p className="text-indigo-700/90 dark:text-orange-300/80 max-w-md mx-auto mb-6">
+            <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
               {searchQuery 
-                ? `No blogs match your search for "${searchQuery}"`
-                : `You haven't created any ${activeTab === 'Blog' ? 'published' : activeTab === 'DraftBlogs' ? 'draft' : 'archived'} content yet`}
+                ? `We couldn't find any blogs matching "${searchQuery}".`
+                : `You haven't created any ${activeTab === 'Blog' ? 'published articles' : activeTab.replace('Blogs', '').toLowerCase() + 's'} yet. Time to start writing!`}
             </p>
-            {!searchQuery && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/create-blog')}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-orange-600 dark:to-amber-600 hover:from-indigo-700 hover:to-purple-700 dark:hover:from-orange-700 dark:hover:to-amber-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-md"
-              >
-                Start Creating
-              </motion.button>
-            )}
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AnimatePresence>
-              {filteredBlogs.map((blog, idx) => (
+              {filteredBlogs.map((blog) => (
                 <motion.div
                   key={blog._id}
+                  layout
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3, delay: idx * 0.05 }}
-                  whileHover={{ y: -5 }}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow border border-indigo-100 dark:border-orange-900/30 overflow-hidden hover:shadow-lg transition-all flex flex-col relative"
+                  exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  className="bg-white dark:bg-slate-900 rounded-xl shadow border border-slate-200/80 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-shadow flex flex-col relative"
                 >
                   {deletingId === blog._id && (
-                    <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 flex items-center justify-center z-10 backdrop-blur-sm">
-                      <div className="w-8 h-8 border-4 border-indigo-600 dark:border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 flex items-center justify-center z-20 backdrop-blur-sm">
+                      <div className="w-8 h-8 border-4 border-slate-600 dark:border-slate-400 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                   )}
                   
-                  <div className="p-6 flex-1 cursor-pointer" onClick={() => navigate(`/blog/${blog._id}`)}>
+                  <div className="p-6 flex-1 flex flex-col cursor-pointer" onClick={() => navigate(`/blog/${blog._id}`)}>
                     <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <span className={`inline-block px-3 py-1 text-xs rounded-full ${getStatusColor(blog.status).bg} ${getStatusColor(blog.status).text} font-medium`}>
-                          {blog.status}
-                        </span>
-                      </div>
-                      <span className="text-xs text-indigo-600/90 dark:text-orange-400/90">
+                      <span className={`inline-block px-3 py-1 text-xs rounded-full ${getStatusColor(blog.status).bg} ${getStatusColor(blog.status).text} font-semibold`}>
+                        {blog.status}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
                         {formatDate(blog.createdAt)}
                       </span>
                     </div>
                     
-                    <h3 className="text-xl font-bold text-indigo-900 dark:text-orange-300 mb-3 line-clamp-2">
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-3 line-clamp-2 hover:text-slate-600 dark:hover:text-slate-400 transition-colors">
                       {blog.title}
                     </h3>
                     
-                    <p className="text-indigo-800/90 dark:text-white/90 mb-4 line-clamp-3">
+                    <p className="text-slate-600 dark:text-slate-400 mb-5 line-clamp-3 flex-1">
                       {blog.summary || 'No summary available.'}
                     </p>
                     
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {blog.tags?.slice(0, 3).map(tag => (
-                        <span key={tag} className="bg-indigo-100 dark:bg-orange-900/30 text-indigo-800 dark:text-orange-300 text-xs px-2.5 py-1 rounded-full">
-                          {tag}
-                        </span>
-                      ))}
-                      {blog.tags?.length > 3 && (
-                        <span className="bg-indigo-100 dark:bg-orange-900/30 text-indigo-800 dark:text-orange-300 text-xs px-2.5 py-1 rounded-full">
-                          +{blog.tags.length - 3}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center text-sm text-indigo-600/90 dark:text-orange-400/90">
+                    <div className="flex items-center text-sm text-slate-500 dark:text-slate-500 mt-auto">
                       <span className="flex items-center mr-4">
                         <FiEye className="w-4 h-4 mr-1.5" />
-                        {blog.viewsCount || 0} views
+                        {blog.viewsCount || 0}
                       </span>
                       <span className="flex items-center">
                         <FiHeart className="w-4 h-4 mr-1.5" />
-                        {blog.likesCount || 0} likes
+                        {blog.likesCount || 0}
                       </span>
                     </div>
                   </div>
                   
-                  <div className="border-t border-indigo-100 dark:border-orange-900/30 p-4 bg-indigo-50/50 dark:bg-orange-900/10 flex justify-end gap-2">
+                  <div className="border-t border-slate-200/80 dark:border-slate-800 p-3 bg-slate-50/70 dark:bg-slate-800/50 flex justify-end gap-2">
                     <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={e => {
-                        e.stopPropagation();
-                        navigate(`/edit-blog/${blog._id}`);
-                      }}
-                      className="flex items-center gap-1.5 text-sm font-medium text-indigo-700 dark:text-orange-300 hover:text-indigo-900 dark:hover:text-orange-200 px-3.5 py-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-orange-900/20 transition-colors"
+                      whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      onClick={(e) => { e.stopPropagation(); navigate(`/edit-blog/${blog._id}`); }}
+                      className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 px-3.5 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                     >
-                      <FiEdit2 className="w-4 h-4" />
-                      Edit
+                      <FiEdit2 className="w-4 h-4" /> Edit
                     </motion.button>
                     
                     <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={e => {
-                        e.stopPropagation();
-                        setShowDeleteConfirm(blog._id);
-                      }}
-                      className="flex items-center gap-1.5 text-sm font-medium text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 px-3.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                      whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(blog._id); }}
+                      className="flex items-center gap-1.5 text-sm font-medium text-rose-600 dark:text-rose-500 hover:text-rose-800 dark:hover:text-rose-300 px-3.5 py-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
                     >
-                      <FiTrash2 className="w-4 h-4" />
-                      Delete
+                      <FiTrash2 className="w-4 h-4" /> Delete
                     </motion.button>
                   </div>
                 </motion.div>
@@ -363,50 +327,42 @@ const UserBlogs = () => {
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4"
             onClick={() => setShowDeleteConfirm(null)}
           >
             <motion.div 
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 max-w-md w-full border border-indigo-100 dark:border-orange-900/30"
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-700"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center">
                 <div className="mx-auto bg-rose-100 dark:bg-rose-900/30 w-16 h-16 rounded-full flex items-center justify-center mb-4">
                   <FiTrash2 className="w-8 h-8 text-rose-600 dark:text-rose-400" />
                 </div>
-                <h3 className="text-xl font-bold text-indigo-900 dark:text-orange-300 mb-2">Confirm Deletion</h3>
-                <p className="text-indigo-700/90 dark:text-orange-300/80 mb-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200 mb-2">Confirm Deletion</h3>
+                <p className="text-slate-600 dark:text-slate-400 mb-6">
                   Are you sure you want to permanently delete this blog? This action cannot be undone.
                 </p>
                 <div className="flex justify-center gap-3">
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                     onClick={() => setShowDeleteConfirm(null)}
-                    className="px-5 py-2.5 rounded-lg border border-indigo-200 dark:border-orange-900/30 text-indigo-800 dark:text-orange-300 hover:bg-indigo-50 dark:hover:bg-orange-900/20 font-medium transition-colors"
+                    className="px-5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium transition-colors"
                   >
                     Cancel
                   </motion.button>
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                     onClick={() => handleDeleteBlog(showDeleteConfirm)}
-                    className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-medium transition-colors shadow-md"
+                    className="px-5 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-medium transition-colors shadow-md shadow-rose-500/30"
                   >
                     {deletingId === showDeleteConfirm ? (
-                      <span className="flex items-center justify-center">
+                      <span className="flex items-center justify-center w-32">
                         <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
                         Deleting...
                       </span>
-                    ) : (
-                      "Delete Permanently"
-                    )}
+                    ) : ( "Delete Permanently" )}
                   </motion.button>
                 </div>
               </div>

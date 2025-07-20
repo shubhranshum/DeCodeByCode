@@ -59,11 +59,16 @@ const FeaturedBlogCard = ({ featuredBlog, handleViewCount, theme }) => {
               transition={{ delay: 0.6 }}
             >
               <div className="flex items-center">
-                <div className={`border-2 border-dashed rounded-xl w-10 h-10 ${
+                <img 
+                  src={featuredBlog.author?.profilePicture || 'https://i.pravatar.cc/150?img=3'} 
+                  alt={featuredBlog.author?.username || 'Anonymous'} 
+                  className="w-10 h-10 rounded-full" 
+                />
+                {/* <div className={`border-2 border-dashed rounded-xl w-10 h-10 ${
                   theme === 'dark' 
                     ? "bg-gray-700 border-gray-600" 
                     : "bg-gray-200 border-gray-300"
-                }`} />
+                }`} /> */}
                 <div className="ml-3">
                   <p className={`font-medium ${
                     theme === 'dark' 

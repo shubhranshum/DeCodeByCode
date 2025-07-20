@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../../models/user');
+const Community = require('../../models/community/community');
 
 const UserProfile = require('../../models/profile/userProfile');
 const JWT_SECRET="shubh@123#1234#12345#";
@@ -24,11 +25,15 @@ async function userSignUp(req,res){
         college: college,
         isAdmin: false // Default to false, can be changed later
     })
+    const community = await Community.findOne();
+    console.log(community);
+    community.numberOfUsers += 1;
+    await community.save();
 
     
-
-    // console.log("Received data4:", { username, email, password });
+    
     await newUser.save();
+
     
     // console.log("Received data5:", { username, email, password });
 

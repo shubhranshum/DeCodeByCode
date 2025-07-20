@@ -1,8 +1,7 @@
+import SubmissionCodeEditor from "@/components/Tasks/submissionCodeEditor";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 const EditProfileModal = ({ profile, onClose, onUpdate }) => {
-  // const navigator = Navigate();
   const [editFormData, setEditFormData] = useState({
     profilePicture: profile.profilePicture || "",
     username: profile.username || "",
@@ -16,7 +15,9 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
     firstName: profile.firstName || "",
     lastName: profile.lastName || "",
     age: profile.age || "",
-    
+    title: profile.title || "",
+    company: profile.company || "",
+    website: profile.website || ""
   });
 
   const [newSkill, setNewSkill] = useState("");
@@ -72,23 +73,23 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
     } finally {
       setIsSubmitting(false);
     }
-    // navigator("/profile");
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-3xl max-h-screen overflow-y-auto transition-colors">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-gray-100">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto transition-all">
+        <div className="p-5">
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
               Edit Profile
             </h2>
             <button
               onClick={onClose}
-              className="text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              aria-label="Close"
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -104,73 +105,55 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex border-b border-slate-200 dark:border-gray-700 mb-6">
-            <button
-              className={`px-4 py-2 font-medium text-sm ${
-                selectedTab === "basic"
-                  ? "text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
-                  : "text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-300"
-              }`}
-              onClick={() => setSelectedTab("basic")}
-            >
-              Basic Info
-            </button>
-            <button
-              className={`px-4 py-2 font-medium text-sm ${
-                selectedTab === "personal"
-                  ? "text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
-                  : "text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-300"
-              }`}
-              onClick={() => setSelectedTab("personal")}
-            >
-              Personal Details
-            </button>
-            <button
-              className={`px-4 py-2 font-medium text-sm ${
-                selectedTab === "skills"
-                  ? "text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
-                  : "text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-300"
-              }`}
-              onClick={() => setSelectedTab("skills")}
-            >
-              Skills & About
-            </button>
+          <div className="flex border-b border-gray-200 dark:border-gray-700 mb-5">
+            {["basic", "personal", "skills"].map((tab) => (
+              <button
+                key={tab}
+                className={`px-4 py-2.5 text-sm font-medium transition-colors ${
+                  selectedTab === tab
+                    ? "text-sky-600 dark:text-sky-400 border-b-2 border-sky-600 dark:border-sky-400"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300"
+                }`}
+                onClick={() => setSelectedTab(tab)}
+              >
+                {tab === "basic" && "Basic Info"}
+                {tab === "personal" && "Personal Details"}
+                {tab === "skills" && "Skills & About"}
+              </button>
+            ))}
           </div>
 
           <form onSubmit={handleSubmitEdit}>
             {selectedTab === "basic" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="md:col-span-2 flex flex-col items-center">
-                  <div className="relative mb-4">
-                    <img
-                      src={
-                        editFormData.profilePicture ||
-                        "https://via.placeholder.com/150"
-                      }
-                      alt="Profile"
-                      className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg"
-                    />
-                    <button
-                      type="button"
-                      className="absolute bottom-2 right-2 bg-indigo-500 text-white w-8 h-8 rounded-full flex items-center justify-center"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <div className="md:col-span-2 flex flex-col items-center mb-3">
+                  <div className="relative mb-3">
+                    <div className="bg-gray-200 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-full w-28 h-28 flex items-center justify-center overflow-hidden">
+                      {editFormData.profilePicture ? (
+                        <img
+                          src={editFormData.profilePicture}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
                         />
-                      </svg>
-                    </button>
+                      ) : (
+                        <svg
+                          className="w-12 h-12 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                      )}
+                    </div>
                   </div>
                   <div className="w-full max-w-xs">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                       Profile Picture URL
                     </label>
                     <input
@@ -178,14 +161,14 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                       name="profilePicture"
                       value={editFormData.profilePicture}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
-                      placeholder="https://example.com/photo.jpg"
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                      placeholder="Paste image URL"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     First Name
                   </label>
                   <input
@@ -193,13 +176,13 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="firstName"
                     value={editFormData.firstName}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Last Name
                   </label>
                   <input
@@ -207,13 +190,13 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="lastName"
                     value={editFormData.lastName}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Username
                   </label>
                   <input
@@ -221,14 +204,14 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="username"
                     value={editFormData.username}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     required
-                    readOnly = {true}
+                    readOnly={true}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Email
                   </label>
                   <input
@@ -236,18 +219,18 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="email"
                     value={editFormData.email}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     required
-                    readOnly = {true}
+                    readOnly={true}
                   />
                 </div>
               </div>
             )}
 
             {selectedTab === "personal" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Title/Position
                   </label>
                   <input
@@ -255,13 +238,13 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="title"
                     value={editFormData.title}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     placeholder="Software Engineer"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Company
                   </label>
                   <input
@@ -269,13 +252,13 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="company"
                     value={editFormData.company}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     placeholder="Tech Company Inc."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Age
                   </label>
                   <input
@@ -285,12 +268,12 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     onChange={handleInputChange}
                     min="16"
                     max="100"
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Website
                   </label>
                   <input
@@ -298,13 +281,13 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="website"
                     value={editFormData.website}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     placeholder="https://yourwebsite.com"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     College/University
                   </label>
                   <input
@@ -312,13 +295,13 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="college"
                     value={editFormData.college}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     placeholder="University Name"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     City
                   </label>
                   <input
@@ -326,13 +309,13 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="city"
                     value={editFormData.city}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     placeholder="New York"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     State
                   </label>
                   <input
@@ -340,13 +323,13 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="state"
                     value={editFormData.state}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     placeholder="NY"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Country
                   </label>
                   <input
@@ -354,7 +337,7 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     name="country"
                     value={editFormData.country}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     placeholder="United States"
                   />
                 </div>
@@ -362,9 +345,9 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
             )}
 
             {selectedTab === "skills" && (
-              <div className="grid grid-cols-1 gap-6 mb-6">
+              <div className="grid grid-cols-1 gap-4 mb-5">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     About Me
                   </label>
                   <textarea
@@ -372,26 +355,26 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                     value={editFormData.about}
                     onChange={handleInputChange}
                     rows="4"
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                     placeholder="Tell others about yourself..."
                   ></textarea>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Skills & Expertise
                   </label>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {editFormData.skills.map((skill, index) => (
                       <span
                         key={index}
-                        className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full text-sm flex items-center"
+                        className="bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 px-3 py-1 rounded-full text-sm flex items-center"
                       >
                         {skill}
                         <button
                           type="button"
                           onClick={() => handleRemoveSkill(skill)}
-                          className="ml-1.5 text-indigo-500 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200"
+                          className="ml-1.5 text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200"
                         >
                           &times;
                         </button>
@@ -403,13 +386,13 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                       type="text"
                       value={newSkill}
                       onChange={(e) => setNewSkill(e.target.value)}
-                      className="flex-1 px-4 py-2 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600"
-                      placeholder="Add a new skill (e.g. JavaScript)"
+                      className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                      placeholder="Add a new skill"
                     />
                     <button
                       type="button"
                       onClick={handleAddSkill}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center"
+                      className="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2 rounded-lg flex items-center transition-colors"
                     >
                       <svg
                         className="w-4 h-4 mr-1"
@@ -431,18 +414,18 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
               </div>
             )}
 
-            <div className="pt-6 flex justify-between items-center border-t border-slate-200 dark:border-gray-700">
-              <div className="text-sm text-slate-500 dark:text-gray-400">
-                {selectedTab === "basic" && "Step 1 of 3: Basic Information"}
-                {selectedTab === "personal" && "Step 2 of 3: Personal Details"}
-                {selectedTab === "skills" && "Step 3 of 3: Skills & About"}
+            <div className="pt-5 flex justify-between items-center border-t border-gray-200 dark:border-gray-700">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {selectedTab === "basic" && "Step 1 of 3"}
+                {selectedTab === "personal" && "Step 2 of 3"}
+                {selectedTab === "skills" && "Step 3 of 3"}
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 {selectedTab !== "basic" && (
                   <button
                     type="button"
                     onClick={() => setSelectedTab(selectedTab === "skills" ? "personal" : "basic")}
-                    className="px-6 py-3 text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-300 font-medium"
+                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg font-medium transition-colors"
                   >
                     Back
                   </button>
@@ -450,8 +433,10 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                 {selectedTab !== "skills" ? (
                   <button
                     type="button"
-                    onClick={() => setSelectedTab(selectedTab === "basic" ? "personal" : "skills")}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium"
+                    onClick={() => setSelectedTab(selectedTab === "basic" ? "personal" : "skills")
+                      
+                    }
+                    className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                   >
                     Next
                   </button>
@@ -459,7 +444,8 @@ const EditProfileModal = ({ profile, onClose, onUpdate }) => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 flex items-center"
+                    
+                    className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-70 flex items-center"
                   >
                     {isSubmitting ? (
                       <>

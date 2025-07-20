@@ -98,7 +98,7 @@ const ConnectionsSection = () => {
         ) : activeTab === 'followers' ? (
           <FollowerList 
             followers={followers}
-            following={following}
+            following={following.map(connection => connection.reciever.username)}
             onFollow={handleFollow} 
             onProfileClick={navigateToProfile}
           />
@@ -115,6 +115,7 @@ const ConnectionsSection = () => {
 };
 
 const FollowerList = ({ followers, following ,onFollow, onProfileClick }) => {
+  console.log("following",following);
   if (!followers?.length) {
     return (
       <div className="text-center py-8">
@@ -177,12 +178,19 @@ const FollowerList = ({ followers, following ,onFollow, onProfileClick }) => {
             )}
           </div>
           
-          {<button 
+          {following.includes(follower.sender.username) ? <button 
+            
+            className="ml-2 text-sm bg-gray-600 text-white px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Following
+          </button> :<button 
             onClick={() => onFollow(follower.sender.username)}
             className="ml-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg transition-colors"
           >
             Follow
-          </button>}
+          </button> 
+          
+          }
         </div>
       ))}
     </div>
@@ -251,9 +259,9 @@ const FollowingList = ({ following, onUnfollow, onProfileClick }) => {
                   {user.email}
                 </p>
               )}
-              {user.bio && (
+              {user.about && (
                 <p className="text-xs text-slate-500 dark:text-gray-400 mt-1 truncate">
-                  {user.bio}
+                  {user.about}
                 </p>
               )}
             </div>
