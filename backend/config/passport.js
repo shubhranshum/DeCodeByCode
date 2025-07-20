@@ -12,8 +12,10 @@ passport.use(new GoogleStrategy({
       const existingUser = await User.findOne({ oauthId: profile.id, oauthProvider: 'google' });
 
       if (existingUser) {
+        console.log("User already exists:", existingUser);
         return done(null, existingUser);
       }
+
 
       // 🆕 Create a new user for first-time login via Google
       const newUser = new User({

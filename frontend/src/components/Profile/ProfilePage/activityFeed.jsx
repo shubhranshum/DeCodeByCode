@@ -137,6 +137,12 @@ const ActivityFeed = ({
       case 'PROBLEM_ATTEMPTED':
         navigate(`/problems/${activity.refId}`);
         break;
+      case 'FOLLOWED':
+        navigate(`/profile/u/${activity.details.split(' ')[2]}`);
+        break;
+      case 'UNFOLLOWED':
+        navigate(`/profile/u/${activity.details.split(' ')[2]}`);
+        break;
       default:
         navigate(`/activity/${activity._id}`);
     }

@@ -1,3 +1,4 @@
+
 import { useParams, useLocation } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import SubmissionCodeEditor from "../Tasks/submissionCodeEditor.jsx";
@@ -43,6 +44,9 @@ function formatDuration(ms) {
 // Move STATUS_RANK outside the component to make it a true constant
 const STATUS_RANK = { Unattempted: 0, Attempted: 1, Accepted: 2 };
 
+export default function ContestProblem() {
+  const { problemId, contestId } = useParams();
+  const STORAGE_KEY = `status-${problemId}`;
 
 // --- Main GlobalProblem Component ---
 export default function GlobalProblem() {
@@ -75,6 +79,9 @@ export default function GlobalProblem() {
   const [solutions, setSolutions] = useState([]);
   const [isSolutionsLoading, setIsSolutionsLoading] = useState(false);
   const [selectedSolution, setSelectedSolution] = useState(null);
+  const [customInput, setCustomInput] = useState("");
+  const [customOutput, setCustomOutput] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
 
   // State for custom input/output
   const [customInput, setCustomInput] = useState("");
@@ -94,6 +101,23 @@ export default function GlobalProblem() {
   const updateStatus = useCallback((newStatus) => {
     // Ensure STORAGE_KEY.current is set before attempting to use localStorage
     if (!problemId || !STORAGE_KEY.current) return;
+  // fetch problem + submissions on mount or problemId change
+  useEffect(() => {
+    setIsLoading(true);
+    fetch(`http://localhost:3000/problems/${problemId}`, {
+      credentials: "include"
+    })
+      .then(res => res.json())
+      .then(data => setProblem(data))
+      .catch(err => {
+        console.error("Failed to load problem:", err);
+        setProblem(null);
+      })
+      .finally(() => setIsLoading(false));
+
+    fetchSubmissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contestId,problemId]);
 
     const prev = localStorage.getItem(STORAGE_KEY.current) || "Unattempted";
     if (STATUS_RANK[newStatus] > STATUS_RANK[prev]) {
@@ -114,7 +138,7 @@ export default function GlobalProblem() {
     try {
       // API endpoint for global problem submissions
       const res = await fetch(
-        `http://localhost:3000/problems/${problemId}/submissions`,
+        `http://localhost:3000/contests/${contestId}/submissions/${problemId}`,
         { credentials: "include" }
       );
       const data = await res.json();
@@ -240,6 +264,7 @@ export default function GlobalProblem() {
       setVerdict("Error: Problem ID not available for submission.");
       return;
     }
+  }, [contestId, problemId, updateStatus]);
 
     let isCorrect = true;
     let finalVerdict = "Accepted";
@@ -292,6 +317,7 @@ export default function GlobalProblem() {
       setVerdict("Submission failed due to network error.");
     }
   }, [problemId, problem, updateStatus, fetchSubmissions]); // Dependencies for useCallback
+
 
   // --- Callback: Handle Running Custom Input ---
   const handleRunCustomInput = async () => {
@@ -526,7 +552,6 @@ export default function GlobalProblem() {
                   selectedSolution={selectedSolution}
                 />
               )}
-
               {activeTab === "run-code" && (
                 <div className="space-y-4">
                   <div>
@@ -634,6 +659,7 @@ export default function GlobalProblem() {
               <SubmissionCodeEditor
                 initialCode={code}
                 // language={language} // You might want to manage this state if multiple languages are supported
+                language="cpp"
                 onCodeChange={setCode}
                 theme={isDark ? "vs-dark" : "light"}
               />
@@ -721,18 +747,19 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
           </div>
 
           <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
+
             <div className="text-xs text-gray-400">Runtime</div>
             <div className="font-medium">
-              {selectedSubmission.timeTaken} ms
+              {selectedSubmission.timetaken} ms
             </div>
           </div>
 
           <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
             <div className="text-xs text-gray-400">Memory</div>
             <div className="font-medium">
-              {selectedSubmission.memoryTaken} KB
+              {selectedSubmission.memorytaken} KB
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="mb-3">
@@ -803,14 +830,10 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
               }`}
             >
               <td className="py-3 px-4">
-              {sub.submissionTime
-                ? new Date(sub.submissionTime).toLocaleString('en-US', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short'
-                  })
-                : "N/A"}
-            </td>
-
+                {sub.submissionTime
+                  ? formatDuration(sub.timeFromStart)
+                  : "N/A"}
+              </td>
               <td className="py-3 px-4">
                 <span className={`px-2 py-1 rounded-full text-xs ${
                   sub.verdict === "Accepted"
@@ -825,10 +848,10 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
                 </span>
               </td>
               <td className={`py-3 px-4 ${isDark ? "text-gray-400" : "text-slate-600"}`}>
-                {sub.timeTaken ? `${sub.timeTaken} ms` : "N/A"}
+                {sub.timetaken ? `${sub.timetaken} ms` : "N/A"}
               </td>
               <td className={`py-3 px-4 ${isDark ? "text-gray-400" : "text-slate-600"}`}>
-                {sub.memoryTaken ? `${sub.memoryTaken} KB` : "N/A"}
+                {sub.memorytaken ? `${sub.memorytaken} KB` : "N/A"}
               </td>
               <td className="py-3 px-4">
                 <button
@@ -848,6 +871,7 @@ function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
       </table>
     </div>
   );
+
 }
 
 // --- Solutions Tab Component (Renamed and adapted for global problems) ---

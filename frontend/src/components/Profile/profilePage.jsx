@@ -24,7 +24,8 @@ const ProfilePage = () => {
   const { username: urlUsername } = useParams();
   // const { user: currentUser } = useUser();
   const isOwnProfile = currentUser && currentUser.username === urlUsername;
-
+  //following only allowed is user is loggen in and the profile is not logged in users profile
+  const isFollowingAllowed = currentUser != null ? true : false;
   // Track mounted state to prevent state updates on unmounted component
   const isMounted = useRef(true);
 
@@ -54,6 +55,7 @@ const ProfilePage = () => {
 
   // Apply theme on initial load
   useEffect(() => {
+    console.log("hello",isOwnProfile);
     const savedTheme = getTheme();
     setTheme(savedTheme);
     localStorage.setItem("theme", savedTheme);
@@ -72,6 +74,16 @@ const ProfilePage = () => {
     localStorage.setItem("theme", newTheme);
     document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
+   useEffect(() => {
+    const savedTheme = getTheme();
+    setTheme(savedTheme);
+    localStorage.setItem("theme", savedTheme);
+    document.documentElement.classList.toggle("dark", savedTheme === "dark");
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const fetchBlogs = async () => {
     try {
@@ -133,7 +145,8 @@ const ProfilePage = () => {
 
       const data = await res.json();
       if (isMounted.current) {
-        setProfile(data);
+        setProfile(data.profile || null);
+       
         setIsFollowing(data.isFollowing || false);
 
         setStats({
@@ -288,7 +301,7 @@ const ProfilePage = () => {
   return (
     <div
       className={`min-h-screen py-8 px-4 sm:px-6 transition-colors duration-200 ${
-        theme === "dark" ? "bg-gray-900" : "bg-slate-50"
+        theme === "dark" ? "bg-gray-900" : "bg-purple-50"
       }`}
     >
       {isOwnProfile && isEditModalOpen && (
@@ -302,7 +315,7 @@ const ProfilePage = () => {
 
       {isOwnProfile && successMessage && (
         <div className="fixed top-4 right-4 z-50">
-          <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center animate-fadeInOut">
+          <div className={`${theme === 'dark' ? 'bg-orange-600' : 'bg-purple-600'} text-white px-6 py-4 rounded-lg shadow-lg flex items-center animate-fadeInOut`}>
             <svg
               className="w-6 h-6 mr-2"
               fill="none"
@@ -311,7 +324,7 @@ const ProfilePage = () => {
             >
               <path
                 strokeLinecap="round"
-                strokeLinejoin="round"
+                strokeLineJoin="round"
                 strokeWidth={2}
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
@@ -321,29 +334,45 @@ const ProfilePage = () => {
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <ProfileHeader
           profile={profile}
+          isFollowing={isFollowing}
+          setIsFollowing={setIsFollowing}
           onEditClick={() => setIsEditModalOpen(true)}
-          theme={theme}
           toggleTheme={toggleTheme}
+          theme={theme}
           isOwnProfile={isOwnProfile}
+          isFollowingAllowed={isFollowingAllowed}
         />
 
+        {/* Contribution Graph Section - Full Width */}
+        
+          
+          <div className="overflow-x-auto p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+            <ContributionGraph
+              data={profile.activityData || []}
+              theme={theme}
+            />
+          </div>
+          
+        
+
+        {/* Tab Navigation - Updated Colors */}
         <div
           className={`flex flex-wrap border-b mb-8 ${
-            theme === "dark" ? "border-gray-700" : "border-slate-200"
+            theme === "dark" ? "border-gray-700" : "border-purple-200"
           }`}
         >
           <button
             className={`px-4 py-3 font-medium ${
               activeTab === "overview"
                 ? theme === "dark"
-                  ? "text-indigo-400 border-b-2 border-indigo-400"
-                  : "text-indigo-600 border-b-2 border-indigo-600"
+                  ? "text-orange-400 border-b-2 border-orange-400"
+                  : "text-purple-600 border-b-2 border-purple-600"
                 : theme === "dark"
                 ? "text-gray-400 hover:text-gray-300"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-purple-500 hover:text-purple-700"
             }`}
             onClick={() => {
               setActiveTab("overview");
@@ -358,11 +387,11 @@ const ProfilePage = () => {
               className={`px-4 py-3 font-medium ${
                 activeTab === "activity"
                   ? theme === "dark"
-                    ? "text-indigo-400 border-b-2 border-indigo-400"
-                    : "text-indigo-600 border-b-2 border-indigo-600"
+                    ? "text-orange-400 border-b-2 border-orange-400"
+                    : "text-purple-600 border-b-2 border-purple-600"
                   : theme === "dark"
                   ? "text-gray-400 hover:text-gray-300"
-                  : "text-slate-500 hover:text-slate-700"
+                  : "text-purple-500 hover:text-purple-700"
               }`}
               onClick={() => {
                 setActiveTab("activity");
@@ -373,15 +402,15 @@ const ProfilePage = () => {
             </button>
           )}
 
-          <button
+          {isOwnProfile && <button
             className={`px-4 py-3 font-medium ${
               activeTab === "connections"
                 ? theme === "dark"
-                  ? "text-indigo-400 border-b-2 border-indigo-400"
-                  : "text-indigo-600 border-b-2 border-indigo-600"
+                  ? "text-orange-400 border-b-2 border-orange-400"
+                  : "text-purple-600 border-b-2 border-purple-600"
                 : theme === "dark"
                 ? "text-gray-400 hover:text-gray-300"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-purple-500 hover:text-purple-700"
             }`}
             onClick={() => {
               setActiveTab("connections");
@@ -389,18 +418,18 @@ const ProfilePage = () => {
             }}
           >
             Connections
-          </button>
+          </button>}
 
           {isOwnProfile && (
             <button
               className={`px-4 py-3 font-medium ${
                 activeTab === "attempts"
                   ? theme === "dark"
-                    ? "text-indigo-400 border-b-2 border-indigo-400"
-                    : "text-indigo-600 border-b-2 border-indigo-600"
+                    ? "text-orange-400 border-b-2 border-orange-400"
+                    : "text-purple-600 border-b-2 border-purple-600"
                   : theme === "dark"
                   ? "text-gray-400 hover:text-gray-300"
-                  : "text-slate-500 hover:text-slate-700"
+                  : "text-purple-500 hover:text-purple-700"
               }`}
               onClick={() => {
                 setActiveTab("attempts");
@@ -415,11 +444,11 @@ const ProfilePage = () => {
             className={`px-4 py-3 font-medium ${
               activeTab === "problems"
                 ? theme === "dark"
-                  ? "text-indigo-400 border-b-2 border-indigo-400"
-                  : "text-indigo-600 border-b-2 border-indigo-600"
+                  ? "text-orange-400 border-b-2 border-orange-400"
+                  : "text-purple-600 border-b-2 border-purple-600"
                 : theme === "dark"
                 ? "text-gray-400 hover:text-gray-300"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-purple-500 hover:text-purple-700"
             }`}
             onClick={() => {
               setActiveTab("problems");
@@ -434,11 +463,11 @@ const ProfilePage = () => {
               className={`px-4 py-3 font-medium ${
                 activeTab === "settings"
                   ? theme === "dark"
-                    ? "text-indigo-400 border-b-2 border-indigo-400"
-                    : "text-indigo-600 border-b-2 border-indigo-600"
+                    ? "text-orange-400 border-b-2 border-orange-400"
+                    : "text-purple-600 border-b-2 border-purple-600"
                   : theme === "dark"
                   ? "text-gray-400 hover:text-gray-300"
-                  : "text-slate-500 hover:text-slate-700"
+                  : "text-purple-500 hover:text-purple-700"
               }`}
               onClick={() => {
                 setActiveTab("settings");
@@ -450,24 +479,54 @@ const ProfilePage = () => {
           )}
         </div>
 
+        {/* Tab Content */}
         {activeTab === "overview" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* About Me Card */}
               <div
-                className={`rounded-xl shadow-sm p-6 transition-colors ${
+                className={`rounded-xl shadow-lg p-6 transition-colors ${
                   theme === "dark" ? "bg-gray-800" : "bg-white"
                 }`}
               >
-                <h2
-                  className={`text-xl font-bold mb-4 ${
-                    theme === "dark" ? "text-gray-100" : "text-slate-800"
-                  }`}
-                >
-                  About Me
-                </h2>
+                <div className="flex justify-between items-start">
+                  <h2
+                    className={`text-xl font-bold mb-4 ${
+                      theme === "dark" ? "text-orange-300" : "text-purple-700"
+                    }`}
+                  >
+                    About Me
+                  </h2>
+                  {isOwnProfile && (
+                    <button
+                      className={`flex items-center gap-1 ${
+                        theme === "dark"
+                          ? "text-orange-400 hover:text-orange-300"
+                          : "text-purple-600 hover:text-purple-800"
+                      }`}
+                      onClick={() => setIsEditModalOpen(true)}
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      Edit
+                    </button>
+                  )}
+                </div>
                 <p
                   className={`mb-4 ${
-                    theme === "dark" ? "text-gray-300" : "text-slate-600"
+                    theme === "dark" ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
                   {profile.about ||
@@ -478,60 +537,25 @@ const ProfilePage = () => {
                   socialLinks={profile.socialLinks || {}}
                   theme={theme}
                 />
-
-                {isOwnProfile && (
-                  <button
-                    className={`font-medium flex items-center gap-1 mt-4 ${
-                      theme === "dark"
-                        ? "text-indigo-400 hover:text-indigo-300"
-                        : "text-indigo-600 hover:text-indigo-800"
-                    }`}
-                    onClick={() => setIsEditModalOpen(true)}
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    Edit bio
-                  </button>
-                )}
               </div>
 
+              {/* Stats Card */}
               <div
-                className={`rounded-xl shadow-sm p-6 transition-colors ${
+                className={`rounded-xl shadow-lg p-6 transition-colors ${
                   theme === "dark" ? "bg-gray-800" : "bg-white"
                 }`}
               >
                 <h2
                   className={`text-xl font-bold mb-4 ${
-                    theme === "dark" ? "text-gray-100" : "text-slate-800"
+                    theme === "dark" ? "text-orange-300" : "text-purple-700"
                   }`}
                 >
-                  Activity Heatmap
+                  Statistics
                 </h2>
-                <ContributionGraph
-                  data={profile.activityData || []}
-                  theme={theme}
-                />
-                <p
-                  className={`text-sm mt-3 ${
-                    theme === "dark" ? "text-gray-400" : "text-slate-500"
-                  }`}
-                >
-                  Shows activity over the past year. Darker squares indicate
-                  more activity.
-                </p>
+                <StatsSection stats={stats} theme={theme} />
               </div>
 
+              {/* Skills Card */}
               <SkillsSection
                 skills={profile.skills || []}
                 onEditClick={() => setIsEditModalOpen(true)}
@@ -540,24 +564,69 @@ const ProfilePage = () => {
               />
             </div>
 
+            {/* Right Column */}
             <div className="space-y-8">
-              <StatsSection stats={stats} theme={theme} />
-              <BadgesSection badges={profile.badges || []} theme={theme} />
-              <AchievementsSection
-                achievements={profile.achievements || []}
-                theme={theme}
-              />
-              <CertificationsSection
-                certifications={profile.certifications || []}
-                theme={theme}
-              />
+              {/* Badges Card */}
+              <div
+                className={`rounded-xl shadow-lg p-6 transition-colors ${
+                  theme === "dark" ? "bg-gray-800" : "bg-white"
+                }`}
+              >
+                <h2
+                  className={`text-xl font-bold mb-4 ${
+                    theme === "dark" ? "text-orange-300" : "text-purple-700"
+                  }`}
+                >
+                  Badges
+                </h2>
+                <BadgesSection badges={profile.badges || []} theme={theme} />
+              </div>
+
+              {/* Achievements Card */}
+              <div
+                className={`rounded-xl shadow-lg p-6 transition-colors ${
+                  theme === "dark" ? "bg-gray-800" : "bg-white"
+                }`}
+              >
+                <h2
+                  className={`text-xl font-bold mb-4 ${
+                    theme === "dark" ? "text-orange-300" : "text-purple-700"
+                  }`}
+                >
+                  Achievements
+                </h2>
+                <AchievementsSection
+                  achievements={profile.achievements || []}
+                  theme={theme}
+                />
+              </div>
+
+              {/* Certifications Card */}
+              <div
+                className={`rounded-xl shadow-lg p-6 transition-colors ${
+                  theme === "dark" ? "bg-gray-800" : "bg-white"
+                }`}
+              >
+                <h2
+                  className={`text-xl font-bold mb-4 ${
+                    theme === "dark" ? "text-orange-300" : "text-purple-700"
+                  }`}
+                >
+                  Certifications
+                </h2>
+                <CertificationsSection
+                  certifications={profile.certifications || []}
+                  theme={theme}
+                />
+              </div>
             </div>
           </div>
         )}
 
+        {/* Other tabs remain the same */}
         {isOwnProfile && activeTab === "activity" && (
           <div
-            className={`rounded-xl shadow-sm p-6 transition-colors ${
+            className={`rounded-xl shadow-lg p-6 transition-colors ${
               theme === "dark" ? "bg-gray-800" : "bg-white"
             }`}
           >
@@ -565,7 +634,7 @@ const ProfilePage = () => {
               <div className="flex justify-center py-10">
                 <div
                   className={`w-12 h-12 border-4 ${
-                    theme === "dark" ? "border-indigo-500" : "border-indigo-600"
+                    theme === "dark" ? "border-orange-500" : "border-purple-600"
                   } border-t-transparent rounded-full animate-spin`}
                 ></div>
               </div>
@@ -580,10 +649,9 @@ const ProfilePage = () => {
           </div>
         )}
 
-        {activeTab === "connections" && (
+        {activeTab === "connections" &&isOwnProfile && (
           <ConnectionsSection
-            followers={profile.followers || []}
-            following={profile.following || []}
+            
             isOwnProfile={isOwnProfile}
             theme={theme}
           />
@@ -605,7 +673,11 @@ const ProfilePage = () => {
           />
         )}
 
-        {isOwnProfile && <BlogsSection blogs={blogs || []} theme={theme} />}
+        {isOwnProfile && (
+          <div className="mt-8">
+            <BlogsSection blogs={blogs || []} theme={theme} />
+          </div>
+        )}
       </div>
     </div>
   );

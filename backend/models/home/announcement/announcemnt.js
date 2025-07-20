@@ -11,6 +11,10 @@ const announcementSchema = new mongoose.Schema({
     default: '',
     
   },
+  link: {
+    type: String ,
+    default : null
+  },
   type: {
     type: String,
     enum: ['info', 'warning', 'alert', 'update', 'success'],

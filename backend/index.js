@@ -16,7 +16,7 @@ const makeAdmin = require('./routes/makeAdmin.js');
 const blogRouter = require('./routes/blog');
 const profile = require('./routes/profile');
 const adminRouter = require('./routes/admin.js');
-
+const notificationRouter = require('./routes/notification.js');
 const passport = require('passport');
 require('./config/passport'); // register Google strategy
 
@@ -47,6 +47,8 @@ app.use('/api/auth', oauthRouter);
 app.use('/', router);
 app.use('/', blogRouter);
 app.use('/', profile);
+app.use('/',notificationRouter)
+
 
 app.use('/',auth,[homeRouter,problemHandling,contestHandling,logoutRouter,codeRunner,makeAdmin]);
 
