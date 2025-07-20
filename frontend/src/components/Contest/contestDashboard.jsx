@@ -424,7 +424,7 @@ const ContestCard = ({ contest, status, onRegister, getTimeRemaining, formatDate
   };
 
   const handleCardClick = () => {
-    window.location.href = `/contests/${contest._id}`;
+    window.location.href = `/contests/${contest.slug}`;
   };
 
   const getStatusIcon = () => {
@@ -709,7 +709,7 @@ const ContestCard = ({ contest, status, onRegister, getTimeRemaining, formatDate
                 <Button
                   variant="contained"
                   size="small"
-                  href={`/contests/${contest._id}`}
+                  href={`/contests/${contest.slug}`}
                   disabled={!isRegistered}
                   sx={{
                     fontWeight: 600,
@@ -741,7 +741,7 @@ const ContestCard = ({ contest, status, onRegister, getTimeRemaining, formatDate
               <Button
                 variant="contained"
                 size="small"
-                href={`/contests/${contest._id}`}
+                href={`/contests/${contest.slug}`}
                 sx={{
                   fontWeight: 600,
                   textTransform: 'none',

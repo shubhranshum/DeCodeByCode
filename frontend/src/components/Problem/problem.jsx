@@ -1,10 +1,13 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
-import SubmissionCodeEditor from "../Tasks/submissionCodeEditor.jsx";
-import codeOutput from "../Tasks/output.jsx";
-import MathjaxRenderer from "../MathjaxRenderer";
 
-// Loading and Error Components
+import { useParams, useLocation } from "react-router-dom";
+import { useEffect, useState, useCallback, useRef } from "react";
+import SubmissionCodeEditor from "../Tasks/submissionCodeEditor.jsx";
+import codeOutput from "../Tasks/output.jsx"; // Assuming this is an external utility for running code
+import MathjaxRenderer from "../MathjaxRenderer"; // Assuming this is an external utility for rendering MathJax
+// Removed getContestBySlug as this component is no longer contest-specific
+import { getProblemBySlug } from '../Tasks/getProblemBySlug'; // Utility to fetch problem by slug
+
+// --- Loading and Error Components ---
 const LoadingSpinner = ({ isDark }) => (
   <div className={`flex items-center justify-center min-h-screen ${isDark ? "bg-gray-900" : "bg-slate-50"}`}>
     <div className="flex flex-col items-center">
@@ -23,12 +26,13 @@ const ProblemNotFound = ({ isDark }) => (
         Problem Not Found
       </h2>
       <p className={isDark ? "text-gray-300" : "text-slate-600"}>
-        The requested problem could not be loaded.
+        The requested problem could not be loaded. Please check the URL.
       </p>
     </div>
   </div>
 );
 
+// --- Utility Function ---
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, ms);
   const hours = Math.floor(totalSeconds / 3600);
@@ -37,51 +41,66 @@ function formatDuration(ms) {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+// Move STATUS_RANK outside the component to make it a true constant
+const STATUS_RANK = { Unattempted: 0, Attempted: 1, Accepted: 2 };
+
 export default function ContestProblem() {
   const { problemId, contestId } = useParams();
-  // status priority map
-  const STATUS_RANK = { Unattempted: 0, Attempted: 1, Accepted: 2 };
   const STORAGE_KEY = `status-${problemId}`;
 
-  // initialize status
-  const [status, setStatus] = useState(() =>
-    location.state?.verdict ||
-    localStorage.getItem(STORAGE_KEY) ||
-    "Unattempted"
-  );
+// --- Main GlobalProblem Component ---
+export default function GlobalProblem() {
+  // Get problemSlug from the URL parameters
+  const { problemSlug } = useParams(); // Only problemSlug is expected now
+  const location = useLocation();
 
-  // persist incoming verdict on first mount
-  useEffect(() => {
-    if (location.state?.verdict) {
-      localStorage.setItem(STORAGE_KEY, location.state.verdict);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Internal state to store problem ID, derived from the slug
+  const [problemId, setProblemId] = useState(null);
+  // contestId is no longer relevant for a global problem page
 
-  // central updateStatus: only upgrade
-  const updateStatus = useCallback((newStatus) => {
-    const prev = localStorage.getItem(STORAGE_KEY) || "Unattempted";
-    if (STATUS_RANK[newStatus] > STATUS_RANK[prev]) {
-      localStorage.setItem(STORAGE_KEY, newStatus);
-      setStatus(newStatus);
-    }
-  }, [STORAGE_KEY]);
+  // Local storage key for problem status, dependent on problemId
+  const STORAGE_KEY = useRef(null);
 
+  // Full problem details fetched using getProblemBySlug
   const [problem, setProblem] = useState(null);
+
+  // State for code editor and submission
   const [code, setCode] = useState("");
   const [verdict, setVerdict] = useState(null);
   const [activeTab, setActiveTab] = useState("problem");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Manages overall loading state
+
+  // State for submissions tab
   const [submissions, setSubmissions] = useState([]);
   const [isSubmissionsLoading, setIsSubmissionsLoading] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+
+  // State for solutions tab
+  const [solutions, setSolutions] = useState([]);
+  const [isSolutionsLoading, setIsSolutionsLoading] = useState(false);
+  const [selectedSolution, setSelectedSolution] = useState(null);
   const [customInput, setCustomInput] = useState("");
   const [customOutput, setCustomOutput] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
 
-  const theme = "dark";
+  // State for custom input/output
+  const [customInput, setCustomInput] = useState("");
+  const [customOutput, setCustomOutput] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
+
+  // Problem status (Unattempted, Attempted, Accepted)
+  const [status, setStatus] = useState("Unattempted");
+  // Ref to store initial verdict from navigation state (e.g., after a submission)
+  const initialVerdict = useRef(location.state?.verdict);
+
+  // Theme setting
+  const theme = "dark"; // This could be dynamic based on user preference
   const isDark = theme === "dark";
 
+  // --- Callback: Update Problem Status (only upgrades) ---
+  const updateStatus = useCallback((newStatus) => {
+    // Ensure STORAGE_KEY.current is set before attempting to use localStorage
+    if (!problemId || !STORAGE_KEY.current) return;
   // fetch problem + submissions on mount or problemId change
   useEffect(() => {
     setIsLoading(true);
@@ -100,15 +119,31 @@ export default function ContestProblem() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contestId,problemId]);
 
+    const prev = localStorage.getItem(STORAGE_KEY.current) || "Unattempted";
+    if (STATUS_RANK[newStatus] > STATUS_RANK[prev]) {
+      localStorage.setItem(STORAGE_KEY.current, newStatus);
+      setStatus(newStatus);
+    }
+  }, [problemId]); // Dependency on problemId to ensure STORAGE_KEY is valid
+
+  // --- Callback: Fetch Submissions for the Problem ---
   const fetchSubmissions = useCallback(async () => {
+    // Ensure problemId is available before fetching submissions
+    if (!problemId) {
+      console.warn("Cannot fetch submissions: problemId not available.");
+      return;
+    }
+
     setIsSubmissionsLoading(true);
     try {
+      // API endpoint for global problem submissions
       const res = await fetch(
         `http://localhost:3000/contests/${contestId}/submissions/${problemId}`,
         { credentials: "include" }
       );
       const data = await res.json();
 
+      // Update problem status based on fetched submissions
       if (!data.length) {
         updateStatus("Unattempted");
       } else if (data.some(s => s.verdict === "Accepted")) {
@@ -120,70 +155,206 @@ export default function ContestProblem() {
       setSubmissions(data);
     } catch (err) {
       console.error("Failed to load submissions:", err);
+      setSubmissions([]); // Clear submissions on error
     } finally {
       setIsSubmissionsLoading(false);
     }
+  }, [problemId, updateStatus]); // Dependencies for useCallback
+
+  // --- Callback: Fetch Accepted Solutions for the Problem ---
+  const fetchAllSolutions = useCallback(async () => {
+    // Ensure problemId is available before fetching solutions
+    if (!problemId) {
+      console.warn("Cannot fetch solutions: problemId not available.");
+      return;
+    }
+
+    setIsSolutionsLoading(true);
+    try {
+      // API endpoint for global problem solutions
+      const res = await fetch(
+        `http://localhost:3000/problems/${problemId}/solutions`,
+        {
+          method: "GET",
+          credentials: "include"
+        }
+      );
+      const data = await res.json();
+      setSolutions(data);
+    } catch (err) {
+      console.error("Failed to load solutions:", err);
+      setSolutions([]); // Clear solutions on error
+    } finally {
+      setIsSolutionsLoading(false);
+    }
+  }, [problemId]); // Dependencies for useCallback
+
+
+  // --- Effect 1: Fetch Problem Details using Slug ---
+  // This effect fetches the problem data directly using its slug.
+  useEffect(() => {
+    const fetchProblemData = async () => {
+      setIsLoading(true); // Start overall loading
+      setProblem(null); // Reset problem data
+      setProblemId(null);
+      // Reset status to default while loading new problem
+      setStatus("Unattempted");
+      STORAGE_KEY.current = null; // Reset storage key ref
+
+      try {
+        // Fetch the problem data directly by its slug
+        const problemData = await getProblemBySlug(problemSlug);
+
+        if (!problemData || !problemData._id) {
+          throw new Error("Problem not found.");
+        }
+
+        // Set the problem ID and the full problem object
+        setProblemId(problemData._id);
+        setProblem(problemData);
+
+      } catch (err) {
+        console.error("Error loading problem:", err);
+        setProblem(null); // Set problem to null to trigger ProblemNotFound component
+      } finally {
+        // isLoading will be set to false in the next useEffect once problemId is set
+        // or if problem wasn't found.
+        if (!problem) setIsLoading(false);
+      }
+    };
+
+    fetchProblemData();
+  }, [problemSlug]); // Re-run whenever problemSlug changes
+
+  // --- Effect 2: Initialize Problem Status and Fetch Submissions/Solutions (once problemId is set) ---
+  useEffect(() => {
+    if (problemId) { // Only proceed if problemId is available
+      // Set the STORAGE_KEY.current once problemId is available
+      STORAGE_KEY.current = `status-${problemId}`;
+
+      // Load status from localStorage using the problemId
+      const savedStatus = localStorage.getItem(STORAGE_KEY.current) || "Unattempted";
+      setStatus(savedStatus);
+
+      // If there's an initial verdict from navigation (e.g., after a submission redirect)
+      if (initialVerdict.current) {
+        const prevRank = STATUS_RANK[savedStatus];
+        const newRank = STATUS_RANK[initialVerdict.current];
+
+        // Only update status if the new verdict is "better" (higher rank)
+        if (newRank > prevRank) {
+          localStorage.setItem(STORAGE_KEY.current, initialVerdict.current);
+          setStatus(initialVerdict.current);
+        }
+        initialVerdict.current = null; // Clear the ref after processing
+      }
+
+      // Fetch submissions once problemId is available
+      fetchSubmissions();
+      // fetchAllSolutions(); // Only fetch when solutions tab is active to avoid unnecessary calls
+      setIsLoading(false); // Stop overall loading here, as essential data is now available
+    }
+  }, [problemId, fetchSubmissions]); // fetchAllSolutions is intentionally excluded here
+
+
+  // --- Callback: Handle Code Submission ---
+  const handleCodeSubmit = useCallback(async (codeToSubmit) => {
+    // Ensure problemId and problem object are available
+    if (!problemId || !problem) {
+      setVerdict("Error: Problem ID not available for submission.");
+      return;
+    }
   }, [contestId, problemId, updateStatus]);
 
-  const handleCodeSubmit = useCallback(async (code) => {
     let isCorrect = true;
     let finalVerdict = "Accepted";
     let maxTime = 0, maxMem = 0;
 
+    // Simulate running code against test cases (using the external codeOutput utility)
     for (let i = 0; i < problem.testCases.length; i++) {
       setVerdict(`Running on test case ${i + 1}`);
       const tc = problem.testCases[i];
-      const out = await codeOutput(code, tc.input, tc.output.stdout);
-      maxTime = Math.max(maxTime, Number(out.time));
-      maxMem  = Math.max(maxMem, Number(out.memory));
+      // Assuming codeOutput simulates execution and returns status/output
+      const out = await codeOutput(codeToSubmit, tc.input, tc.output.stdout);
+      maxTime = Math.max(maxTime, Number(out.time || 0));
+      maxMem  = Math.max(maxMem, Number(out.memory || 0));
 
-      if (out.status_id !== 3) {
+      if (out.status_id !== 3) { // Assuming status_id 3 means Accepted
         isCorrect = false;
         finalVerdict = out.stderr
           ? `Runtime Error on Test ${i+1}: ${out.stderr}`
           : out.compile_output
             ? `Compilation Error on Test ${i+1}: ${out.compile_output}`
-            : `${out.status.description} on Test ${i+1}`;
+            : `${out.status?.description || "Unknown Error"} on Test ${i+1}`;
         break;
       }
     }
 
+    // Update problem status based on the final verdict
     updateStatus(isCorrect ? "Accepted" : "Attempted");
     setVerdict(finalVerdict);
 
-    // post submission
-    await fetch(
-      `http://localhost:3000/contests/${contestId}/problems/${problemId}/submit`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          code,
-          language: 52,
-          verdict: finalVerdict,
-          timeTaken: maxTime,
-          memoryTaken: maxMem,
-        })
-      }
-    );
+    // Post the submission to the backend using problemId
+    try {
+      await fetch(
+        `http://localhost:3000/problems/${problemId}/submit`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            code: codeToSubmit,
+            language: 52, // Example language ID (e.g., C++)
+            verdict: finalVerdict,
+            timeTaken: maxTime,
+            memoryTaken: maxMem,
+          })
+        }
+      );
+      fetchSubmissions(); // Refresh submissions list after successful submission
+    } catch (error) {
+      console.error("Failed to submit code:", error);
+      setVerdict("Submission failed due to network error.");
+    }
+  }, [problemId, problem, updateStatus, fetchSubmissions]); // Dependencies for useCallback
 
-    fetchSubmissions();
-  }, [contestId, problemId, problem, updateStatus, fetchSubmissions]);
 
+  // --- Callback: Handle Running Custom Input ---
   const handleRunCustomInput = async () => {
+    if (!problem) {
+      setCustomOutput({ userOutput: "Error: Problem data not loaded." });
+      return;
+    }
+
     setIsRunning(true);
-    const userOut     = await codeOutput(code, customInput);
-    const expectedOut = await codeOutput(problem.codeSolution, customInput);
-    setCustomOutput({
-      userOutput: userOut.stdout || "No output",
-      expectedOutput: expectedOut.stdout || "No expected output"
-    });
-    setIsRunning(false);
+    try {
+      // Run user's code with custom input
+      const userOut = await codeOutput(code, customInput);
+      // Run problem's solution code with custom input to get expected output
+      const expectedOut = await codeOutput(problem.codeSolution, customInput);
+
+      setCustomOutput({
+        userOutput: userOut.stdout || userOut.stderr || userOut.compile_output || "No output",
+        expectedOutput: expectedOut.stdout || expectedOut.stderr || expectedOut.compile_output || "No expected output"
+      });
+    } catch (error) {
+      console.error("Error running custom input:", error);
+      setCustomOutput({ userOutput: "Error running code.", expectedOutput: "Error running solution." });
+    } finally {
+      setIsRunning(false);
+    }
   };
 
-  if (isLoading) return <LoadingSpinner isDark={isDark} />;
-  if (!problem)   return <ProblemNotFound isDark={isDark} />;
+  // --- Conditional Rendering for Loading and Not Found States ---
+  if (isLoading) {
+    return <LoadingSpinner isDark={isDark} />;
+  }
+  // If problem is null after loading, it means the problem wasn't found
+  if (!problem) {
+    return <ProblemNotFound isDark={isDark} />;
+  }
+
+  // --- Main Render for Problem Page ---
   return (
     <div className={`min-h-screen ${isDark ? "bg-gray-900 text-gray-100" : "bg-slate-50 text-slate-800"}`}>
       {/* Header */}
@@ -195,7 +366,7 @@ export default function ContestProblem() {
             </h1>
             <div className="flex items-center mt-2 text-sm">
               <span className={`mr-4 ${isDark ? "text-gray-400" : "text-slate-500"}`}>
-                Problem ID: {problemId}
+                Problem ID: {problemId} {/* Display problemId as it's the global identifier here */}
               </span>
               <span className={`text-[11px] px-2 py-[2px] rounded-full font-medium border ${
                 status === "Accepted"
@@ -248,6 +419,21 @@ export default function ContestProblem() {
                 onClick={() => setActiveTab("submissions")}
               >
                 Submissions
+              </button>
+              {/* Solutions tab */}
+              <button
+                className={`px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === "solutions"
+                    ? isDark ? "text-orange-500 border-b-2 border-orange-500" : "text-indigo-600 border-b-2 border-indigo-600"
+                    : isDark ? "text-gray-400 hover:text-gray-300" : "text-slate-500 hover:text-slate-700"
+                }`}
+                onClick={() => {
+                  setActiveTab("solutions");
+                  // Only fetch solutions if the tab is activated and solutions haven't been loaded yet
+                  if (solutions.length === 0 && !isSolutionsLoading) fetchAllSolutions();
+                }}
+              >
+                Solutions
               </button>
               <button
                 className={`px-4 py-3 text-sm font-medium transition-colors ${
@@ -347,7 +533,7 @@ export default function ContestProblem() {
               )}
 
               {activeTab === "submissions" && (
-                <ContestSubmissionsTab
+                <ProblemSubmissionsTab // Renamed component
                   submissions={submissions}
                   isLoading={isSubmissionsLoading}
                   isDark={isDark}
@@ -356,6 +542,16 @@ export default function ContestProblem() {
                 />
               )}
 
+              {/* Solutions Tab */}
+              {activeTab === "solutions" && (
+                <ProblemSolutionsTab // Renamed component
+                  solutions={solutions}
+                  isLoading={isSolutionsLoading}
+                  isDark={isDark}
+                  onSelectSolution={setSelectedSolution}
+                  selectedSolution={selectedSolution}
+                />
+              )}
               {activeTab === "run-code" && (
                 <div className="space-y-4">
                   <div>
@@ -406,14 +602,14 @@ export default function ContestProblem() {
                         isDark ? "text-gray-200" : "text-slate-800"
                         }`}>
                         {customOutput?.userOutput
-                            ? JSON.stringify(customOutput.userOutput, null, 2)
+                            ? customOutput.userOutput // Display directly
                             : "Run code to see your output"}
                         </pre>
 
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium block mb-2">Your Output</label>
+                      <label className="text-sm font-medium block mb-2">Expected Output</label>
                       <div className={`rounded-lg overflow-hidden border ${
                         isDark ? "border-gray-600 bg-gray-700" : "border-slate-300 bg-slate-100"
                       }`}>
@@ -421,7 +617,7 @@ export default function ContestProblem() {
                         isDark ? "text-gray-200" : "text-slate-800"
                         }`}>
                         {customOutput?.expectedOutput
-                            ? JSON.stringify(customOutput.expectedOutput, null, 2)
+                            ? customOutput.expectedOutput // Display directly
                             : "Run code to see Expected Output"}
                         </pre>
 
@@ -461,6 +657,8 @@ export default function ContestProblem() {
             </div>
             <div className="flex-1">
               <SubmissionCodeEditor
+                initialCode={code}
+                // language={language} // You might want to manage this state if multiple languages are supported
                 language="cpp"
                 onCodeChange={setCode}
                 theme={isDark ? "vs-dark" : "light"}
@@ -494,7 +692,7 @@ export default function ContestProblem() {
                 <div className={`p-3 rounded ${
                   verdict === "Accepted"
                     ? "bg-green-100 text-green-800"
-                    : verdict.includes("Wrong")
+                    : verdict.includes("Wrong") || verdict.includes("Error") || verdict.includes("Limit Exceeded")
                     ? "bg-red-100 text-red-800"
                     : isDark
                     ? "bg-gray-700"
@@ -517,8 +715,8 @@ export default function ContestProblem() {
   );
 }
 
-// Submissions Tab Component
-function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmission, selectedSubmission }) {
+// --- Submissions Tab Component (Renamed and adapted for global problems) ---
+function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmission, selectedSubmission }) {
   if (isLoading) {
     return <div className="py-6 flex items-center justify-center">Loading...</div>;
   }
@@ -528,7 +726,7 @@ function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-medium">Submission Details</h3>
-          <button 
+          <button
             onClick={() => onSelectSubmission(null)}
             className={`text-xs px-3 py-1 rounded ${
               isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-slate-200 hover:bg-slate-300"
@@ -537,7 +735,7 @@ function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
             Back to list
           </button>
         </div>
-        
+
         <div className="grid grid-cols-3 gap-4 mb-4">
           <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
             <div className="text-xs text-gray-400">Status</div>
@@ -547,14 +745,15 @@ function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
               {selectedSubmission.verdict}
             </div>
           </div>
-          
-          {/* <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
+
+          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
+
             <div className="text-xs text-gray-400">Runtime</div>
             <div className="font-medium">
               {selectedSubmission.timetaken} ms
             </div>
           </div>
-          
+
           <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
             <div className="text-xs text-gray-400">Memory</div>
             <div className="font-medium">
@@ -562,7 +761,7 @@ function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
             </div>
           </div> */}
         </div>
-        
+
         <div className="mb-3">
           <div className="text-sm font-medium mb-2">Submitted Code</div>
           <pre className={`p-4 rounded-lg overflow-x-auto text-sm ${
@@ -571,7 +770,7 @@ function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
             {selectedSubmission.code}
           </pre>
         </div>
-        
+
         <div className="text-xs text-gray-400">
           Submitted at: {new Date(selectedSubmission.submissionTime).toLocaleString()}
         </div>
@@ -664,6 +863,159 @@ function ContestSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmiss
                   }`}
                 >
                   View Code
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+}
+
+// --- Solutions Tab Component (Renamed and adapted for global problems) ---
+function ProblemSolutionsTab({ solutions, isLoading, isDark, onSelectSolution, selectedSolution }) {
+  if (isLoading) {
+    return (
+      <div className="py-6 flex items-center justify-center">
+        <div className={`w-8 h-8 border-2 ${isDark ? "border-orange-500" : "border-indigo-600"} border-t-transparent rounded-full animate-spin`}></div>
+      </div>
+    );
+  }
+
+  if (selectedSolution) {
+    return (
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-medium">Solution Details</h3>
+          <button
+            onClick={() => onSelectSolution(null)}
+            className={`text-xs px-3 py-1 rounded ${
+              isDark ? "bg-gray-700 hover:bg-gray-600" : "bg-slate-200 hover:bg-slate-300"
+            }`}
+          >
+            Back to list
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
+            <div className="text-xs text-gray-400">Status</div>
+            <div className={`font-medium ${
+              selectedSolution.verdict === "Accepted" ? "text-green-500" : "text-red-500"
+            }`}>
+              {selectedSolution.verdict}
+            </div>
+          </div>
+
+          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
+            <div className="text-xs text-gray-400">Runtime</div>
+            <div className="font-medium">
+              {selectedSolution.timeTaken} ms
+            </div>
+          </div>
+
+          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-700" : "bg-slate-100"}`}>
+            <div className="text-xs text-gray-400">Memory</div>
+            <div className="font-medium">
+              {selectedSolution.memoryTaken} KB
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-3">
+          <div className="text-sm font-medium mb-2">Solution Code</div>
+          <pre className={`p-4 rounded-lg overflow-x-auto text-sm ${
+            isDark ? "bg-gray-900" : "bg-slate-100"
+          }`}>
+            {selectedSolution.code}
+          </pre>
+        </div>
+
+        <div className="text-xs text-gray-400">
+          Submitted at: {new Date(selectedSolution.submissionTime).toLocaleString()}
+        </div>
+      </div>
+    );
+  }
+
+  if (solutions.length === 0) {
+    return (
+      <div className={`py-6 text-center ${isDark ? "bg-gray-800/30" : "bg-slate-50"}`}>
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 ${
+          isDark ? "bg-gray-700" : "bg-slate-200"
+        }`}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-slate-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+            />
+          </svg>
+        </div>
+        <h3 className="text-sm font-medium">No Solutions Available</h3>
+        <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-slate-500"}`}>
+          Be the first to solve this problem!
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 250px)" }}>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className={`border-b ${isDark ? "border-gray-700" : "border-slate-200"}`}>
+            <th className="text-left py-2 px-4">User</th>
+            <th className="text-left py-2 px-4">Language</th>
+            <th className="text-left py-2 px-4">Runtime</th>
+            <th className="text-left py-2 px-4">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {solutions.map((solution, index) => (
+            <tr
+              key={index}
+              className={`border-b ${
+                isDark
+                  ? "border-gray-700 hover:bg-gray-700/30"
+                  : "border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              <td className="py-3 px-4">
+                <div className="flex items-center">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${isDark ? "bg-gray-700" : "bg-slate-200"}`}>
+                    <span className="text-xs font-bold">
+                      {solution.userId?.username?.charAt(0)?.toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                  <span>{solution.userId?.username || 'Unknown User'}</span>
+                </div>
+              </td>
+              <td className={`py-3 px-4 ${isDark ? "text-gray-400" : "text-slate-600"}`}>
+                {solution.language}
+              </td>
+              <td className={`py-3 px-4 ${isDark ? "text-gray-400" : "text-slate-600"}`}>
+                {solution.timeTaken} ms
+              </td>
+              <td className="py-3 px-4">
+                <button
+                  onClick={() => onSelectSolution(solution)}
+                  className={`text-xs px-3 py-1 rounded ${
+                    isDark
+                      ? "bg-gray-700 hover:bg-gray-600"
+                      : "bg-slate-200 hover:bg-slate-300"
+                  }`}
+                >
+                  View Solution
                 </button>
               </td>
             </tr>

@@ -46,9 +46,14 @@ export default function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/" element={<Landing />} />
         <Route path="/home" element={<Home />} />
-        <Route path="problems" element={<ProblemsPage/>}></Route>
-        <Route path="problems/:problemId" element={<ProblemPage />} />
+        <Route path="/problems" element={<ProblemsPage/>}></Route>
+        <Route path="/problems/:problemSlug" element={<ProblemPage />} />
         <Route path="/admin" element={<Admin/>}/>
+        <Route path="/admin/problems" element={<Problem />} />
+        <Route path="/admin/contests" element={<Contest />} />
+        <Route path="/admin/announcements" element={<EditAnnouncementForm />} />
+        <Route path="/admin/problems/:problemSlug" element={<ProblemPage />} />
+        <Route path="/admin/contests/:contestSlug" element={<ContestView/>} />
 
         
         <Route path="/blogs" element={<BlogPage />} />
@@ -62,17 +67,17 @@ export default function App() {
         </Route>
         {/* <Route path ="/create" */}
 
-        <Route path="/admin/edit-problem/:problemId" element={<EditProblem/>} />
+        <Route path="/admin/edit-problem/:problemSlug" element={<EditProblem/>} />
         <Route path="/admin/problems/:problemId" element={<Problem/>} />
         <Route path = "/profile/update" element={<UpdateProfileForm/>} />
 
         <Route path="/contests" element={<Contest />} />
-        <Route path="/contests/:contestId" element={<ContestView />} />
-        <Route path="/contests/:contestId/problems/:problemId" element={<ContestProblemPage />} />
-        <Route path="/contests/:contestId/standings" element={<StandingPage />} />
+        <Route path="/contests/:contestSlug" element={<ContestView />} />
+        <Route path="/contests/:contestSlug/problems/:problemSlug" element={<ContestProblemPage />} />
+        <Route path="/contests/:contestSlug/standings" element={<StandingPage />} />
 
 
-        <Route path="/admin/edit-contest/:contestId" element={<EditContest />} />
+        <Route path="/admin/edit-contest/:contestSlug" element={<EditContest />} />
 
         //Announcement router
         <Route path = "/admin/edit-announcement/:announcementId" element={<EditAnnouncementForm/>} />

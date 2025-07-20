@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "../Navbar/navbar.jsx";
@@ -24,10 +24,12 @@ const useProblemOfTheDay = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call
+    // Simulate API call for Problem of the Day
     const timer = setTimeout(() => {
       setProblemOfTheDay({
+        // Assuming problemOfTheDay also has a slug once your backend is updated
         id: 'potd-123',
+        slug: 'array-rotation-challenge', // Added slug for consistency
         title: 'Array Rotation Challenge',
         difficulty: 'Medium',
         description: 'Implement a function to rotate an array to the right by k steps.',
@@ -49,17 +51,21 @@ const DifficultyBadge = ({ difficulty, theme }) => {
     light: {
       Easy: "bg-green-100 text-green-800",
       Medium: "bg-yellow-100 text-yellow-800",
-      Hard: "bg-red-100 text-red-800"
+      Hard: "bg-red-100 text-red-800",
+      "Not Specified": "bg-gray-100 text-gray-800" // Handle "Not Specified"
     },
     dark: {
       Easy: "bg-green-900/50 text-green-300",
       Medium: "bg-yellow-900/50 text-yellow-300",
-      Hard: "bg-red-900/50 text-red-300"
+      Hard: "bg-red-900/50 text-red-300",
+      "Not Specified": "bg-gray-700/50 text-gray-300" // Handle "Not Specified"
     }
   };
 
+  const selectedColor = colors[theme][difficulty] || colors[theme]["Not Specified"];
+
   return (
-    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${colors[theme][difficulty]}`}>
+    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${selectedColor}`}>
       {difficulty}
     </span>
   );
@@ -85,9 +91,9 @@ const ProblemCard = ({ problem, theme, onClick }) => {
   };
 
   return (
-    <Card 
-      className={`transition-all hover:shadow-lg ${themeColors[theme].card}`}
-      onClick={onClick}
+    <Card
+      className={`transition-all hover:shadow-lg cursor-pointer ${themeColors[theme].card}`}
+      onClick={onClick} // This will now receive the slug
     >
       <CardContent className="p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -114,10 +120,11 @@ const ProblemCard = ({ problem, theme, onClick }) => {
               </span>
             </div>
           </div>
-          <Button 
-            variant="default" 
-            size="sm" 
+          <Button
+            variant="default"
+            size="sm"
             className={`${themeColors[theme].button} flex items-center gap-1`}
+            onClick={onClick} // Ensure button also triggers the click handler
           >
             Solve <ChevronRight className="h-4 w-4" />
           </Button>
@@ -128,25 +135,27 @@ const ProblemCard = ({ problem, theme, onClick }) => {
 };
 
 // Problem of the Day Card
-const ProblemOfTheDayCard = ({ problem, theme, loading }) => {
+const ProblemOfTheDayCard = ({ problem, theme, loading, onClick }) => {
   const themeColors = {
     light: {
       card: 'bg-gradient-to-r from-purple-50 to-indigo-50',
       title: 'text-purple-800',
       text: 'text-gray-700',
-      highlight: 'bg-purple-100 text-purple-800'
+      highlight: 'bg-purple-100 text-purple-800',
+      button: 'bg-purple-600 hover:bg-purple-700'
     },
     dark: {
       card: 'bg-gradient-to-r from-gray-800 to-gray-900',
       title: 'text-orange-300',
       text: 'text-gray-300',
-      highlight: 'bg-orange-900/50 text-orange-300'
+      highlight: 'bg-orange-900/50 text-orange-300',
+      button: 'bg-orange-600 hover:bg-orange-700'
     }
   };
 
   if (loading) {
     return (
-      <Card className={`${themeColors[theme].card} animate-pulse`}>
+      <Card className={`${themeColors[theme].card} animate-pulse mb-8`}>
         <CardContent className="p-6">
           <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
           <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-full mb-2"></div>
@@ -157,7 +166,10 @@ const ProblemOfTheDayCard = ({ problem, theme, loading }) => {
   }
 
   return (
-    <Card className={`${themeColors[theme].card} mb-8`}>
+    <Card
+      className={`${themeColors[theme].card} mb-8 cursor-pointer`}
+      onClick={onClick} // POTD card itself is clickable
+    >
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3">
@@ -186,10 +198,11 @@ const ProblemOfTheDayCard = ({ problem, theme, loading }) => {
               ))}
             </div>
           </div>
-          <Button 
-            variant="default" 
+          <Button
+            variant="default"
             size="lg"
-            className={`${theme === 'light' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-orange-600 hover:bg-orange-700'} text-white flex items-center gap-2`}
+            className={`${themeColors[theme].button} text-white flex items-center gap-2`}
+            onClick={onClick} // Ensure button also triggers the click handler
           >
             Solve Challenge <ChevronRight className="h-5 w-5" />
           </Button>
@@ -215,10 +228,11 @@ export default function ProblemDashboard() {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     async function loadProblems() {
       try {
         setIsLoading(true);
+        // Assuming getAllGlobalProblems now returns problems with a 'slug' field
         const data = await getAllGlobalProblems();
         if (isMounted) {
           setProblems(data);
@@ -239,9 +253,19 @@ export default function ProblemDashboard() {
     };
   }, []);
 
-  const handleProblemClick = (problemId) => {
-    window.location.href = `/problems/${problemId}`;
-  };
+  // Updated handler to navigate using problem slug
+  const handleProblemClick = useCallback((problemSlug) => {
+    // Navigate to the problem page using its slug
+    window.location.href = `/problems/${problemSlug}`;
+  }, []);
+
+  // Handler for Problem of the Day click
+  const handlePotdClick = useCallback(() => {
+    if (problemOfTheDay && problemOfTheDay.slug) {
+      window.location.href = `/problems/${problemOfTheDay.slug}`;
+    }
+  }, [problemOfTheDay]);
+
 
   const themeColors = {
     light: {
@@ -277,10 +301,11 @@ export default function ProblemDashboard() {
 
           {/* Problem of the Day Section */}
           {problemOfTheDay && (
-            <ProblemOfTheDayCard 
-              problem={problemOfTheDay} 
-              theme={theme} 
-              loading={potdLoading} 
+            <ProblemOfTheDayCard
+              problem={problemOfTheDay}
+              theme={theme}
+              loading={potdLoading}
+              onClick={handlePotdClick} // Make POTD card clickable
             />
           )}
 
@@ -312,10 +337,10 @@ export default function ProblemDashboard() {
             ) : filteredProblems.length > 0 ? (
               filteredProblems.map((problem) => (
                 <ProblemCard
-                  key={problem._id}
+                  key={problem._id} // Keep _id as key for React list rendering
                   problem={problem}
                   theme={theme}
-                  onClick={() => handleProblemClick(problem._id)}
+                  onClick={() => handleProblemClick(problem.slug)} // Pass problem.slug
                 />
               ))
             ) : (

@@ -1,4 +1,5 @@
 const Problem = require('../../../models/problem');
+const slugify = require('slugify');
 
 async function createProblem(req, res) {
     if(req.user === undefined) {
@@ -8,7 +9,8 @@ async function createProblem(req, res) {
         const newProblem = new Problem({
             title: req.body.title,
             user: req.user._id,
-            createdAt: new Date()
+            createdAt: new Date(),
+            slug: slugify(req.body.title),
         });
         // // if(req.user) newProblem.user = req.user;// Set the user ID from the authenticated user
         await newProblem.save();

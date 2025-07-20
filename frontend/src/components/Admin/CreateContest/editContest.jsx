@@ -4,13 +4,14 @@ import { FiEdit, FiPlus, FiClock, FiLock, FiUnlock } from "react-icons/fi";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { getAdminContestById } from "../../Tasks/getAdminContestById.jsx";  
+import { getAdminContestBySlug } from "../../Tasks/getAdminContestBySlug.jsx";  
 import { getProblemById } from "../../Tasks/getProblemById.jsx";  // Assuming this function fetches a problem by ID
 
 
 export default function ContestEditSection() {
-  const { contestId } = useParams();
+  const { contestSlug } = useParams();
   const [activeSection, setActiveSection] = useState("general");
+  const [contestId, setContestId] = useState(null); // Initialize with the contest ID from URL
   const [contest, setContest] = useState({
     title: "",
     description: "",
@@ -69,7 +70,8 @@ export default function ContestEditSection() {
   useEffect(() => {
     const fetchContest = async () => {
       try {
-        const data = await getAdminContestById(contestId);
+        const data = await getAdminContestBySlug(contestSlug);
+        setContestId(data._id); // Set the contest ID
         setContestData(data);
       } catch (err) {
         setError(err.message);
@@ -79,7 +81,7 @@ export default function ContestEditSection() {
     };
 
     fetchContest();
-  }, [contestId]);
+  }, [contestSlug]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -330,7 +332,7 @@ const setProblemsForContest = async (problems) => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button 
-                          onClick={() => window.location.href = `/problems/${problem._id}`}
+                          onClick={() => window.location.href = `/problems/${problem.slug}`}
                           className="text-blue-400 hover:text-blue-300 mr-4">View</button>
                           <button 
                             onClick={() => handleRemoveProblem(problem._id)}

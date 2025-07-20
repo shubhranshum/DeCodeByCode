@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const getContestById = require('../controllers/Contest/getContestById');
+const getContestById = require('../controllers/Contest/getContestById.js');
+const getContestBySlug = require('../controllers/Contest/getContestBySlug');
 const getGlobalContests = require('../controllers/Contest/getGlobalContests');
 const register = require('../controllers/Contest/register');
 const submitProblem = require('../controllers/Contest/submitProblem');
@@ -15,6 +16,7 @@ const evaluateContest = require('../controllers/Contest/evaluateRatingChanges');
 
 router.get('/contests', getGlobalContests);
 router.get('/contests/:contestId', getContestById);
+router.get('/contests/slug/:contestSlug',getContestBySlug);
 router.get('/contests/user-solved/:contestId',getContestUserSolvedProblems)
 router.get('/contests/user-submissions/:contestId', getContestUserAttemptedProblems); // Assuming this is to fetch attempted problems by user
 router.post('/contests/:contestId/register', register); // Assuming this is to fetch problems of a contest
@@ -23,7 +25,7 @@ router.get('/contests/:contestId/submissions/:problemId', submissionsByUser); //
 router.get('/contests/:contestId/standings', async (req, res) => {
   try {
     const standings = await Standings.find({ contestId: req.params.contestId })
-      .populate("userId", "username")
+      .populate("userId", "username profilePicture ")
       .populate("problemResults", "problemId")
       .sort({ totalSolved: -1, totalPenalty: 1 });
 
