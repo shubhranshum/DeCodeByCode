@@ -1,10 +1,10 @@
 const Contest = require('../../models/contest/contest');
 
-async function getContestById(req, res) {
-
-    const {contestId} = req.params;// Assuming the problem ID is passed as a URL parameter
+async function getContestBySlug(req, res) {
+    console.log('Fetching contest by slug');
+    const {contestSlug} = req.params;// Assuming the problem ID is passed as a URL parameter
     try {
-        const contest = await Contest.findById(contestId)
+        const contest = await Contest.findOne({slug:contestSlug})
             .populate('creator', 'username')
             .populate('Problems','title _id difficulty points slug');  // only include title and _id
         if (!contest) {
@@ -18,4 +18,4 @@ async function getContestById(req, res) {
     }
 }
 
-module.exports = getContestById;
+module.exports = getContestBySlug;

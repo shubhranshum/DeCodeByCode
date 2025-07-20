@@ -1,16 +1,20 @@
 const Contest = require('../../../models/contest/contest');
+const slugify = require('slugify');
+
 
 async function createContest(req, res) {
+    console.log("Creating Contest with data:", req.body);
     if(req.user === undefined) {
         return res.status(401).json({ message: 'Unauthorized: User not authenticated' });
     }
     try {
         const newContest = new Contest({
+            slug : slugify(req.body.title),
             title: req.body.title,
             creator: req.user._id,
             createdAt: new Date()
         });
-        console.log("New Contest Created:", newContest);
+        // console.log("New Contest Created:", newContest);
         // // if(req.user) newProblem.user = req.user;// Set the user ID from the authenticated user
         await newContest.save();
         res.status(201).json({ message: 'Contest created successfully', contest: newContest });

@@ -1,31 +1,33 @@
+// models/Problem.js
+
 const mongoose = require("mongoose");
 
-const Output = new mongoose.Schema({
-  stdout: {
-    type: String,
-    default: "",
-  },
-  stderr:{
-    type:String,
-    default: "",
-  },
-  time:{
-    type: Number,
-  },
-  memory:{
-    type: Number
-  },
-  compile_output: {
-    type: String,
-    default: "",
-  },
-  status_id:{
-    type: String,
-  },
-  language_id: {
-    type: String,
-  }
-})
+// const Output = new mongoose.Schema({
+//   stdout: {
+//     type: String,
+//     default: "",
+//   },
+//   stderr:{
+//     type:String,
+//     default: "",
+//   },
+//   time:{
+//     type: Number,
+//   },
+//   memory:{
+//     type: Number
+//   },
+//   compilerOutput: {
+//     type: String,
+//     default: "",
+//   },
+//   status:{
+//     type: String,
+//   },
+//   language: {
+//     type: String,
+//   }
+// })
 
 
 
@@ -43,29 +45,19 @@ const testCaseSchema = new mongoose.Schema({
     default: "Explanation For Test Case."
   },
   output: {
-    type: Output,
-    default: {
-      stdout: "",
-      stderr: "",
-      time: 0,
-      memory: 0,
-      compile_output: "",
-      status_id: "",
-      language_id: ""
-    }
+    type: String,
+    default: null
+    // type: mongoose.Schema.Types.ObjectId,
+    // ref: "Output",
+    // default: null
   }
 });
 
 
 
+
+
 const problemSchema = new mongoose.Schema({
-  slug:{
-    type: String,
-    required: true,
-    unique: true, // to ensure no duplicates
-    lowercase: true, // to ensure uniformity
-    trim: true, // to remove any leading/trailing spaces
-  },
   title: {
     type: String,
     required: true,
@@ -105,36 +97,14 @@ const problemSchema = new mongoose.Schema({
     type: String,
     // required: true, // Assuming every problem has a code solution
   },
-  points:{
-    type: Number,
-    default: 100, // Default to 0 points
-  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     // required: true, // Assuming every problem is created by a user
   },
-  //added by omvrut
-
-  attemptCount: {
-    type: Number,
-    default: 0,
-  },
-  solvedCount: {
-    type: Number,
-    default: 0,
-  },
-  solvedBy:{
-    type: [mongoose.Schema.Types.ObjectId],
-    ref: "User"
-  },
-  isVerified: {
+  isVerified:{
     type: Boolean,
-    default: false, // Default to false
-  },
-  isGlobal:{
-    type: Boolean,
-    default: false, // Default to false
+    default: false, // Problems are not verified by default
   },
   createdAt: {
     type: Date,
@@ -142,5 +112,4 @@ const problemSchema = new mongoose.Schema({
   }
 });
 
-
-module.exports = mongoose.model("Problem", problemSchema);
+module.exports = mongoose.model("adminProblem", problemSchema);

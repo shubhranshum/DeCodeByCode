@@ -84,6 +84,7 @@ export default function AdminDashboard() {
         setAnnouncements(announcementsData);
         setProblems(problemsData);
         setContests(contestsData);
+        
       } catch (error) {
         console.error("Error fetching data:", error);
         setProblems([]);
@@ -94,6 +95,9 @@ export default function AdminDashboard() {
       }
     }
     loadData();
+    return () => {
+      localStorage.removeItem("adminDashboardActiveTab");
+    };
   }, []);
 
   const filteredItems =
@@ -188,10 +192,10 @@ export default function AdminDashboard() {
   };
 
   // Navigation handlers
-  const handleViewProblem = (id) => navigate(`/admin/problems/${id}`);
-  const handleEditProblem = (id) => navigate(`/admin/edit-problem/${id}`);
-  const handleViewContest = (id) => navigate(`/admin/contests/${id}`);
-  const handleEditContest = (id) => navigate(`/admin/edit-contest/${id}`);
+  const handleViewProblem = (slug) => navigate(`/admin/problems/${slug}`);
+  const handleEditProblem = (slug) => navigate(`/admin/edit-problem/${slug}`);
+  const handleViewContest = (slug) => navigate(`/admin/contests/${slug}`);
+  const handleEditContest = (slug) => navigate(`/admin/edit-contest/${slug}`);
   const handleViewAnnouncement = (id) => navigate(`/admin/announcements/${id}`);
   const handleEditAnnouncement = (id) =>
     navigate(`/admin/edit-announcement/${id}`);
@@ -392,8 +396,8 @@ export default function AdminDashboard() {
                   <ProblemCard
                     key={item._id}
                     problem={item}
-                    onView={() => handleViewProblem(item._id)}
-                    onEdit={() => handleEditProblem(item._id)}
+                    onView={() => handleViewProblem(item.slug)}
+                    onEdit={() => handleEditProblem(item.slug)}
                     onVerify={() =>
                       handleVerifyProblem(item._id, problems, setProblems)
                     }
@@ -407,8 +411,8 @@ export default function AdminDashboard() {
                   <ContestCard
                     key={item._id}
                     contest={item}
-                    onView={() => handleViewContest(item._id)}
-                    onEdit={() => handleEditContest(item._id)}
+                    onView={() => handleViewContest(item.slug)}
+                    onEdit={() => handleEditContest(item.slug)}
                     onVerify={() => handleVerifyContest(item._id, contests, setContests)}
                     onDelete={() => handleDeleteContest(item._id)}
                     onToggleGlobal={() =>

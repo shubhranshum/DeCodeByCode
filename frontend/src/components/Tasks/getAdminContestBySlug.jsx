@@ -1,6 +1,6 @@
 
-export async function getProblemById(id) {
-    const response = await fetch(`http://localhost:3000/problems/${id}`, {
+export async function getAdminContestBySlug(slug) {
+    const response = await fetch(`http://localhost:3000/admin/contests/slug/${slug}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

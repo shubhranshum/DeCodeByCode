@@ -1,23 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate, Outlet } from 'react-router-dom';
-import { 
-  FiClock, 
+import {
+  FiClock,
   FiBarChart2,
   FiLock,
   FiCalendar,
   FiChevronRight,
   FiCheckCircle,
   FiXCircle,
-  FiAward,
-  FiUser
+  // FiAward, // Not used, can be removed if not needed
+  // FiUser // Not used, can be removed if not needed
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getContestById } from '../Tasks/getContestById';
+
+// Assuming these utility functions are correctly implemented to use IDs internally
+// and that getContestBySlug returns problems with their slugs and _ids.
+import { getContestBySlug } from '../Tasks/getContestBySlug'; // Ensure this fetches by slug and returns problem slugs
 import { getContestSolvedProblems } from '../Tasks/getContestSolvedProblems';
 import { getContestAttemptedProblems } from '../Tasks/getContestAttemptedProblems';
 
-// Theme configuration
+// --- Theme Configuration ---
 const themes = {
   light: {
     background: 'bg-gray-50',
@@ -67,10 +70,10 @@ const themes = {
   }
 };
 
-// ContestStats component
-const ContestStats = ({ contest, solvedProblems }) => {
-  const theme = localStorage.getItem('theme') || 'light';
-  
+// --- ContestStats Component ---
+const ContestStats = ({ contest, solvedProblemsCount, currentTheme }) => {
+  const themeStyles = themes[currentTheme];
+
   return (
     <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
       <StatCard
@@ -79,41 +82,44 @@ const ContestStats = ({ contest, solvedProblems }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
         }
-        iconBg={themes[theme].primary}
+        iconBg={themeStyles.primary}
         title="Total Problems"
         value={contest.Problems.length}
+        currentTheme={currentTheme}
       />
       <StatCard
         icon={<FiCheckCircle className="h-6 w-6 text-white" />}
-        iconBg={themes[theme].success}
+        iconBg={themeStyles.success}
         title="Solved"
-        value={solvedProblems.length}
+        value={solvedProblemsCount}
+        currentTheme={currentTheme}
       />
       <StatCard
         icon={<FiClock className="h-6 w-6 text-white" />}
-        iconBg={themes[theme].danger}
+        iconBg={themeStyles.danger}
         title="Time Remaining"
-        value={<TimeRemaining endTime={contest.endTime} />}
+        value={<TimeRemaining endTime={contest.endTime} currentTheme={currentTheme} />}
+        currentTheme={currentTheme}
       />
     </div>
   );
 };
 
-// StatCard component
-const StatCard = ({ icon, iconBg, title, value }) => {
-  const theme = localStorage.getItem('theme') || 'light';
-  
+// --- StatCard Component ---
+const StatCard = ({ icon, iconBg, title, value, currentTheme }) => {
+  const themeStyles = themes[currentTheme];
+
   return (
-    <div className={`${themes[theme].card} overflow-hidden shadow rounded-xl`}>
+    <div className={`${themeStyles.card} overflow-hidden shadow rounded-xl`}>
       <div className="px-4 py-5 sm:p-6">
         <div className="flex items-center">
           <div className={`flex-shrink-0 ${iconBg} rounded-lg p-3`}>
             {icon}
           </div>
           <div className="ml-5 w-0 flex-1">
-            <dt className={`text-sm font-medium ${themes[theme].secondaryText} truncate`}>{title}</dt>
+            <dt className={`text-sm font-medium ${themeStyles.secondaryText} truncate`}>{title}</dt>
             <dd className="flex items-baseline">
-              <div className={`text-2xl font-semibold ${themes[theme].text}`}>
+              <div className={`text-2xl font-semibold ${themeStyles.text}`}>
                 {value}
               </div>
             </dd>
@@ -124,10 +130,10 @@ const StatCard = ({ icon, iconBg, title, value }) => {
   );
 };
 
-// TimeRemaining component
-const TimeRemaining = ({ endTime }) => {
+// --- TimeRemaining Component ---
+const TimeRemaining = ({ endTime, currentTheme }) => {
   const [timeLeft, setTimeLeft] = useState('');
-  const theme = localStorage.getItem('theme') || 'light';
+  const themeStyles = themes[currentTheme];
 
   useEffect(() => {
     const updateTime = () => {
@@ -139,31 +145,32 @@ const TimeRemaining = ({ endTime }) => {
       const hours = Math.floor(diffInSeconds / 3600);
       const minutes = Math.floor((diffInSeconds % 3600) / 60);
       const seconds = diffInSeconds % 60;
-      if (hours > 0) {
-        setTimeLeft(`${hours}h ${minutes}m`);
-      } else if (minutes > 0) {
-        setTimeLeft(`${minutes}m ${seconds}s`);
-      } else {
-        setTimeLeft(`${seconds}s`);
-      }
+
+      let timeParts = [];
+      if (hours > 0) timeParts.push(`${hours}h`);
+      if (minutes > 0) timeParts.push(`${minutes}m`);
+      if (seconds > 0 && hours === 0) timeParts.push(`${seconds}s`); // Show seconds if less than an hour
+
+      setTimeLeft(timeParts.join(' ') || "0s");
     };
 
-    updateTime();
+    updateTime(); // Initial call
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, [endTime]);
 
-  return <span className={themes[theme].text}>{timeLeft}</span>;
+  return <span className={themeStyles.text}>{timeLeft}</span>;
 };
 
-// ProblemCard component
-const ProblemCard = ({ problem, index, contestId, isSolved, isAttempted }) => {
-  const theme = localStorage.getItem('theme') || 'light';
-  
+// --- ProblemCard Component ---
+const ProblemCard = ({ problem, index, contestSlug, isSolved, isAttempted, startTime, currentTheme }) => {
+  const themeStyles = themes[currentTheme];
+
   return (
     <Link
-      to={`/contests/${contestId}/problems/${problem._id}`}
-      className={`block ${themes[theme].hover} transition duration-150 ease-in-out rounded-xl overflow-hidden shadow-sm ${themes[theme].card} border ${themes[theme].border}`}
+      to={`/contests/${contestSlug}/problems/${problem.slug}`}
+      state={{ startTime }} // Pass startTime for problem context
+      className={`block ${themeStyles.hover} transition duration-150 ease-in-out rounded-xl overflow-hidden shadow-sm ${themeStyles.card} border ${themeStyles.border}`}
     >
       <div className="px-6 py-5 flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -179,7 +186,7 @@ const ProblemCard = ({ problem, index, contestId, isSolved, isAttempted }) => {
             <span className="font-medium">{String.fromCharCode(65 + index)}</span>
           </div>
           <div>
-            <h3 className={`text-lg font-medium ${themes[theme].text}`}>{problem.title}</h3>
+            <h3 className={`text-lg font-medium ${themeStyles.text}`}>{problem.title}</h3>
             <div className="flex items-center space-x-2 mt-1">
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -192,7 +199,7 @@ const ProblemCard = ({ problem, index, contestId, isSolved, isAttempted }) => {
               >
                 {problem.difficulty}
               </span>
-              <span className={`text-xs ${themes[theme].secondaryText}`}>
+              <span className={`text-xs ${themeStyles.secondaryText}`}>
                 {problem.points} points
               </span>
             </div>
@@ -204,63 +211,62 @@ const ProblemCard = ({ problem, index, contestId, isSolved, isAttempted }) => {
           ) : isAttempted ? (
             <FiXCircle className="text-yellow-500 dark:text-yellow-400" />
           ) : (
-            <div className="w-5 h-5"></div>
+            <div className="w-5 h-5"></div> // Placeholder for consistent spacing
           )}
-          <FiChevronRight className={`ml-2 ${themes[theme].secondaryText}`} />
+          <FiChevronRight className={`ml-2 ${themeStyles.secondaryText}`} />
         </div>
       </div>
     </Link>
   );
 };
 
-// AnnouncementCard component
-const AnnouncementCard = ({ announcement }) => {
-  const theme = localStorage.getItem('theme') || 'light';
-  
+// --- AnnouncementCard Component ---
+const AnnouncementCard = ({ announcement, currentTheme }) => {
+  const themeStyles = themes[currentTheme];
+
   return (
-    <div className={`rounded-xl overflow-hidden shadow-sm ${themes[theme].card} border ${themes[theme].border}`}>
+    <div className={`rounded-xl overflow-hidden shadow-sm ${themeStyles.card} border ${themeStyles.border}`}>
       <div className="px-6 py-5">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className={`text-lg font-medium ${themes[theme].text}`}>{announcement.title}</h3>
-            <p className={`mt-2 ${themes[theme].secondaryText}`}>{announcement.content}</p>
+            <h3 className={`text-lg font-medium ${themeStyles.text}`}>{announcement.title}</h3>
+            <p className={`mt-2 ${themeStyles.secondaryText}`}>{announcement.content}</p>
           </div>
-          <span className={`text-sm ${themes[theme].secondaryText}`}>{announcement.time}</span>
+          <span className={`text-sm ${themeStyles.secondaryText}`}>{announcement.time}</span>
         </div>
       </div>
     </div>
   );
 };
 
-// ContestHeader component
-const ContestHeader = ({ contest }) => {
-  const theme = localStorage.getItem('theme') || 'light';
+// --- ContestHeader Component ---
+const ContestHeader = ({ contest, currentTheme }) => {
+  const themeStyles = themes[currentTheme];
 
-  
   return (
-    <div className={`${themes[theme].card} shadow-sm`}>
+    <div className={`${themeStyles.card} shadow-sm`}>
       <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
-            <h1 className={`text-3xl font-bold ${themes[theme].text}`}>{contest.title}</h1>
-            <p className={`mt-2 ${themes[theme].secondaryText}`}>{contest.description}</p>
+            <h1 className={`text-3xl font-bold ${themeStyles.text}`}>{contest.title}</h1>
+            <p className={`mt-2 ${themeStyles.secondaryText}`}>{contest.description}</p>
           </div>
           <div className="mt-4 md:mt-0 flex flex-wrap gap-3">
-            <div className={`flex items-center text-sm px-3 py-1 rounded-full ${themes[theme].accentBg}`}>
+            <div className={`flex items-center text-sm px-3 py-1 rounded-full ${themeStyles.accentBg}`}>
               <FiCalendar className="mr-1" />
-              <span className={themes[theme].text}>
+              <span className={themeStyles.text}>
                 {new Date(contest.startTime).toLocaleString()}
               </span>
             </div>
-            <div className={`flex items-center text-sm px-3 py-1 rounded-full ${themes[theme].accentBg}`}>
+            <div className={`flex items-center text-sm px-3 py-1 rounded-full ${themeStyles.accentBg}`}>
               <FiClock className="mr-1" />
-              <span className={themes[theme].text}>
+              <span className={themeStyles.text}>
                 {contest.duration} minutes
               </span>
             </div>
             <div className={`flex items-center text-sm px-3 py-1 rounded-full ${
-              contest.isPrivate 
-                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
+              contest.isPrivate
+                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                 : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
             }`}>
               {contest.isPrivate ? (
@@ -275,13 +281,14 @@ const ContestHeader = ({ contest }) => {
   );
 };
 
+// --- Main ContestView Component ---
 export default function ContestView() {
-  const { contestId } = useParams();
+  const { contestSlug } = useParams();
   const [contest, setContest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [solvedProblems, setSolvedProblems] = useState([]);
-  const [attemptedProblems, setAttemptedProblems] = useState([]);
+  const [solvedProblemIds, setSolvedProblemIds] = useState([]); // Stores _ids of solved problems
+  const [attemptedProblemIds, setAttemptedProblemIds] = useState([]); // Stores _ids of attempted problems
   const [activeTab, setActiveTab] = useState('problems');
   const [announcements, setAnnouncements] = useState([
     {
@@ -297,45 +304,69 @@ export default function ContestView() {
       time: '25 minutes ago',
     },
   ]);
-  const theme = localStorage.getItem('theme') || 'light';
+
+  // Read theme once at the top level
+  const currentTheme = localStorage.getItem('theme') || 'light';
+  const themeStyles = themes[currentTheme];
   const navigate = useNavigate();
 
+  // No longer need slugToIdMap and idToSlugMap in state here,
+  // as the problem objects themselves (from contest.Problems) will contain both.
+  // The `ProblemCard` directly uses `problem.slug` for links and `problem._id` for status checks.
+
+  // --- Effect: Fetch Contest Data and Problem Status ---
   useEffect(() => {
-    const fetchContest = async () => {
+    const fetchContestData = async () => {
       try {
-        const data = await getContestById(contestId);
-        const solved = await getContestSolvedProblems(contestId);
-        const attempted = await getContestAttemptedProblems(contestId);
-        setContest(data);
-        setSolvedProblems(solved.map(problem => problem.problemId));
-        setAttemptedProblems(attempted.map(problem => problem.problemId));
+        setLoading(true);
+        setError(null); // Clear previous errors
+
+        // 1. Fetch contest data by slug
+        const contestData = await getContestBySlug(contestSlug);
+        if (!contestData) {
+          throw new Error('Contest not found.');
+        }
+
+        setContest(contestData);
+
+        // 2. Fetch solved/attempted problems using the internal contest ID
+        // These functions should return arrays of problem _ids
+        // const solvedResponse = await getContestSolvedProblems(contestData._id);
+        // const attemptedResponse = await getContestAttemptedProblems(contestData._id);
+
+        // setSolvedProblemIds(solvedResponse.map(p => p._id));
+        // setAttemptedProblemIds(attemptedResponse.map(p => p._id));
+
       } catch (err) {
-        setError(err.message);
-        toast.error('Failed to load contest');
+        console.error("Error fetching contest data:", err);
+        setError(err.message || 'Failed to load contest details.');
+        toast.error(`Error: ${err.message || 'Failed to load contest.'}`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchContest();
-  }, [contestId]);
+    fetchContestData();
+  }, [contestSlug]); // Re-run when the contest slug changes
 
+  // --- Render Loading State ---
   if (loading) return (
-    <div className={`flex items-center justify-center min-h-screen ${themes[theme].background}`}>
+    <div className={`flex items-center justify-center min-h-screen ${themeStyles.background}`}>
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 dark:border-purple-500 mx-auto"></div>
-        <p className={`mt-4 text-lg ${themes[theme].text}`}>Loading contest details...</p>
+        <p className={`mt-4 text-lg ${themeStyles.text}`}>Loading contest details...</p>
       </div>
     </div>
   );
 
+  // --- Render Error State ---
   if (error) return (
-    <div className={`flex items-center justify-center min-h-screen ${themes[theme].background}`}>
-      <div className={`text-center p-6 rounded-xl ${themes[theme].card} shadow-md`}>
-        <p className={`text-red-500 text-lg`}>{error}</p>
-        <button 
+    <div className={`flex items-center justify-center min-h-screen ${themeStyles.background}`}>
+      <div className={`text-center p-6 rounded-xl ${themeStyles.card} shadow-md`}>
+        <p className={`text-lg ${themeStyles.danger}`}>{error}</p>
+        <button
           onClick={() => window.location.reload()}
-          className={`mt-4 px-4 py-2 rounded-lg ${themes[theme].primaryBg} ${themes[theme].primary} font-medium`}
+          className={`mt-4 px-4 py-2 rounded-lg ${themeStyles.primaryBg} ${themeStyles.primary} font-medium`}
         >
           Try Again
         </button>
@@ -343,13 +374,14 @@ export default function ContestView() {
     </div>
   );
 
+  // --- Render Contest Not Found State ---
   if (!contest) return (
-    <div className={`flex items-center justify-center min-h-screen ${themes[theme].background}`}>
-      <div className={`text-center p-6 rounded-xl ${themes[theme].card} shadow-md`}>
-        <p className={`text-lg ${themes[theme].text}`}>Contest not found</p>
-        <Link 
+    <div className={`flex items-center justify-center min-h-screen ${themeStyles.background}`}>
+      <div className={`text-center p-6 rounded-xl ${themeStyles.card} shadow-md`}>
+        <p className={`text-lg ${themeStyles.text}`}>Contest not found</p>
+        <Link
           to="/contests"
-          className={`mt-4 inline-block px-4 py-2 rounded-lg ${themes[theme].primaryBg} ${themes[theme].primary} font-medium`}
+          className={`mt-4 inline-block px-4 py-2 rounded-lg ${themeStyles.primaryBg} ${themeStyles.primary} font-medium`}
         >
           Back to Contests
         </Link>
@@ -357,10 +389,11 @@ export default function ContestView() {
     </div>
   );
 
+  // --- Main Render for Contest View ---
   return (
-    <div className={`min-h-screen ${themes[theme].background}`}>
-      <ContestHeader contest={contest} />
-      
+    <div className={`min-h-screen ${themeStyles.background}`}>
+      <ContestHeader contest={contest} currentTheme={currentTheme} />
+
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         {/* Navigation Tabs */}
         <div className="mb-6">
@@ -369,18 +402,21 @@ export default function ContestView() {
               onClick={() => setActiveTab('problems')}
               className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center ${
                 activeTab === 'problems'
-                  ? `${themes[theme].tabActive}`
-                  : `${themes[theme].tabInactive}`
+                  ? `${themeStyles.tabActive}`
+                  : `${themeStyles.tabInactive}`
               }`}
             >
               Problems
             </button>
             <button
-              onClick={() => navigate(`/contests/${contestId}/standings`)}
+              onClick={() => {
+                setActiveTab('standings'); // Set active tab for styling
+                navigate(`/contests/${contestSlug}/standings`); // Navigate to standings route
+              }}
               className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center ${
                 activeTab === 'standings'
-                  ? `${themes[theme].tabActive}`
-                  : `${themes[theme].tabInactive}`
+                  ? `${themeStyles.tabActive}`
+                  : `${themeStyles.tabInactive}`
               }`}
             >
               <FiBarChart2 className="mr-2" />
@@ -392,19 +428,25 @@ export default function ContestView() {
         {/* Problems Tab Content */}
         {activeTab === 'problems' && (
           <div className="space-y-6">
-            <ContestStats contest={contest} solvedProblems={solvedProblems} />
-            
+            <ContestStats
+              contest={contest}
+              solvedProblemsCount={solvedProblemIds.length}
+              currentTheme={currentTheme}
+            />
+
             <div className="space-y-4">
-              <h2 className={`text-xl font-semibold ${themes[theme].text}`}>Problems</h2>
+              <h2 className={`text-xl font-semibold ${themeStyles.text}`}>Problems</h2>
               <div className="grid grid-cols-1 gap-4">
                 {contest.Problems.map((problem, index) => (
                   <ProblemCard
-                    key={problem._id}
+                    key={problem.slug} // Use slug as key for uniqueness
                     problem={problem}
                     index={index}
-                    contestId={contestId}
-                    isSolved={solvedProblems.includes(problem._id)}
-                    isAttempted={attemptedProblems.includes(problem._id)}
+                    contestSlug={contestSlug}
+                    isSolved={solvedProblemIds.includes(problem._id)} // Check against problem _id
+                    isAttempted={attemptedProblemIds.includes(problem._id)} // Check against problem _id
+                    startTime={contest.startTime}
+                    currentTheme={currentTheme}
                   />
                 ))}
               </div>
@@ -412,12 +454,13 @@ export default function ContestView() {
 
             {/* Announcements Section */}
             <div className="mt-8 space-y-4">
-              <h2 className={`text-xl font-semibold ${themes[theme].text}`}>Announcements</h2>
+              <h2 className={`text-xl font-semibold ${themeStyles.text}`}>Announcements</h2>
               <div className="grid grid-cols-1 gap-4">
                 {announcements.map((announcement) => (
-                  <AnnouncementCard 
-                    key={announcement.id} 
-                    announcement={announcement} 
+                  <AnnouncementCard
+                    key={announcement.id}
+                    announcement={announcement}
+                    currentTheme={currentTheme}
                   />
                 ))}
               </div>
@@ -425,7 +468,8 @@ export default function ContestView() {
           </div>
         )}
 
-        {/* Standings Tab Content - Handled by separate route */}
+        {/* Standings Tab Content - Rendered by React Router's Outlet */}
+        {/* This will render the component for /contests/:contestSlug/standings when that route is active */}
         <Outlet />
       </main>
     </div>
