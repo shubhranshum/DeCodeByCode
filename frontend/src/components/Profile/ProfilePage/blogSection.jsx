@@ -1,8 +1,52 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { FiEye, FiHeart, FiFileText } from 'react-icons/fi'; // Import icons
 
-const BlogsSection = ({ blogs }) => {
+const BlogsSection = ({ blogs, theme, themeStyles }) => {
+  // Ensure themeStyles is available, providing a robust default if not passed
+  // In a real application, consider using React Context for global theme access
+  const defaultThemes = {
+    light: {
+      background: 'bg-gradient-to-br from-teal-50 to-cyan-50', // Updated: More pronounced green-blue gradient
+      card: 'bg-white',
+      border: 'border-gray-200',
+      text: 'text-gray-800',
+      secondaryText: 'text-gray-500',
+      primaryAccent: 'text-purple-700',
+      secondaryAccent: 'text-teal-600', // Green-blue accent
+      primaryAccentBg: 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700',
+      secondaryAccentBg: 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600', // Green-blue button
+      secondaryAccentText: 'text-white', // Text for green-blue buttons
+      sectionTitle: 'text-teal-700', // Updated: Section title in teal
+      subCardBg: 'bg-teal-50', // Lighter background for nested cards with teal tint
+      shadow: 'shadow-xl',
+      linkHoverText: 'hover:text-teal-700', // Link hover text
+      tagBg: 'bg-teal-100', // Updated: Teal background for tags
+      tagText: 'text-teal-800', // Updated: Teal text for tags
+    },
+    dark: {
+      background: 'bg-gradient-to-br from-gray-900 to-gray-800', // Main background is still neutral, cards get the color
+      card: 'bg-gray-800', // Cards remain neutral dark base
+      border: 'border-gray-700',
+      text: 'text-gray-100',
+      secondaryText: 'text-gray-400',
+      primaryAccent: 'text-indigo-400',
+      secondaryAccent: 'text-cyan-400', // Green-blue accent
+      primaryAccentBg: 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500',
+      secondaryAccentBg: 'bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500', // Green-blue button
+      secondaryAccentText: 'text-white', // Text for green-blue buttons
+      sectionTitle: 'text-cyan-400', // Updated: Section title in cyan
+      subCardBg: 'bg-gray-750', // Still a darker grey for nested cards
+      shadow: 'shadow-xl',
+      linkHoverText: 'hover:text-cyan-300', // Link hover text
+      tagBg: 'bg-gray-700', // Tags are slightly more neutral in dark mode for contrast
+      tagText: 'text-gray-300',
+    }
+  };
+  const currentThemeStyles = themeStyles || defaultThemes[theme];
+
+
   // Sort blogs by date and get the 4 most recent
   const recentBlogs = [...blogs]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -10,11 +54,11 @@ const BlogsSection = ({ blogs }) => {
 
   // Animation variants
   const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
       y: 0,
-      transition: { duration: 0.4 }
+      transition: { duration: 0.5, ease: "easeOut" }
     }
   };
 
@@ -29,94 +73,89 @@ const BlogsSection = ({ blogs }) => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-sm dark:shadow-lg p-6 mt-8 transition-colors duration-300">
+    <div className={`rounded-2xl ${currentThemeStyles.card} ${currentThemeStyles.shadow} p-8 mt-8 transition-colors duration-300 border ${currentThemeStyles.border}`}>
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold text-indigo-900 dark:text-orange-300">Latest Insights</h2>
-        <Link 
-          to="/profile/userblogs" 
-          className="group text-indigo-700 dark:text-orange-400 hover:text-indigo-900 dark:hover:text-orange-300 font-medium flex items-center gap-1 transition-colors"
+        <h2 className={`text-3xl font-bold ${currentThemeStyles.sectionTitle}`}>Your Recent Blogs</h2>
+        <Link
+          to="/profile/userblogs"
+          className={`group ${currentThemeStyles.secondaryText} ${currentThemeStyles.linkHoverText} font-semibold flex items-center gap-2 transition-colors`}
         >
           View all blogs
-          <motion.svg 
-            className="w-5 h-5"
-            fill="none" 
-            stroke="currentColor" 
+          <motion.svg
+            className={`w-6 h-6 ${currentThemeStyles.secondaryText} group-hover:${currentThemeStyles.secondaryAccent}`}
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
             animate={{ x: [0, 4, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
+            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </motion.svg>
         </Link>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {recentBlogs.length > 0 ? (
           recentBlogs.map((blog, index) => (
-            <motion.div 
-              key={blog.id}
+            <motion.div
+              key={blog._id} // Changed from blog.id to blog._id for consistency with backend
               variants={cardVariants}
               initial="hidden"
               animate="visible"
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -5 }}
-              className="border border-indigo-100 dark:border-orange-900/30 rounded-xl p-5 hover:shadow-lg transition-all duration-300 hover:border-indigo-300 dark:hover:border-orange-500/50 bg-white dark:bg-gray-800/90"
+              transition={{ delay: index * 0.15 }}
+              whileHover={{ y: -8, boxShadow: currentThemeStyles.shadow === 'shadow-xl' ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' : currentThemeStyles.shadow, transition: { duration: 0.3 } }}
+              className={`border ${currentThemeStyles.border} rounded-xl p-6 transition-all duration-300 ${currentThemeStyles.card} hover:${currentThemeStyles.card} overflow-hidden flex flex-col`}
             >
               <div className="flex flex-col h-full">
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg text-indigo-900 dark:text-orange-200 mb-3 group-hover:text-indigo-700 dark:group-hover:text-orange-400 transition-colors">
-                    <Link to={`/blog/${blog.id}`} className="hover:underline">
+                  <h3 className={`font-bold text-xl ${currentThemeStyles.secondaryAccent} mb-3 group-hover:${currentThemeStyles.primaryAccent} transition-colors line-clamp-2`}>
+                    <Link to={`/blog/${blog._id}`} className="hover:underline">
                       {blog.title}
                     </Link>
                   </h3>
-                  <div className="flex justify-between text-sm text-indigo-600/90 dark:text-orange-400/90 mb-4">
+                  <div className={`flex justify-between text-sm ${currentThemeStyles.secondaryText} mb-4`}>
                     <span className="font-medium">
-                      {new Date(blog.createdAt).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric', 
-                        year: 'numeric' 
+                      {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
                       })}
                     </span>
                     <div className="flex items-center gap-3">
                       <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        {blog.viewedBy.length}
+                        <FiEye className="w-4 h-4" />
+                        {blog.viewedBy?.length || 0} {/* Use optional chaining */}
                       </span>
                       <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                        {blog.likedBy.length}
+                        <FiHeart className="w-4 h-4" />
+                        {blog.likedBy?.length || 0} {/* Use optional chaining */}
                       </span>
                     </div>
                   </div>
-                  <p className="text-indigo-800/90 dark:text-gray-300 text-sm mb-4 line-clamp-3">
-                    {blog.summary}
+                  <p className={`${currentThemeStyles.secondaryText} text-base mb-4 line-clamp-3 flex-1`}>
+                    {blog.summary || 'No summary available.'}
                   </p>
                 </div>
-                
-                <div className="mt-auto">
+
+                <div className="mt-auto"> {/* Pushes tags and button to the bottom */}
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {blog.tags.slice(0, 3).map(tag => (
-                      <span 
-                        key={tag} 
-                        className="bg-indigo-100 dark:bg-orange-900/30 text-indigo-800 dark:text-orange-300 text-xs px-3 py-1 rounded-full"
+                    {blog.tags?.slice(0, 3).map(tag => ( // Use optional chaining
+                      <span
+                        key={tag}
+                        className={`${currentThemeStyles.tagBg} ${currentThemeStyles.tagText} text-xs px-3 py-1 rounded-full`}
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
                   <motion.div
+                    variants={buttonVariants}
                     whileHover="hover"
                     whileTap="tap"
-                    variants={buttonVariants}
                   >
-                    <Link 
+                    <Link
                       to={`/blog/${blog._id}`}
-                      className="block w-full text-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 dark:from-orange-600 dark:to-amber-600 dark:hover:from-orange-700 dark:hover:to-amber-700 text-white px-4 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-md"
+                      className={`block w-full text-center ${currentThemeStyles.secondaryAccentBg} ${currentThemeStyles.secondaryAccentText} px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 ${currentThemeStyles.shadow} hover:shadow-xl`}
                     >
                       Read Post
                     </Link>
@@ -126,33 +165,26 @@ const BlogsSection = ({ blogs }) => {
             </motion.div>
           ))
         ) : (
-          <motion.div 
-            className="text-center py-12 col-span-2"
+          <motion.div
+            className={`rounded-2xl ${currentThemeStyles.card} ${currentThemeStyles.shadow} p-12 text-center border ${currentThemeStyles.border} col-span-1 md:col-span-2`} // Spans full width
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="bg-indigo-100 dark:bg-orange-900/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg 
-                className="w-10 h-10 text-indigo-600 dark:text-orange-400" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-              </svg>
+            <div className={`${currentThemeStyles.subCardBg} w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner`}>
+              <FiFileText className={`w-10 h-10 ${currentThemeStyles.secondaryAccent}`} /> {/* Icon with green-blue accent */}
             </div>
-            <h3 className="text-xl font-medium text-indigo-900 dark:text-orange-300 mb-3">Your Story Starts Here</h3>
-            <p className="text-indigo-700/90 dark:text-orange-300/80 mb-6 max-w-md mx-auto">
+            <h3 className={`text-xl font-semibold ${currentThemeStyles.text} mb-3`}>Your Story Starts Here</h3>
+            <p className={`${currentThemeStyles.secondaryText} text-base mb-6 max-w-md mx-auto`}>
               Share your unique perspective and experiences with our community.
             </p>
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Link 
-                to="/create-blog" 
-                className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 dark:from-orange-600 dark:to-amber-600 dark:hover:from-orange-700 dark:hover:to-amber-700 text-white px-8 py-3 rounded-lg font-medium text-sm uppercase tracking-wider shadow-lg hover:shadow-xl transition-all duration-300"
+              <Link
+                to="/create-blog"
+                className={`inline-block ${currentThemeStyles.secondaryAccentBg} ${currentThemeStyles.secondaryAccentText} px-8 py-3 rounded-lg font-semibold text-base uppercase tracking-wider ${currentThemeStyles.shadow} hover:shadow-xl transition-all duration-300`}
               >
                 Create Your First Post
               </Link>

@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef, useContext } from "react";
-import {UserContext} from "../../context/UserContext";
-import { useParams } from "react-router-dom";
+import { useEffect, useState, useRef, useContext, useCallback } from "react"; // Added useCallback
+import { UserContext } from "../../context/UserContext";
+import { useParams, Link } from "react-router-dom";
 import { getTheme } from "../../utils/theme";
 import AchievementsSection from "./ProfilePage/achievementsSection";
 import ActivityFeed from "./ProfilePage/activityFeed";
@@ -14,19 +14,60 @@ import ProfileHeader from "./ProfilePage/profileHeader";
 import SettingsTab from "./ProfilePage/settingPage/UI/settingsTab";
 import SkillsSection from "./ProfilePage/skillsSection";
 import SocialLinks from "./ProfilePage/socialLinks";
-import StatsSection from "./ProfilePage/statsSection";
+// import StatsSection from "./ProfilePage/statsSection"; // Not used in provided code, but kept for context if needed
 import RecentAttempts from "./ProfilePage/recentAttempts";
 import RecentSolvedProblems from "./ProfilePage/recentSolvedProblems";
-// import { useUser } from "../../context/userContext";
+
+// Define a comprehensive theme object for light and dark modes with green-blue accent
+const themes = {
+  light: {
+    background: 'bg-gradient-to-br from-purple-50 to-indigo-50',
+    card: 'bg-white',
+    border: 'border-gray-200',
+    text: 'text-gray-800',
+    secondaryText: 'text-gray-500',
+    primaryAccent: 'text-purple-700', // Primary accent: Deeper purple
+    secondaryAccent: 'text-teal-600', // Secondary accent: Teal green-blue
+    primaryAccentBorder: 'border-purple-600',
+    secondaryAccentBorder: 'border-teal-600', // Border for green-blue elements
+    buttonPrimaryBg: 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700',
+    buttonPrimaryText: 'text-white',
+    tabActiveBorder: 'border-teal-600', // Tab active border using green-blue
+    tabActiveText: 'text-teal-600', // Tab active text using green-blue
+    tabInactiveText: 'text-gray-500 hover:text-purple-700',
+    sectionTitle: 'text-purple-800',
+    subCardBg: 'bg-gray-50',
+    shadow: 'shadow-xl',
+    successBg: 'bg-teal-500', // Green-blue for success messages
+  },
+  dark: {
+    background: 'bg-gradient-to-br from-gray-900 to-gray-850',
+    card: 'bg-gray-800',
+    border: 'border-gray-700',
+    text: 'text-gray-100',
+    secondaryText: 'text-gray-400',
+    primaryAccent: 'text-indigo-400', // Primary accent: Indigo for dark mode
+    secondaryAccent: 'text-cyan-400', // Secondary accent: Cyan green-blue for dark mode
+    primaryAccentBorder: 'border-indigo-500',
+    secondaryAccentBorder: 'border-cyan-500', // Border for green-blue elements
+    buttonPrimaryBg: 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500',
+    buttonPrimaryText: 'text-white',
+    tabActiveBorder: 'border-cyan-500', // Tab active border using green-blue
+    tabActiveText: 'text-cyan-500', // Tab active text using green-blue
+    tabInactiveText: 'text-gray-400 hover:text-indigo-400',
+    sectionTitle: 'text-indigo-300',
+    subCardBg: 'bg-gray-750',
+    shadow: 'shadow-xl',
+    successBg: 'bg-cyan-600', // Green-blue for success messages
+  }
+};
 
 const ProfilePage = () => {
-  const { user: currentUser} = useContext(UserContext);
+  const { user: currentUser } = useContext(UserContext);
   const { username: urlUsername } = useParams();
-  // const { user: currentUser } = useUser();
   const isOwnProfile = currentUser && currentUser.username === urlUsername;
-  //following only allowed is user is loggen in and the profile is not logged in users profile
-  const isFollowingAllowed = currentUser != null ? true : false;
-  // Track mounted state to prevent state updates on unmounted component
+  const isFollowingAllowed = currentUser != null;
+
   const isMounted = useRef(true);
 
   const [profile, setProfile] = useState(null);
@@ -53,102 +94,72 @@ const ProfilePage = () => {
     ranking: 0,
   });
 
-  // Apply theme on initial load
+  const themeStyles = themes[theme];
+
   useEffect(() => {
-    console.log("hello",isOwnProfile);
     const savedTheme = getTheme();
     setTheme(savedTheme);
-    localStorage.setItem("theme", savedTheme);
     document.documentElement.classList.toggle("dark", savedTheme === "dark");
 
-    // Cleanup function
     return () => {
       isMounted.current = false;
     };
   }, []);
 
-  // Toggle theme function
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
     document.documentElement.classList.toggle("dark", newTheme === "dark");
-  };
-   useEffect(() => {
-    const savedTheme = getTheme();
-    setTheme(savedTheme);
-    localStorage.setItem("theme", savedTheme);
-    document.documentElement.classList.toggle("dark", savedTheme === "dark");
+  }, [theme]);
 
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  const fetchBlogs = async () => {
+  const fetchBlogs = useCallback(async () => {
     try {
       const url = `http://localhost:3000/blogs/${urlUsername}`;
-      const res = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
-
+      const res = await fetch(url, { method: "GET", credentials: "include" });
       const data = await res.json();
-      console.log(data.blogs);
-
-      setBlogs(data.blogs);
+      if (isMounted.current) {
+        setBlogs(data.blogs);
+      }
     } catch (error) {
       console.error("Error fetching blogs:", error);
     }
-  };
+  }, [urlUsername]);
 
-  const fetchRecentAttempts = async () => {
+  const fetchRecentAttempts = useCallback(async () => {
     try {
       const url = `http://localhost:3000/profile/recent-attempts/${urlUsername}`;
-      const res = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
+      const res = await fetch(url, { method: "GET", credentials: "include" });
       const data = await res.json();
-
-      setRecentAttempts(data.attemptedProblems);
+      if (isMounted.current) {
+        setRecentAttempts(data.attemptedProblems);
+      }
     } catch (error) {
       console.error("Error fetching recent attempts:", error);
     }
-  };
+  }, [urlUsername]);
 
-  const fetchSolvedProblems = async () => {
+  const fetchSolvedProblems = useCallback(async () => {
     try {
       const url = `http://localhost:3000/profile/solved-problems/${urlUsername}`;
-      const res = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
+      const res = await fetch(url, { method: "GET", credentials: "include" });
       const data = await res.json();
-
       if (isMounted.current && data.success) {
         setSolvedProblems(data.solvedProblems);
       }
     } catch (err) {
       console.error("Error fetching solved problems:", err);
     }
-  };
+  }, [urlUsername]);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
-      if (isMounted.current) setLoading(true);
       const url = `http://localhost:3000/profile/user/${urlUsername}`;
-      const res = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
-
+      const res = await fetch(url, { method: "GET", credentials: "include" });
       const data = await res.json();
       if (isMounted.current) {
         setProfile(data.profile || null);
-       
         setIsFollowing(data.isFollowing || false);
-
         setStats({
           problemsSolved: data.stats?.problemsSolved || 0,
           blogCount: data.stats?.blogCount || 0,
@@ -161,23 +172,13 @@ const ProfilePage = () => {
       }
     } catch (err) {
       console.error("Error fetching profile:", err);
-    } finally {
-      if (isMounted.current) setLoading(false);
     }
-  };
+  }, [urlUsername]);
 
-  const fetchActivities = async () => {
-    // Compute isOwnProfile inside the function using latest context
-    const isOwn = currentUser?.username === urlUsername;
-
-    if (!isOwn) {
-      if (isMounted.current) setActivityLoading(false);
-      return;
-    }
-
+  const fetchActivities = useCallback(async () => {
     try {
       if (isMounted.current) setActivityLoading(true);
-      const res = await fetch(`http://localhost:3000/profile/user-activities`, {
+      const res = await fetch(`http://localhost:3000/profile/user-activities/${urlUsername}`, {
         method: "GET",
         credentials: "include",
       });
@@ -193,22 +194,21 @@ const ProfilePage = () => {
     } finally {
       if (isMounted.current) setActivityLoading(false);
     }
-  };
+  }, [urlUsername]);
+
   useEffect(() => {
     isMounted.current = true;
 
-    // In fetchAllData
     const fetchAllData = async () => {
-      await fetchProfile();
-
-      // Only fetch activities if it's the user's own profile
-      if (currentUser?.username === urlUsername) {
-        await fetchActivities();
-        await fetchRecentAttempts();
-        await fetchBlogs();
-      }
-
-      await fetchSolvedProblems();
+      if (isMounted.current) setLoading(true);
+      await Promise.all([
+        fetchProfile(),
+        fetchActivities(),
+        fetchSolvedProblems(),
+        currentUser?.username === urlUsername ? fetchRecentAttempts() : Promise.resolve(),
+        currentUser?.username === urlUsername ? fetchBlogs() : Promise.resolve(),
+      ]);
+      if (isMounted.current) setLoading(false);
     };
 
     fetchAllData();
@@ -216,9 +216,9 @@ const ProfilePage = () => {
     return () => {
       isMounted.current = false;
     };
-  }, [urlUsername, currentUser]);
+  }, [urlUsername, currentUser, fetchProfile, fetchActivities, fetchSolvedProblems, fetchRecentAttempts, fetchBlogs]);
 
-  const handleProfileUpdate = (updatedProfile) => {
+  const handleProfileUpdate = useCallback((updatedProfile) => {
     if (isMounted.current) {
       setProfile(updatedProfile);
       setSuccessMessage("Profile updated successfully!");
@@ -226,19 +226,15 @@ const ProfilePage = () => {
         if (isMounted.current) setSuccessMessage("");
       }, 5000);
     }
-  };
+  }, []);
 
   if (loading || (isOwnProfile && activityLoading)) {
     return (
       <div
-        className={`min-h-screen flex items-center justify-center ${
-          theme === "dark" ? "bg-gray-900" : "bg-slate-50"
-        }`}
+        className={`min-h-screen flex items-center justify-center ${themeStyles.background}`}
       >
         <div
-          className={`w-16 h-16 border-4 ${
-            theme === "dark" ? "border-indigo-500" : "border-indigo-600"
-          } border-t-transparent rounded-full animate-spin`}
+          className={`w-16 h-16 border-4 ${themeStyles.primaryAccentBorder} border-t-transparent rounded-full animate-spin`}
         ></div>
       </div>
     );
@@ -247,17 +243,13 @@ const ProfilePage = () => {
   if (!profile) {
     return (
       <div
-        className={`min-h-screen flex flex-col items-center justify-center px-4 text-center ${
-          theme === "dark" ? "bg-gray-900" : "bg-slate-50"
-        }`}
+        className={`min-h-screen flex flex-col items-center justify-center px-4 text-center ${themeStyles.background}`}
       >
         <div
-          className={`rounded-full p-4 mb-6 ${
-            theme === "dark" ? "bg-gray-800" : "bg-slate-100"
-          }`}
+          className={`rounded-full p-6 mb-6 ${themeStyles.card} shadow-lg`}
         >
           <svg
-            className="w-16 h-16 text-slate-400"
+            className={`w-20 h-20 ${themeStyles.secondaryText}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -271,28 +263,21 @@ const ProfilePage = () => {
           </svg>
         </div>
         <h2
-          className={`text-2xl font-bold mb-2 ${
-            theme === "dark" ? "text-gray-100" : "text-slate-800"
-          }`}
+          className={`text-3xl font-extrabold mb-3 ${themeStyles.text}`}
         >
           Profile Not Found
         </h2>
         <p
-          className={`mb-8 max-w-md ${
-            theme === "dark" ? "text-gray-400" : "text-slate-600"
-          }`}
+          className={`mb-8 max-w-md text-lg ${themeStyles.secondaryText}`}
         >
-          We couldn't find this profile information.
+          We couldn't find a profile for the username "{urlUsername}".
+          It might not exist or there was an issue loading it.
         </p>
         <button
           onClick={fetchProfile}
-          className={`px-6 py-3 rounded-lg font-medium ${
-            theme === "dark"
-              ? "bg-indigo-700 hover:bg-indigo-600"
-              : "bg-indigo-600 hover:bg-indigo-700"
-          } text-white`}
+          className={`px-8 py-3 rounded-lg font-bold text-lg transition-all duration-300 ${themeStyles.buttonPrimaryBg} ${themeStyles.buttonPrimaryText} hover:scale-105`}
         >
-          Reload Profile
+          Try Again
         </button>
       </div>
     );
@@ -300,9 +285,7 @@ const ProfilePage = () => {
 
   return (
     <div
-      className={`min-h-screen py-8 px-4 sm:px-6 transition-colors duration-200 ${
-        theme === "dark" ? "bg-gray-900" : "bg-purple-50"
-      }`}
+      className={`min-h-screen py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${themeStyles.background} font-sans`}
     >
       {isOwnProfile && isEditModalOpen && (
         <EditProfileModal
@@ -310,21 +293,22 @@ const ProfilePage = () => {
           onClose={() => setIsEditModalOpen(false)}
           onUpdate={handleProfileUpdate}
           theme={theme}
+          themeStyles={themeStyles} // Pass themeStyles
         />
       )}
 
       {isOwnProfile && successMessage && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className={`${theme === 'dark' ? 'bg-orange-600' : 'bg-purple-600'} text-white px-6 py-4 rounded-lg shadow-lg flex items-center animate-fadeInOut`}>
+        <div className="fixed top-6 right-6 z-50 animate-fadeInOut">
+          <div className={`${themeStyles.successBg} ${themeStyles.buttonPrimaryText} px-6 py-4 rounded-lg shadow-xl flex items-center text-lg font-semibold`}>
             <svg
-              className="w-6 h-6 mr-2"
+              className="w-7 h-7 mr-3"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path
                 strokeLinecap="round"
-                strokeLineJoin="round"
+                strokeLinejoin="round"
                 strokeWidth={2}
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
@@ -334,7 +318,7 @@ const ProfilePage = () => {
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <ProfileHeader
           profile={profile}
           isFollowing={isFollowing}
@@ -344,138 +328,72 @@ const ProfilePage = () => {
           theme={theme}
           isOwnProfile={isOwnProfile}
           isFollowingAllowed={isFollowingAllowed}
+          themeStyles={themeStyles}
         />
 
         {/* Contribution Graph Section - Full Width */}
-        
-          
-          <div className="overflow-x-auto p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-            <ContributionGraph
-              data={profile.activityData || []}
-              theme={theme}
-            />
-          </div>
-          
-        
+        <div className={`mt-8 p-4 rounded-xl ${themeStyles.card} ${themeStyles.shadow} overflow-x-auto border ${themeStyles.border}`}>
+          <ContributionGraph
+            data={activities || []}
+            stats={stats}
+            theme={theme}
+            themeStyles={themeStyles}
+          />
+        </div>
 
-        {/* Tab Navigation - Updated Colors */}
+        {/* Tab Navigation */}
         <div
-          className={`flex flex-wrap border-b mb-8 ${
-            theme === "dark" ? "border-gray-700" : "border-purple-200"
-          }`}
+          className={`flex flex-wrap gap-2 sm:gap-4 mt-8 mb-8 p-2 rounded-xl ${themeStyles.card} ${themeStyles.shadow} border ${themeStyles.border}`}
         >
-          <button
-            className={`px-4 py-3 font-medium ${
-              activeTab === "overview"
-                ? theme === "dark"
-                  ? "text-orange-400 border-b-2 border-orange-400"
-                  : "text-purple-600 border-b-2 border-purple-600"
-                : theme === "dark"
-                ? "text-gray-400 hover:text-gray-300"
-                : "text-purple-500 hover:text-purple-700"
-            }`}
-            onClick={() => {
-              setActiveTab("overview");
-              localStorage.setItem("activeTab", "overview");
-            }}
-          >
-            Overview
-          </button>
-
+          <TabButton
+            label="Overview"
+            tabName="overview"
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            themeStyles={themeStyles}
+          />
           {isOwnProfile && (
-            <button
-              className={`px-4 py-3 font-medium ${
-                activeTab === "activity"
-                  ? theme === "dark"
-                    ? "text-orange-400 border-b-2 border-orange-400"
-                    : "text-purple-600 border-b-2 border-purple-600"
-                  : theme === "dark"
-                  ? "text-gray-400 hover:text-gray-300"
-                  : "text-purple-500 hover:text-purple-700"
-              }`}
-              onClick={() => {
-                setActiveTab("activity");
-                localStorage.setItem("activeTab", "activity");
-              }}
-            >
-              Activity
-            </button>
+            <TabButton
+              label="Activity"
+              tabName="activity"
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              themeStyles={themeStyles}
+            />
           )}
-
-          {isOwnProfile && <button
-            className={`px-4 py-3 font-medium ${
-              activeTab === "connections"
-                ? theme === "dark"
-                  ? "text-orange-400 border-b-2 border-orange-400"
-                  : "text-purple-600 border-b-2 border-purple-600"
-                : theme === "dark"
-                ? "text-gray-400 hover:text-gray-300"
-                : "text-purple-500 hover:text-purple-700"
-            }`}
-            onClick={() => {
-              setActiveTab("connections");
-              localStorage.setItem("activeTab", "connections");
-            }}
-          >
-            Connections
-          </button>}
-
           {isOwnProfile && (
-            <button
-              className={`px-4 py-3 font-medium ${
-                activeTab === "attempts"
-                  ? theme === "dark"
-                    ? "text-orange-400 border-b-2 border-orange-400"
-                    : "text-purple-600 border-b-2 border-purple-600"
-                  : theme === "dark"
-                  ? "text-gray-400 hover:text-gray-300"
-                  : "text-purple-500 hover:text-purple-700"
-              }`}
-              onClick={() => {
-                setActiveTab("attempts");
-                localStorage.setItem("activeTab", "attempts");
-              }}
-            >
-              Recent Attempts
-            </button>
+            <TabButton
+              label="Connections"
+              tabName="connections"
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              themeStyles={themeStyles}
+            />
           )}
-
-          <button
-            className={`px-4 py-3 font-medium ${
-              activeTab === "problems"
-                ? theme === "dark"
-                  ? "text-orange-400 border-b-2 border-orange-400"
-                  : "text-purple-600 border-b-2 border-purple-600"
-                : theme === "dark"
-                ? "text-gray-400 hover:text-gray-300"
-                : "text-purple-500 hover:text-purple-700"
-            }`}
-            onClick={() => {
-              setActiveTab("problems");
-              localStorage.setItem("activeTab", "problems");
-            }}
-          >
-            Solved Problems
-          </button>
-
           {isOwnProfile && (
-            <button
-              className={`px-4 py-3 font-medium ${
-                activeTab === "settings"
-                  ? theme === "dark"
-                    ? "text-orange-400 border-b-2 border-orange-400"
-                    : "text-purple-600 border-b-2 border-purple-600"
-                  : theme === "dark"
-                  ? "text-gray-400 hover:text-gray-300"
-                  : "text-purple-500 hover:text-purple-700"
-              }`}
-              onClick={() => {
-                setActiveTab("settings");
-                localStorage.setItem("activeTab", "settings");
-              }}
-            >
-              Settings
-            </button>
+            <TabButton
+              label="Recent Attempts"
+              tabName="attempts"
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              themeStyles={themeStyles}
+            />
+          )}
+          <TabButton
+            label="Solved Problems"
+            tabName="problems"
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            themeStyles={themeStyles}
+          />
+          {isOwnProfile && (
+            <TabButton
+              label="Settings"
+              tabName="settings"
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              themeStyles={themeStyles}
+            />
           )}
         </div>
 
@@ -486,25 +404,17 @@ const ProfilePage = () => {
             <div className="lg:col-span-2 space-y-8">
               {/* About Me Card */}
               <div
-                className={`rounded-xl shadow-lg p-6 transition-colors ${
-                  theme === "dark" ? "bg-gray-800" : "bg-white"
-                }`}
+                className={`rounded-xl ${themeStyles.card} ${themeStyles.shadow} p-8 border ${themeStyles.border}`}
               >
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start mb-6">
                   <h2
-                    className={`text-xl font-bold mb-4 ${
-                      theme === "dark" ? "text-orange-300" : "text-purple-700"
-                    }`}
+                    className={`text-2xl font-bold  `}
                   >
                     About Me
                   </h2>
                   {isOwnProfile && (
                     <button
-                      className={`flex items-center gap-1 ${
-                        theme === "dark"
-                          ? "text-orange-400 hover:text-orange-300"
-                          : "text-purple-600 hover:text-purple-800"
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${themeStyles.subCardBg} ${themeStyles.secondaryText} hover:${themeStyles.secondaryAccent} hover:scale-105`}
                       onClick={() => setIsEditModalOpen(true)}
                     >
                       <svg
@@ -525,34 +435,19 @@ const ProfilePage = () => {
                   )}
                 </div>
                 <p
-                  className={`mb-4 ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-600"
-                  }`}
+                  className={`text-lg leading-relaxed ${themeStyles.text}`}
                 >
                   {profile.about ||
-                    "This user hasn't written anything about themselves yet."}
+                    "This user hasn't written anything about themselves yet. Time to get creative!"}
                 </p>
 
-                <SocialLinks
-                  socialLinks={profile.socialLinks || {}}
-                  theme={theme}
-                />
-              </div>
-
-              {/* Stats Card */}
-              <div
-                className={`rounded-xl shadow-lg p-6 transition-colors ${
-                  theme === "dark" ? "bg-gray-800" : "bg-white"
-                }`}
-              >
-                <h2
-                  className={`text-xl font-bold mb-4 ${
-                    theme === "dark" ? "text-orange-300" : "text-purple-700"
-                  }`}
-                >
-                  Statistics
-                </h2>
-                <StatsSection stats={stats} theme={theme} />
+                <div className={`mt-6 pt-6 border-t ${themeStyles.border}`}>
+                  <SocialLinks
+                    socialLinks={profile.socialLinks || {}}
+                    theme={theme}
+                    themeStyles={themeStyles}
+                  />
+                </div>
               </div>
 
               {/* Skills Card */}
@@ -561,81 +456,50 @@ const ProfilePage = () => {
                 onEditClick={() => setIsEditModalOpen(true)}
                 allowEdit={isOwnProfile}
                 theme={theme}
+                themeStyles={themeStyles}
               />
             </div>
 
             {/* Right Column */}
             <div className="space-y-8">
               {/* Badges Card */}
-              <div
-                className={`rounded-xl shadow-lg p-6 transition-colors ${
-                  theme === "dark" ? "bg-gray-800" : "bg-white"
-                }`}
+              {/* <div
+                className={`rounded-xl ${themeStyles.card} ${themeStyles.shadow} p-8 border ${themeStyles.border}`}
               >
                 <h2
-                  className={`text-xl font-bold mb-4 ${
-                    theme === "dark" ? "text-orange-300" : "text-purple-700"
-                  }`}
+                  className={`text-2xl font-bold mb-6 ${themeStyles.sectionTitle}`}
                 >
                   Badges
                 </h2>
-                <BadgesSection badges={profile.badges || []} theme={theme} />
-              </div>
+                <BadgesSection badges={profile.badges || []} theme={theme} themeStyles={themeStyles} />
+              </div> */}
 
               {/* Achievements Card */}
-              <div
-                className={`rounded-xl shadow-lg p-6 transition-colors ${
-                  theme === "dark" ? "bg-gray-800" : "bg-white"
-                }`}
-              >
-                <h2
-                  className={`text-xl font-bold mb-4 ${
-                    theme === "dark" ? "text-orange-300" : "text-purple-700"
-                  }`}
-                >
-                  Achievements
-                </h2>
-                <AchievementsSection
-                  achievements={profile.achievements || []}
-                  theme={theme}
-                />
-              </div>
+              <AchievementsSection
+                achievements={profile.achievements || []}
+                theme={theme}
+                themeStyles={themeStyles}
+              />
 
               {/* Certifications Card */}
-              <div
-                className={`rounded-xl shadow-lg p-6 transition-colors ${
-                  theme === "dark" ? "bg-gray-800" : "bg-white"
-                }`}
-              >
-                <h2
-                  className={`text-xl font-bold mb-4 ${
-                    theme === "dark" ? "text-orange-300" : "text-purple-700"
-                  }`}
-                >
-                  Certifications
-                </h2>
-                <CertificationsSection
-                  certifications={profile.certifications || []}
-                  theme={theme}
-                />
-              </div>
+              <CertificationsSection
+                certifications={profile.certifications || []}
+                theme={theme}
+                themeStyles={themeStyles}
+              />
             </div>
           </div>
         )}
 
-        {/* Other tabs remain the same */}
-        {isOwnProfile && activeTab === "activity" && (
+        {/* Other tabs */}
+        {activeTab === "activity" && isOwnProfile && (
           <div
-            className={`rounded-xl shadow-lg p-6 transition-colors ${
-              theme === "dark" ? "bg-gray-800" : "bg-white"
-            }`}
+            className={`rounded-xl ${themeStyles.card} ${themeStyles.shadow} p-8 border ${themeStyles.border}`}
           >
             {activityLoading ? (
-              <div className="flex justify-center py-10">
+              <div className="flex justify-center py-12">
                 <div
-                  className={`w-12 h-12 border-4 ${
-                    theme === "dark" ? "border-orange-500" : "border-purple-600"
-                  } border-t-transparent rounded-full animate-spin`}
+                  className={`w-16 h-16 border-4 ${themeStyles.secondaryAccentBorder} border-t-transparent rounded-full animate-spin`}
                 ></div>
               </div>
             ) : (
@@ -644,42 +508,65 @@ const ProfilePage = () => {
                 theme={theme}
                 loading={activityLoading}
                 mode="full"
+                themeStyles={themeStyles}
               />
             )}
           </div>
         )}
 
-        {activeTab === "connections" &&isOwnProfile && (
+        {activeTab === "connections" && isOwnProfile && (
           <ConnectionsSection
-            
             isOwnProfile={isOwnProfile}
             theme={theme}
+            themeStyles={themeStyles}
           />
         )}
 
-        {isOwnProfile && activeTab === "attempts" && (
-          <RecentAttempts attempts={recentAttempts} theme={theme} />
+        {activeTab === "attempts" && isOwnProfile && (
+          <RecentAttempts attempts={recentAttempts} theme={theme} themeStyles={themeStyles} />
         )}
 
         {activeTab === "problems" && (
-          <RecentSolvedProblems problems={solvedProblems} theme={theme} />
+          <RecentSolvedProblems problems={solvedProblems} theme={theme} themeStyles={themeStyles} />
         )}
 
-        {isOwnProfile && activeTab === "settings" && (
+        {activeTab === "settings" && isOwnProfile && (
           <SettingsTab
             profile={profile}
             theme={theme}
             toggleTheme={toggleTheme}
+            themeStyles={themeStyles}
           />
         )}
 
         {isOwnProfile && (
           <div className="mt-8">
-            <BlogsSection blogs={blogs || []} theme={theme} />
+            <BlogsSection blogs={blogs || []} theme={theme} themeStyles={themeStyles} />
           </div>
         )}
       </div>
     </div>
+  );
+};
+
+// --- Helper TabButton Component for Cleaner Tab Navigation ---
+const TabButton = ({ label, tabName, activeTab, setActiveTab, themeStyles }) => {
+  return (
+    <button
+      className={`px-6 py-3 font-semibold text-lg transition-all duration-300 rounded-lg focus:outline-none ${
+        activeTab === tabName
+          ? `${themeStyles.tabActiveText} bg-opacity-10 ${themeStyles.tabActiveBorder} border-b-2`
+          : `${themeStyles.tabInactiveText} hover:bg-opacity-5 hover:${themeStyles.tabActiveText}`
+      }
+      ${themeStyles.background.includes('gray-900') ? 'hover:bg-gray-700' : 'hover:bg-purple-100'}
+      `}
+      onClick={() => {
+        setActiveTab(tabName);
+        localStorage.setItem("activeTab", tabName);
+      }}
+    >
+      {label}
+    </button>
   );
 };
 

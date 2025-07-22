@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const getNotification = async (req, res) => {
     try {
         console.log("Hello from getNotification");
-        const notifications = await Notification.find({recipient: req.user._id ,isRead: false}).sort({ createdAt: -1 });
+        const notifications = await Notification.find({recipient: req.user._id }).sort({ createdAt: -1 });
         res.status(200).json(notifications);
     } catch (error) {
         console.error(error);

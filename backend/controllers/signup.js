@@ -3,13 +3,14 @@ const User = require('../models/user');
 
 const UserProfile = require('../models/profile/userProfile');
 const JWT_SECRET="shubh@123#1234#12345#";
+const Community = require('../models/community/community');
 
 
 async function userSignUp(req,res){
     console.log("I am in userSignUp controller");
     const {username, email, password,college} = req.body;
 
-    console.log("Received data1:", { username, email, password, });
+    
     try{
         const userExists = await User.findOne({email});
         const nuserExists = await UserProfile.findOne({username});
@@ -33,11 +34,15 @@ async function userSignUp(req,res){
         email,
         college: college
     });
-
-    // console.log("Received data4:", { username, email, password });
+    
+    const community = await Community.findOne();
+    console.log(community);
+    community.numberOfBlogs += 1;
+    await community.save();
+    
     
     await newProfile.save();
-    // console.log("Received data5:", { username, email, password });
+    
 
     res.status(201).json({message : 'User created successfully', user: newUser});
     console.log("Received data6:", { username, email, password });

@@ -3,6 +3,7 @@ const Comment = require('../models/Comments.js');
 const User = require('../models/user.js');
 const UserProfile = require('../models/profile/userProfile.js');
 const mongoose = require('mongoose');
+const Community = require('../models/community/community');
 
 // or User if you're using that
 
@@ -14,7 +15,7 @@ const { logActivity, getUserActivities, deleteUserActivities } = require('./acti
 exports.getFeaturedBlogs = async(req,res)=>{
   console.log("Hello from getFeaturedBlogs");
   try {
-    const blogs = await Blog.find({ isFeatured: true }).populate('author', 'username email');
+    const blogs = await Blog.find({ isFeatured: true }).populate('author', 'username email profilePicture');
     const topBlogs = blogs.sort((a, b) => b.likesCount - a.likesCount).slice(0, 6);
    
     return res.status(200).json({blogs:topBlogs});
@@ -66,11 +67,15 @@ exports.createBlog = async (req, res) => {
     });
 
     const savedBlog = await blog.save({ session });
+    const community = await Community.findOne();
+    console.log(community);
+    community.numberOfBlogs += 1;
+    await community.save();
     await session.commitTransaction();
 
     // Log activity outside transaction since it's non-critical
     await logActivity(author, savedBlog._id, "BlogPost", "BLOG_POSTED", savedBlog.title);
-
+    
     res.status(201).json(savedBlog);
   } catch (err) {
     await session.abortTransaction();
@@ -88,7 +93,7 @@ exports.createBlog = async (req, res) => {
 exports.getAllBlogs = async (req, res) => {
   try {
     console.log("Hello from getAllBlogs");
-    const blogs = await Blog.find().populate('author', 'username email');
+    const blogs = await Blog.find().populate('author', 'username email profilePicture');
     console.log(blogs);
     res.json(blogs);
   } catch (err) {
@@ -163,7 +168,7 @@ exports.updateBlog = async (req, res) => {
     blog.isFeatured = isFeatured;
     const updatedBlog = await blog.save();
 
-    await logActivity(author, updatedBlog._id, "BlogPost", "BLOG_EDITED", "Blog Edited with title : " + updatedBlog.title);
+    // await logActivity(author, updatedBlog._id, "BlogPost", "BLOG_EDITED", "Blog Edited with title : " + updatedBlog.title);
 
 
     res.json(updatedBlog);
@@ -189,13 +194,13 @@ exports.deleteBlog = async (req, res) => {
     }
 
     // 3. Log activity BEFORE deleting
-    await logActivity(
-      req.user._id,
-      blogId,
-      "BlogPost",
-      "BLOG_DELETED",
-      `Blog Deleted with title: ${blog.title}`
-    );
+    // await logActivity(
+    //   req.user._id,
+    //   blogId,
+    //   "BlogPost",
+    //   "BLOG_DELETED",
+    //   `Blog Deleted with title: ${blog.title}`
+    // );
 
     // 4. Delete related comments (if any)
     await Comment.deleteMany({ blog: blogId });

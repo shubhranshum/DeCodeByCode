@@ -5,7 +5,7 @@ const BlogPage = () => {
     return (
         <>
             <Navbar activePage={"BlogPage"} />
-            <div className="pt-15.5"> {/* Adjust this value to your navbar's height */}
+            <div > {/* Adjust this value to your navbar's height */}
                 <Blog />
             </div>
         </>

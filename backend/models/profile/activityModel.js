@@ -12,7 +12,7 @@ const activitySchema = new Schema({
   refModel: {
     type: String,
     required: true,
-    enum: ['Problem', 'BlogPost', 'Comment' , 'Connection','USER'] // Add any model names you want to support
+    enum: ['Problem', 'BlogPost', 'Comment' , 'Connection','User'] // Add any model names you want to support
   },
 
   type: {

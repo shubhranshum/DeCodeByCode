@@ -12,7 +12,7 @@ router.get('/profile', auth, getProfile);
 router.get('/profile/user/:username',noAuth, getProfileByUserName);
 router.put('/profile',auth, updateProfile);
 router.get('/profile/user-blogs',auth, BlogController.getBlogsByUserId); 
-router.get('/profile/user-activities',auth, ActivityController.getUserActivities);
+router.get('/profile/user-activities/:username', ActivityController.getUserActivitiesByUsername);
 
 //for solved
 router.get('/profile/solved-problems',auth, getSolvedProblems);

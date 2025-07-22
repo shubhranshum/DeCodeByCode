@@ -71,6 +71,7 @@ const userSchema = new mongoose.Schema({
     solutionsAccepted: { type: Number, default: 0 },
     ranking: { type: Number, default: 0 }
   },
+  isOnline: { type: Boolean, default: false },
 
   // ====== Preferences ======
   preferences: {
