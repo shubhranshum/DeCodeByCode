@@ -9,21 +9,21 @@ loader.config({
   }
 });
 
-// Enhanced custom themes
+// Retro CRT-style themes
 const editorThemes = {
   dark: {
     base: "vs-dark",
-    themeName: "code-dark-pro",
+    themeName: "crt-dark",
     colors: {
-      "editor.background": "#1e1e2e",
-      "editor.foreground": "#e0e0e0",
-      "editor.lineHighlightBackground": "#2a2a3a",
-      "editorCursor.foreground": "#f8f8f0",
+      "editor.background": "#1a1a2e",
+      "editor.foreground": "#c5e8c5",
+      "editor.lineHighlightBackground": "#2a2a3e",
+      "editorCursor.foreground": "#ff66cc",
       "editor.selectionBackground": "#3d3d5a",
       "editor.inactiveSelectionBackground": "#3a3a4a",
-      "editor.lineNumbers": "#6c7086",
-      "editorGutter.background": "#1e1e2e",
-      "editor.selectionHighlightBorder": "#3d3d5a",
+      "editor.lineNumbers": "#a0a0cc",
+      "editorGutter.background": "#1a1a2e",
+      "editor.selectionHighlightBorder": "#ff66cc",
       "editor.wordHighlightBackground": "#57575750",
       "editor.wordHighlightStrongBackground": "#57575750",
       "editor.findMatchBackground": "#515c6a",
@@ -32,31 +32,37 @@ const editorThemes = {
       "editorIndentGuide.background": "#3a3a4a",
       "editorIndentGuide.activeBackground": "#4a4a5a",
       "editorBracketMatch.background": "#3a3a4a",
-      "editorBracketMatch.border": "#888888"
+      "editorBracketMatch.border": "#888888",
+      "scrollbarSlider.background": "#ff66cc80",
+      "scrollbarSlider.hoverBackground": "#ff66cc",
+      "scrollbarSlider.activeBackground": "#ff66ff",
     }
   },
   light: {
     base: "vs",
-    themeName: "code-light-pro",
+    themeName: "crt-light",
     colors: {
-      "editor.background": "#ffffff",
-      "editor.foreground": "#333333",
-      "editor.lineHighlightBackground": "#f5f5f5",
-      "editorCursor.foreground": "#333333",
-      "editor.selectionBackground": "#add6ff",
-      "editor.inactiveSelectionBackground": "#e5e5e5",
-      "editor.lineNumbers": "#999999",
-      "editorGutter.background": "#ffffff",
-      "editor.selectionHighlightBorder": "#add6ff",
+      "editor.background": "#fff0f5",
+      "editor.foreground": "#5a5a8c",
+      "editor.lineHighlightBackground": "#ffe6f2",
+      "editorCursor.foreground": "#ff66cc",
+      "editor.selectionBackground": "#ffccf9",
+      "editor.inactiveSelectionBackground": "#f0d6e8",
+      "editor.lineNumbers": "#b19cd9",
+      "editorGutter.background": "#fff0f5",
+      "editor.selectionHighlightBorder": "#ffccf9",
       "editor.wordHighlightBackground": "#d3d3d350",
       "editor.wordHighlightStrongBackground": "#d3d3d350",
-      "editor.findMatchBackground": "#a8c8e8",
-      "editor.findMatchHighlightBackground": "#b8d8f8",
-      "editor.hoverHighlightBackground": "#e5e5e5",
-      "editorIndentGuide.background": "#e5e5e5",
-      "editorIndentGuide.activeBackground": "#d5d5d5",
-      "editorBracketMatch.background": "#e5e5e5",
-      "editorBracketMatch.border": "#888888"
+      "editor.findMatchBackground": "#ffb6c180",
+      "editor.findMatchHighlightBackground": "#ffcce680",
+      "editor.hoverHighlightBackground": "#ffe6f2",
+      "editorIndentGuide.background": "#e6d6ff",
+      "editorIndentGuide.activeBackground": "#d5c2ff",
+      "editorBracketMatch.background": "#e6d6ff",
+      "editorBracketMatch.border": "#b19cd9",
+      "scrollbarSlider.background": "#b19cd980",
+      "scrollbarSlider.hoverBackground": "#b19cd9",
+      "scrollbarSlider.activeBackground": "#9370db",
     }
   }
 };
@@ -86,6 +92,107 @@ export default function SubmissionCodeEditor({
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [problemId]);
 
+  // Inject CRT effect styles
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .crt-effect::before {
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(
+            rgba(18, 16, 16, 0) 50%,
+            rgba(0, 0, 0, 0.25) 50%
+          ),
+          linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 0.06),
+            rgba(0, 255, 0, 0.02),
+            rgba(0, 0, 255, 0.06)
+          );
+        background-size: 100% 2px, 3px 100%;
+        pointer-events: none;
+        z-index: 10;
+      }
+      
+      .crt-effect {
+        position: relative;
+        background: #1a1a2e;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 
+          0 0 10px rgba(0, 255, 150, 0.1),
+          0 0 20px rgba(0, 200, 255, 0.1) inset;
+      }
+      
+      .crt-effect.light {
+        background: #fff0f5;
+        box-shadow: 
+          0 0 10px rgba(255, 105, 180, 0.2),
+          0 0 20px rgba(255, 182, 193, 0.3) inset;
+      }
+      
+      .crt-effect::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.05);
+        pointer-events: none;
+        z-index: 10;
+        animation: flicker 0.15s infinite;
+      }
+      
+      @keyframes flicker {
+        0% { opacity: 0.1; }
+        20% { opacity: 0.1; }
+        21% { opacity: 0.6; }
+        22% { opacity: 0.1; }
+        40% { opacity: 0.1; }
+        41% { opacity: 0.3; }
+        42% { opacity: 0.1; }
+        60% { opacity: 0.1; }
+        62% { opacity: 0.8; }
+        63% { opacity: 0.1; }
+        80% { opacity: 0.1; }
+        81% { opacity: 0.4; }
+        82% { opacity: 0.1; }
+        100% { opacity: 0.1; }
+      }
+      
+      /* Custom scrollbar for editor container */
+      .crt-scrollbar::-webkit-scrollbar {
+        width: 12px;
+      }
+      
+      .crt-scrollbar::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+      }
+      
+      .crt-scrollbar::-webkit-scrollbar-thumb {
+        background: linear-gradient(45deg, #ff66cc, #66ccff);
+        border-radius: 10px;
+        border: 2px solid rgba(0, 0, 0, 0.2);
+      }
+      
+      .crt-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(45deg, #ff33cc, #33ccff);
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
@@ -96,17 +203,23 @@ export default function SubmissionCodeEditor({
       monaco.editor.defineTheme(config.themeName, {
         base: config.base,
         inherit: true,
-        rules: [],
+        rules: [
+          { token: '', foreground: config.colors["editor.foreground"], background: config.colors["editor.background"] },
+          { token: 'keyword', foreground: '#ff66cc' },
+          { token: 'comment', foreground: '#b19cd9', fontStyle: 'italic' },
+          { token: 'string', foreground: '#a0e7a0' },
+          { token: 'number', foreground: '#66ccff' },
+          { token: 'type', foreground: '#ffcc66' },
+        ],
         colors: config.colors,
       });
     });
     monaco.editor.setTheme(editorThemes[theme].themeName);
 
-    // Configure language defaults for better suggestions
+    // Configure language defaults
     monaco.languages.registerCompletionItemProvider(language, {
       provideCompletionItems: (model, position) => {
         const suggestions = [
-          // C++ specific suggestions
           ...(language === 'cpp' ? [
             {
               label: 'for loop',
@@ -115,95 +228,24 @@ export default function SubmissionCodeEditor({
               documentation: 'For loop snippet',
               range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
             },
-            {
-              label: 'if statement',
-              kind: monaco.languages.CompletionItemKind.Snippet,
-              insertText: 'if (${1:condition}) {\n\t${2}\n}',
-              documentation: 'If statement snippet',
-              range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
-            },
-            {
-              label: 'function',
-              kind: monaco.languages.CompletionItemKind.Snippet,
-              insertText: '${1:int} ${2:functionName}(${3}) {\n\t${4}\n\treturn ${5};\n}',
-              documentation: 'Function declaration snippet',
-              range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
-            },
-            {
-              label: 'main function',
-              kind: monaco.languages.CompletionItemKind.Snippet,
-              insertText: 'int main() {\n\t${1}\n\treturn 0;\n}',
-              documentation: 'Main function declaration snippet',
-              range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
-            },
-            {
-              label: 'vector',
-              kind: monaco.languages.CompletionItemKind.Snippet,
-              insertText: 'vector<int> ${1:vectorName};',
-              documentation: 'Vector declaration snippet',
-              range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
-            },
-            {
-              label: 'pair',
-              kind: monaco.languages.CompletionItemKind.Snippet,
-              insertText: 'pair<int, int> ${1:pairName};',
-              documentation: 'Pair declaration snippet',
-              range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
-            },
-            {
-              label: 'map',
-              kind: monaco.languages.CompletionItemKind.Snippet,
-              insertText: 'map<int, int> ${1:mapName};',
-              documentation: 'Map declaration snippet',
-              range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
-            },
-            {
-              label: 'set',
-              kind: monaco.languages.CompletionItemKind.Snippet,
-              insertText: 'set<int> ${1:setName};',
-              documentation: 'Set declaration snippet',
-              range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
-            },
-            {
-              label: 'queue',
-              kind: monaco.languages.CompletionItemKind.Snippet,
-              insertText: 'queue<int> ${1:queueName};',
-              documentation: 'Queue declaration snippet',
-              range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
-            },
-            {
-              label: 'stack',
-              kind: monaco.languages.CompletionItemKind.Snippet,
-              insertText: 'stack<int> ${1:stackName};',
-              documentation: 'Stack declaration snippet',
-              range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
-            },
-
+            // ... other snippets
           ] : []),
-          // Add more language-specific suggestions here
         ];
         return { suggestions };
       }
     });
 
-    // Smooth typing effect
+    // Retro editor options
     editor.updateOptions({
-      cursorBlinking: "smooth",
+      cursorBlinking: "phase",
       cursorSmoothCaretAnimation: true,
-      cursorStyle: "line-thin",
+      cursorStyle: "line",
       smoothScrolling: true,
-      accessibilitySupport: "auto",
-      scrollBeyondLastLine: true,
-      minimap: {
-        enabled: false,
-      },
-      lineNumbersMinChars: 3,
-      scrollbar: {
-        verticalScrollbarSize: 8,
-        horizontalScrollbarSize: 8,
-      },
-      glyphMargin: true,
-
+      fontFamily: "'Courier New', monospace",
+      fontSize: 15,
+      lineHeight: 24,
+      letterSpacing: 0.5,
+      fontWeight: "bold",
     });
   };
 
@@ -213,10 +255,13 @@ export default function SubmissionCodeEditor({
     if (onCodeChange) onCodeChange(newCode);
   };
 
+  const containerClass = `crt-effect ${theme === 'light' ? 'light' : ''} crt-scrollbar rounded-xl overflow-hidden border height-full border-gray-700 shadow-xl transition-all duration-300`;
+  const badgeClass = theme === 'dark' 
+    ? "absolute bottom-4 right-4 text-xs font-mono font-medium text-pink-300 bg-black/50 px-3 py-1 rounded-full border border-pink-500 shadow-sm glow-text"
+    : "absolute bottom-4 right-4 text-xs font-mono font-medium text-purple-700 bg-pink-100/80 px-3 py-1 rounded-full border border-purple-500 shadow-sm";
+
   return (
-    
-    <div className="rounded-xl overflow-hidden border height-full  border-gray-200 dark:border-gray-700 shadow-xl bg-white dark:bg-gray-900 transition-all duration-300">
-      
+    <div className={containerClass}>
       <div className="relative h-full">
         <Editor
           height="75vh"
@@ -227,23 +272,19 @@ export default function SubmissionCodeEditor({
           onMount={handleEditorDidMount}
           loading={
             <div className="flex items-center justify-center h-full">
-              <div className="animate-pulse text-gray-500 dark:text-gray-400">
-                Loading DeCodeByCode editor...
+              <div className="animate-pulse text-pink-400">
+                Loading Retro Editor...
               </div>
             </div>
           }
           options={{
             fontSize: 15,
-            
-            glyphMargin: true,
-            fontFamily: "'JetBrains Mono', 'Menlo', monospace",
-            fontLigatures: true,
+            fontFamily: "'Courier New', Courier, monospace",
             lineHeight: 24,
-            letterSpacing: 0.3,
+            letterSpacing: 0.5,
+            fontWeight: "bold",
             minimap: { enabled: true },
-            scrollBeyondLastLine: false,
             automaticLayout: true,
-            renderWhitespace: "boundary",
             renderLineHighlight: "all",
             lineNumbersMinChars: 3,
             folding: true,
@@ -262,21 +303,14 @@ export default function SubmissionCodeEditor({
             padding: { top: 16, bottom: 16 },
             wordWrap: "on",
             scrollbar: { 
-              verticalScrollbarSize: 8, 
-              horizontalScrollbarSize: 8, 
+              verticalScrollbarSize: 12,
+              horizontalScrollbarSize: 12,
               useShadows: false,
               handleMouseWheel: true
             },
             contextmenu: true,
-            quickSuggestions: { 
-              other: true, 
-              comments: false, 
-              strings: true 
-            },
+            quickSuggestions: true,
             suggestOnTriggerCharacters: true,
-            acceptSuggestionOnEnter: "on",
-            tabCompletion: "on",
-            wordBasedSuggestions: true,
             parameterHints: { enabled: true },
             hover: { enabled: true, delay: 300, sticky: true },
             autoClosingBrackets: "always",
@@ -284,38 +318,13 @@ export default function SubmissionCodeEditor({
             autoIndent: "full",
             formatOnPaste: true,
             formatOnType: true,
-            suggest: {
-              preview: true,
-              showMethods: true,
-              showFunctions: true,
-              showConstructors: true,
-              showFields: true,
-              showVariables: true,
-              showClasses: true,
-              showStructs: true,
-              showInterfaces: true,
-              showModules: true,
-              showProperties: true,
-              showEvents: true,
-              showOperators: true,
-              showUnits: true,
-              showValues: true,
-              showConstants: true,
-              showEnums: true,
-              showEnumMembers: true,
-              showKeywords: true,
-              showWords: true,
-              showColors: true,
-              showFiles: true,
-              showReferences: true,
-              showFolders: true,
-              showTypeParameters: true,
-              showSnippets: true
-            }
+            overviewRulerLanes: 3,
+            overviewRulerBorder: false,
+            renderValidationDecorations: "on",
           }}
         />
         {isEditorReady && (
-          <div className="absolute bottom-4 right-4 text-xs font-mono font-medium text-gray-600 dark:text-gray-300 bg-white/90 dark:bg-gray-800/90 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-600 shadow-sm">
+          <div className={badgeClass}>
             {language.toUpperCase()}
           </div>
         )}

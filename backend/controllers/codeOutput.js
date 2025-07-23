@@ -2,8 +2,8 @@ const https = require('https');
 
 // Move to .env in production
 const apiHost = 'judge0-ce.p.rapidapi.com';
-// const apiKey = 'a8fea594d2msh8cb80877f3ac627p10960cjsn6f05dc7b2856';
-const apiKey = 'd58f926360msh3615eb1fef6b3c3p18d3bbjsn7ce9b04dd188';
+const apiKey = 'a8fea594d2msh8cb80877f3ac627p10960cjsn6f05dc7b2856';
+// const apiKey = 'd58f926360msh3615eb1fef6b3c3p18d3bbjsn7ce9b04dd188';
 
 // --- Submit Code ---
 exports.submitCode = (req, res) => {

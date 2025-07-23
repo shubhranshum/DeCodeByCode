@@ -188,6 +188,9 @@ const getFollowers = async (req, res) => {
     console.log("Hello from getFollowers");
     const user = req.user._id;
     const followers = await Connection.find({ reciever: user }).populate('sender', '_id username email profilePicture firstName lastName age ' );
+    if(!followers){
+      return res.status(404).json({ message: 'No followers found' });
+    }
     res.json(followers);
   } catch (error) {
     console.error('Error fetching followers:', error);
@@ -199,7 +202,10 @@ const getFollowing = async (req, res) => {
     console.log("Hello from getFollowing");
     const user = req.user._id;
     const following = await Connection.find({ sender: user }).populate('reciever', '_id username email profilePicture firstName lastName age ');
-    
+    if(!following) {
+      return res.status(404).json({ message: 'No following found' });
+    }
+    console.log(following);
     res.json(following);
   } catch (error) {
     console.error('Error fetching following:', error);

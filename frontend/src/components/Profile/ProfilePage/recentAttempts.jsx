@@ -1,133 +1,84 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { FiZap } from 'react-icons/fi';
 
-const RecentAttempts = ({ attempts, theme, themeStyles }) => { // Accept themeStyles prop
-    // Fallback themeStyles if not provided (though it should be by parent)
-    const currentThemeStyles = themeStyles || (theme === 'dark' ? { /* dark defaults */ } : { /* light defaults */ });
+// --- RETRO THEME DEFINITIONS ---
+const retroThemeColors = {
+    textPrimary: "text-stone-800",
+    textSecondary: "text-stone-500",
+    textAccent: "text-teal-600",
+    panelBorder: "border-stone-800",
+    accentBg: "bg-amber-100",
+    // Badge-specific colors
+    successBg: 'bg-emerald-200',
+    successText: 'text-emerald-800',
+    failureBg: 'bg-rose-200',
+    failureText: 'text-rose-800',
+    difficulty: {
+        Easy: "bg-emerald-200 text-emerald-800",
+        Medium: "bg-amber-200 text-amber-800",
+        Hard: "bg-rose-200 text-rose-800",
+    },
+};
 
-    // Placeholder default theme styles if themeStyles prop is not passed correctly from parent
-    // In a real app, you'd ensure themeStyles is always passed or import a global theme context
-    const defaultThemes = {
-        light: {
-            card: 'bg-white',
-            shadow: 'shadow-xl',
-            border: 'border-gray-200',
-            text: 'text-gray-800',
-            secondaryText: 'text-gray-500',
-            primaryAccent: 'text-purple-700', // Still using purple as primary for titles
-            secondaryAccent: 'text-teal-600', // Green-blue accent
-            sectionTitle: 'text-purple-800', // Main section titles
-            hoverBg: 'hover:bg-gray-50',
-            emptyStateIconBg: 'bg-gray-100',
-            // Specific badge colors
-            badgeSuccessBg: 'bg-emerald-100', // Emerald green
-            badgeSuccessText: 'text-emerald-800',
-            badgeFailureBg: 'bg-rose-100', // Rose red
-            badgeFailureText: 'text-rose-800',
-            badgeDefaultBg: 'bg-gray-100',
-            badgeDefaultText: 'text-gray-700',
-            difficultyEasyBg: 'bg-emerald-100',
-            difficultyEasyText: 'text-emerald-800',
-            difficultyMediumBg: 'bg-amber-100',
-            difficultyMediumText: 'text-amber-800',
-            difficultyHardBg: 'bg-rose-100',
-            difficultyHardText: 'text-rose-800',
-        },
-        dark: {
-            card: 'bg-gray-800',
-            shadow: 'shadow-xl',
-            border: 'border-gray-700',
-            text: 'text-gray-100',
-            secondaryText: 'text-gray-400',
-            primaryAccent: 'text-indigo-400', // Indigo as primary for titles
-            secondaryAccent: 'text-cyan-400', // Green-blue accent
-            sectionTitle: 'text-indigo-300', // Main section titles
-            hoverBg: 'hover:bg-gray-700',
-            emptyStateIconBg: 'bg-gray-700',
-            // Specific badge colors
-            badgeSuccessBg: 'bg-emerald-900/30', // Emerald green
-            badgeSuccessText: 'text-emerald-400',
-            badgeFailureBg: 'bg-rose-900/30', // Rose red
-            badgeFailureText: 'text-rose-400',
-            badgeDefaultBg: 'bg-gray-700',
-            badgeDefaultText: 'text-gray-300',
-            difficultyEasyBg: 'bg-emerald-900/30',
-            difficultyEasyText: 'text-emerald-400',
-            difficultyMediumBg: 'bg-amber-900/30',
-            difficultyMediumText: 'text-amber-400',
-            difficultyHardBg: 'bg-rose-900/30',
-            difficultyHardText: 'text-rose-400',
-        }
-    };
-    const activeThemeStyles = themeStyles || defaultThemes[theme];
+// --- Reusable UI Component ---
+const RetroCard = ({ children, className = '' }) => (
+    <div className={`border-4 ${retroThemeColors.panelBorder} bg-white shadow-chunky ${className}`}>
+        {children}
+    </div>
+);
 
+// --- Main RecentAttempts Component ---
+const RecentAttempts = ({ attempts }) => {
 
     if (!attempts || attempts.length === 0) {
         return (
-            <div className={`rounded-xl ${activeThemeStyles.card} ${activeThemeStyles.shadow} p-8 text-center border ${activeThemeStyles.border}`}>
-                <div className={`${activeThemeStyles.emptyStateIconBg} w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner`}>
-                    <svg className={`w-8 h-8 ${activeThemeStyles.secondaryText}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+            <div>
+                <h2 className="text-3xl font-bold mb-6">Recent Attempts</h2>
+                <div className={`p-8 text-center border-2 border-dashed ${retroThemeColors.panelBorder} ${retroThemeColors.accentBg}`}>
+                    <FiZap className={`mx-auto h-12 w-12 mb-4 ${retroThemeColors.textSecondary}`} />
+                    <h3 className="text-xl font-bold">No recent attempts yet</h3>
+                    <p className={`${retroThemeColors.textSecondary} mt-1`}>Start solving problems to see your attempts here.</p>
                 </div>
-                <h3 className={`text-xl font-semibold ${activeThemeStyles.text}`}>No recent attempts yet</h3>
-                <p className={`${activeThemeStyles.secondaryText} mt-1`}>Start solving problems to see your attempts here.</p>
             </div>
         );
     }
 
     return (
-        <div className={`rounded-xl ${activeThemeStyles.card} ${activeThemeStyles.shadow} transition-colors border ${activeThemeStyles.border}`}>
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 className={`text-2xl font-bold ${activeThemeStyles.sectionTitle}`}>Recent Attempts</h2>
-            </div>
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+        <div>
+            <h2 className="text-3xl font-bold mb-6">Recent Attempts</h2>
+            <div className="space-y-4">
                 {attempts.map((attempt) => (
-                    <li key={attempt._id} className={`${activeThemeStyles.hoverBg} transition-colors`}>
-                        <Link to={`/problems/${attempt.problemId || attempt._id}`} className="block p-6">
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex-1 min-w-0 pr-4">
-                                    <h3 className={`text-xl font-semibold truncate ${activeThemeStyles.secondaryAccent} hover:underline`}>
-                                        {attempt.title}
-                                    </h3>
-                                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                                            attempt.status === 'Accepted'
-                                                ? `${activeThemeStyles.badgeSuccessBg} ${activeThemeStyles.badgeSuccessText}`
-                                                : `${activeThemeStyles.badgeFailureBg} ${activeThemeStyles.badgeFailureText}`
-                                        }`}>
-                                            {attempt.status}
-                                        </span>
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${activeThemeStyles.badgeDefaultBg} ${activeThemeStyles.badgeDefaultText}`}>
-                                            {attempt.language || "C++"}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className={`ml-4 flex-shrink-0 text-sm font-medium ${activeThemeStyles.secondaryText}`}>
-                                    {new Date(attempt.lastTriedAt).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric'
-                                    })}
-                                </div>
+                    <Link 
+                        key={attempt._id} 
+                        to={`/problems/${attempt.problemId || attempt._id}`} 
+                        className={`block p-4 border-2 ${retroThemeColors.panelBorder} bg-stone-50 hover:bg-teal-50 transition-colors`}
+                    >
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                            <div className="flex-1 min-w-0">
+                                <h3 className={`text-xl font-bold truncate ${retroThemeColors.textAccent}`}>
+                                    {attempt.title}
+                                </h3>
+                                <p className={`text-sm mt-1 ${retroThemeColors.textSecondary}`}>
+                                    Last tried on {new Date(attempt.lastTriedAt).toLocaleDateString()}
+                                </p>
                             </div>
-                            {attempt.difficulty && (
-                                <div className="mt-2">
-                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                                        attempt.difficulty === 'Easy'
-                                            ? `${activeThemeStyles.difficultyEasyBg} ${activeThemeStyles.difficultyEasyText}`
-                                            : attempt.difficulty === 'Medium'
-                                                ? `${activeThemeStyles.difficultyMediumBg} ${activeThemeStyles.difficultyMediumText}`
-                                                : `${activeThemeStyles.difficultyHardBg} ${activeThemeStyles.difficultyHardText}`
-                                    }`}>
-                                        {attempt.difficulty}
-                                    </span>
-                                </div>
-                            )}
-                        </Link>
-                    </li>
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                                <span className={`px-3 py-1 text-xs font-bold border-2 ${retroThemeColors.panelBorder} ${
+                                    attempt.status === 'Accepted'
+                                        ? `${retroThemeColors.successBg} ${retroThemeColors.successText}`
+                                        : `${retroThemeColors.failureBg} ${retroThemeColors.failureText}`
+                                }`}>
+                                    {attempt.status}
+                                </span>
+                                <span className={`px-3 py-1 text-xs font-bold border-2 ${retroThemeColors.panelBorder} ${retroThemeColors.difficulty[attempt.difficulty] || 'bg-stone-200 text-stone-800'}`}>
+                                    {attempt.difficulty}
+                                </span>
+                            </div>
+                        </div>
+                    </Link>
                 ))}
-            </ul>
+            </div>
         </div>
     );
 };

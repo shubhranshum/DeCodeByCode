@@ -13,7 +13,7 @@ export default function MathjaxRenderer({ html }) {
   return (
     <div
       ref={contentRef}
-      className="prose max-w-none text-white"
+      className="prose max-w-none text-black"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

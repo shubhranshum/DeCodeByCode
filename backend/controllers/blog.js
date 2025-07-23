@@ -45,8 +45,8 @@ exports.getBlogsByUserId = async (req, res) => {
 
 // Create a new blog post
 exports.createBlog = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  // const session = await mongoose.startSession();
+  // session.startTransaction();
 
   try {
     const { title, content, slug, summary, thumbnailUrl, tags, category, status, allowComments, isFeatured } = req.body;
@@ -66,26 +66,27 @@ exports.createBlog = async (req, res) => {
       author,
     });
 
-    const savedBlog = await blog.save({ session });
+    // const savedBlog = await blog.save({ session });
+    const savedBlog = await blog.save();
     const community = await Community.findOne();
     console.log(community);
     community.numberOfBlogs += 1;
     await community.save();
-    await session.commitTransaction();
+    // await session.commitTransaction();
 
     // Log activity outside transaction since it's non-critical
     await logActivity(author, savedBlog._id, "BlogPost", "BLOG_POSTED", savedBlog.title);
     
     res.status(201).json(savedBlog);
   } catch (err) {
-    await session.abortTransaction();
+    // await session.abortTransaction();
     console.error('Error saving blog:', err);
     res.status(500).json({
       error: 'Failed to create blog',
       details: err.message
     });
   } finally {
-    session.endSession();
+    // session.endSession();
   }
 };
 

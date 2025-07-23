@@ -30,6 +30,13 @@ passport.use(new GoogleStrategy({
         accountStatus: 'active'
       });
      const community = await Community.findOne();
+     if(community == null){
+        Community.create(
+            {
+              name:"DecodeByCode"
+            }
+        );
+     }
      console.log(community);
       community.numberOfUsers += 1;
       await community.save();
