@@ -8,7 +8,7 @@ async function getProblemBySlug(req, res) {
         if (!problem) {
             return res.status(404).json({ message: 'Problem not found' });
         }
-        console.log('Problem fetched successfully:', problem);
+        console.log('Problem fetched successfully:',problem.title);
         res.status(200).json(problem);
     } catch (err) {
         console.error('Error fetching problem:', err);

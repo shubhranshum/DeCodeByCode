@@ -1,389 +1,237 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { FiEdit, FiPlus, FiClock, FiLock, FiUnlock } from "react-icons/fi";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import { FiEdit, FiPlus, FiClock, FiLock, FiUnlock, FiTrash2 } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-import { getAdminContestBySlug } from "../../Tasks/getAdminContestBySlug.jsx";  
-import { getProblemById } from "../../Tasks/getProblemById.jsx";  // Assuming this function fetches a problem by ID
+// --- Data Fetching ---
+import { getAdminContestBySlug } from "../../Tasks/getAdminContestBySlug.jsx";
+import { getProblemById } from "../../Tasks/getProblemById.jsx";
 
+// --- RETRO THEME DEFINITIONS ---
+const retroThemeColors = {
+    bgPrimary: "bg-stone-100",
+    textPrimary: "text-stone-800",
+    textSecondary: "text-stone-500",
+    textAccent: "text-teal-600",
+    panelBg: "bg-white",
+    panelBorder: "border-stone-800",
+    buttonPrimaryBg: "bg-teal-400 hover:bg-teal-500",
+    buttonSecondaryBg: "bg-stone-200 hover:bg-stone-300",
+    buttonDangerBg: "bg-rose-400 hover:bg-rose-500",
+    buttonText: "text-stone-800",
+    inputBg: "bg-stone-100",
+};
 
+// --- Reusable UI Components ---
+const Button = ({ children, onClick, disabled, className = '', small = false, type = 'primary', isSubmit = false }) => {
+    const sizeStyle = small ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-base';
+    const baseStyle = `border-2 ${retroThemeColors.panelBorder} ${retroThemeColors.buttonText} shadow-chunky transition-all hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 flex items-center justify-center gap-2 font-bold`;
+    const typeStyle = type === 'primary' ? retroThemeColors.buttonPrimaryBg : type === 'danger' ? retroThemeColors.buttonDangerBg : retroThemeColors.buttonSecondaryBg;
+    return <button type={isSubmit ? "submit" : "button"} onClick={onClick} disabled={disabled} className={`${baseStyle} ${sizeStyle} ${typeStyle} ${className}`}>{children}</button>;
+};
+
+const RetroCard = ({ children, className = '' }) => <div className={`border-4 ${retroThemeColors.panelBorder} bg-white shadow-chunky ${className}`}>{children}</div>;
+const FormInput = ({ label, name, value, onChange, ...props }) => (
+    <div>
+        <label className="block text-base mb-1.5 font-bold">{label}</label>
+        <input name={name} value={value} onChange={onChange} className={`w-full p-3 text-base border-2 ${retroThemeColors.panelBorder} ${retroThemeColors.inputBg} focus:outline-none`} {...props} />
+    </div>
+);
+const FormTextarea = ({ label, name, value, onChange, ...props }) => (
+    <div>
+        <label className="block text-base mb-1.5 font-bold">{label}</label>
+        <textarea name={name} value={value} onChange={onChange} className={`w-full p-3 text-base border-2 ${retroThemeColors.panelBorder} ${retroThemeColors.inputBg} focus:outline-none resize-none`} {...props} />
+    </div>
+);
+
+// ================
+// MAIN COMPONENT
+// ================
 export default function ContestEditSection() {
-  const { contestSlug } = useParams();
-  const [activeSection, setActiveSection] = useState("general");
-  const [contestId, setContestId] = useState(null); // Initialize with the contest ID from URL
-  const [contest, setContest] = useState({
-    title: "",
-    description: "",
-    startTime: "",
-    endTime: "",
-    duration: 120,
-    isPrivate: false,
-    contestType: "ICPC",
-  });
-  const [problems, setProblems] = useState([]);
-  const [showProblemModal, setShowProblemModal] = useState(false);
-  const [problemIdInput, setProblemIdInput] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    const { contestSlug } = useParams();
+    const [activeSection, setActiveSection] = useState("general");
+    const [contestId, setContestId] = useState(null);
+    const [contest, setContest] = useState({ title: "", description: "", startTime: "", endTime: "", duration: 120, isPrivate: false, contestType: "ICPC" });
+    const [problems, setProblems] = useState([]);
+    const [showProblemModal, setShowProblemModal] = useState(false);
+    const [problemIdInput, setProblemIdInput] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  const setContestData = (data) => {
-    // Function to round time to next 5-minute interval
-    const getNext5MinuteInterval = () => {
-      const date = new Date();
-      const minutes = date.getMinutes();
-      const roundedMinutes = Math.floor(minutes / 5) * 5 + 5;
-
-      // Create new date with rounded time
-      const roundedDate = new Date(date);
-      roundedDate.setMinutes(roundedMinutes);
-      roundedDate.setSeconds(0);
-      roundedDate.setMilliseconds(0);
-
-      // Handle hour overflow
-      if (roundedMinutes >= 60) {
-        roundedDate.setMinutes(0);
-        roundedDate.setHours(roundedDate.getHours() + 1);
-      }
-      return roundedDate;
-    };
+    // --- LOGIC (Functionality Unchanged) ---
     const formatForDatetimeLocalInput = (utcDateString) => {
+        if (!utcDateString) {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            return now.toISOString().slice(0, 16);
+        }
         const date = new Date(utcDateString);
         const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-        return local.toISOString().slice(0, 16); // Format: "yyyy-MM-ddTHH:mm"
-      };
-
-    setContest({
-      title: data.title || "",
-      description: data.description || "",
-      startTime: formatForDatetimeLocalInput(data.startTime || getNext5MinuteInterval()),
-      endTime: formatForDatetimeLocalInput(data.endTime || getNext5MinuteInterval()),
-      duration: data.duration || 120,
-      isPrivate: data.isPrivate || false,
-      contestType: data.contestType || "ICPC",
-    });
-
-    // Set problems array (note the capital 'P' in Problems was corrected)
-    setProblems(data.Problems || []);
-  };
-
-  useEffect(() => {
-    const fetchContest = async () => {
-      try {
-        const data = await getAdminContestBySlug(contestSlug);
-        setContestId(data._id); // Set the contest ID
-        setContestData(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+        return local.toISOString().slice(0, 16);
     };
 
-    fetchContest();
-  }, [contestSlug]);
+    useEffect(() => {
+        const fetchContest = async () => {
+            try {
+                const data = await getAdminContestBySlug(contestSlug);
+                setContestId(data._id);
+                setContest({
+                    title: data.title || "",
+                    description: data.description || "",
+                    startTime: formatForDatetimeLocalInput(data.startTime),
+                    endTime: formatForDatetimeLocalInput(data.endTime),
+                    duration: data.duration || 120,
+                    isPrivate: data.isPrivate || false,
+                    contestType: data.contestType || "ICPC",
+                });
+                setProblems(data.Problems || []);
+            } catch (err) { setError(err.message); } 
+            finally { setLoading(false); }
+        };
+        fetchContest();
+    }, [contestSlug]);
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    setContest((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
+    const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setContest((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    };
 
     const handleSaveChanges = async () => {
-    try {
-      const updatedContest = {
-        ...contest,
-        startTime: new Date(contest.startTime).toISOString(),
-        endTime: new Date(new Date(contest.startTime).getTime() + contest.duration * 60000).toISOString(),
-      };
-      const response = await fetch(`http://localhost:3000/admin/edit-contest/${contestId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedContest),
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update contest");
-      }
-
-      toast.success("Contest updated successfully");
-    } catch (error) {
-      console.error("Error updating contest:", error);
-      toast.error(error.message || "An error occurred while updating the contest");
-    }
-}
-const setProblemsForContest = async (problems) => {
-    const response = await fetch(`http://localhost:3000/admin/edit-contest/${contestId}`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            Problems : problems
-        }),
-        credentials: "include",
-    })
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to add problems to contest");
-    }
-}
-  const handleAddProblem = async () => {
-    if (!problemIdInput.trim()) {;
-      toast.error("Please enter a problem ID");
-      return;
-    }
-    const problem = await getProblemById(problemIdInput.trim());
-    if (!problem) {
-        toast.error("Problem not found");
-        return;
-    }
-    if (problems.some(p => p._id === problem._id)) {
-        toast.error("Problem already added to contest");
-        return;
-      }
-    const newProblem = {
-      _id : problem._id,
-      title: problem.title,
+        try {
+            const updatedContest = { ...contest, startTime: new Date(contest.startTime).toISOString(), endTime: new Date(new Date(contest.startTime).getTime() + contest.duration * 60000).toISOString() };
+            const response = await fetch(`http://localhost:3000/admin/edit-contest/${contestId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedContest), credentials: "include",
+            });
+            if (!response.ok) throw new Error("Failed to update contest");
+            toast.success("Contest updated successfully");
+        } catch (error) { toast.error(error.message); }
     };
-    const updatedProblems = [...problems, newProblem];
-    setProblems(updatedProblems);
-    await setProblemsForContest(updatedProblems.map(p => p._id));
-    setProblemIdInput("");
-    setShowProblemModal(false);
-  };
 
-  const handleRemoveProblem = (problemId) => {
-    const updatedProblems = problems.filter(p => p._id !== problemId);
-    setProblems(updatedProblems);
-    setProblemsForContest(updatedProblems.map(p => p._id));
-    toast.info("Problem removed from contest");
-  };
+    const setProblemsForContest = async (problemIds) => {
+        try {
+            const response = await fetch(`http://localhost:3000/admin/edit-contest/${contestId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ Problems: problemIds }), credentials: "include",
+            });
+            if (!response.ok) throw new Error("Failed to update contest problems");
+        } catch (error) { toast.error(error.message); }
+    };
 
-  if (loading) return <p className="text-white">Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
-
-//--------------------------------------------------------------------------------------------------------
-
-
-  return (
-    <div className="min-h-screen flex bg-gradient-to-br from-gray-950 to-gray-900 text-white">
-      {/* Left Sidebar */}
-      <aside className="w-64 bg-gray-800 p-6 border-r border-gray-700">
-        <h2 className="text-xl font-bold mb-6">Edit Contest</h2>
-        <div className="space-y-4">
-          <button
-            onClick={() => setActiveSection("general")}
-            className={`flex items-center w-full text-left px-4 py-2 rounded-md hover:bg-orange-600 transition ${
-              activeSection === "general" ? "bg-orange-500" : "bg-gray-700"
-            }`}
-          >
-            <FiEdit className="mr-2" /> General Info
-          </button>
-          <button
-            onClick={() => setActiveSection("problems")}
-            className={`flex items-center w-full text-left px-4 py-2 rounded-md hover:bg-orange-600 transition ${
-              activeSection === "problems" ? "bg-orange-500" : "bg-gray-700"
-            }`}
-          >
-            <FiPlus className="mr-2" /> Contest Problems
-          </button>
-        </div>
-      </aside>
-
-      {/* Right Content Area */}
-      <main className="flex-1 p-8">
-        {activeSection === "general" && (
-          <div className="bg-gray-800 rounded-lg p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">General Information</h2>
-            <button
-              onClick={handleSaveChanges}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-md transition"
-            >
-              Save Changes
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-300 mb-1">Title*</label>
-              <input
-                type="text"
-                name="title"
-                value={contest.title}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                required
-              />
-            </div>
+    const handleAddProblem = async () => {
+        if (!problemIdInput.trim()) return toast.error("Please enter a problem ID");
+        try {
+            const problem = await getProblemById(problemIdInput.trim());
+            if (!problem) return toast.error("Problem not found");
+            if (problems.some(p => p._id === problem._id)) return toast.error("Problem already in contest");
             
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-              <textarea
-                name="description"
-                value={contest.description}
-                onChange={handleInputChange}
-                rows={4}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Start Time</label>
-              <input
-                type="datetime-local"
-                name="startTime"
-                value={contest.startTime}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                <FiClock className="inline mr-2" /> Duration (minutes)
-              </label>
-              <input
-                type="number"
-                name="duration"
-                value={contest.duration}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Contest Type</label>
-              <select
-                name="contestType"
-                value={contest.contestType}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="ICPC">ICPC</option>
-                <option value="IOI">IOI</option>
-                <option value="CF">Codeforces</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center col-span-2">
-              <input
-                type="checkbox"
-                name="isPrivate"
-                checked={contest.isPrivate}
-                onChange={handleInputChange}
-                className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-600 rounded"
-              />
-              <label className="ml-2 block text-sm text-gray-300">
-                {contest.isPrivate ? <FiLock className="inline mr-1" /> : <FiUnlock className="inline mr-1" />}
-                Private Contest
-              </label>
-            </div>
-          </div>
-        </div>
-        )}
-        
-        {activeSection === "problems" && (
-          <div className="bg-gray-800 rounded-lg p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold">Contest Problems</h2>
-              <button
-                onClick={() => setShowProblemModal(true)}
-                className="flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-md transition"
-              >
-                <FiPlus className="mr-2" /> Add Problem
-              </button>
-            </div>
-        
-            {problems.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                No problems added yet. Click "Add Problem" to get started.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-700">
-                  <thead className="bg-gray-700">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Title</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Difficulty</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-gray-800 divide-y divide-gray-700">
-                    {problems.map((problem) => (
-                      <tr key={problem.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{problem._id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{problem.title}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            problem.difficulty === "Easy" ? "bg-green-900 text-green-300" :
-                            problem.difficulty === "Medium" ? "bg-yellow-900 text-yellow-300" :
-                            "bg-red-900 text-red-300"
-                          }`}>
-                            Not-Specified
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button 
-                          onClick={() => window.location.href = `/problems/${problem.slug}`}
-                          className="text-blue-400 hover:text-blue-300 mr-4">View</button>
-                          <button 
-                            onClick={() => handleRemoveProblem(problem._id)}
-                            className="text-red-400 hover:text-red-300"
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            const updatedProblems = [...problems, { _id: problem._id, title: problem.title, difficulty: problem.difficulty }];
+            setProblems(updatedProblems);
+            await setProblemsForContest(updatedProblems.map(p => p._id));
+            setProblemIdInput("");
+            setShowProblemModal(false);
+            toast.success("Problem added!");
+        } catch (error) { toast.error("Failed to add problem."); }
+    };
+
+    const handleRemoveProblem = (problemId) => {
+        const updatedProblems = problems.filter(p => p._id !== problemId);
+        setProblems(updatedProblems);
+        setProblemsForContest(updatedProblems.map(p => p._id));
+        toast.info("Problem removed from contest");
+    };
+
+    if (loading) return <div className="min-h-screen flex items-center justify-center font-retro text-2xl">Loading Contest Editor...</div>;
+    if (error) return <div className="min-h-screen flex items-center justify-center font-retro text-2xl text-rose-500">{error}</div>;
+
+    return (
+        <div className={`min-h-screen flex ${retroThemeColors.bgPrimary} font-retro`}>
+            {/* Left Sidebar */}
+            <aside className={`w-64 p-6 border-r-4 ${retroThemeColors.panelBorder} ${retroThemeColors.panelBg}`}>
+                <h2 className="text-2xl font-bold mb-6">Edit Contest</h2>
+                <div className="space-y-4">
+                    <Button onClick={() => setActiveSection("general")} type={activeSection === 'general' ? 'primary' : 'secondary'} className="w-full justify-start"><FiEdit className="mr-2" /> General Info</Button>
+                    <Button onClick={() => setActiveSection("problems")} type={activeSection === 'problems' ? 'primary' : 'secondary'} className="w-full justify-start"><FiPlus className="mr-2" /> Problems</Button>
+                </div>
+            </aside>
+
+            {/* Right Content Area */}
+            <main className="flex-1 p-8">
+                {activeSection === "general" && (
+                    <RetroCard className="p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold">General Information</h2>
+                            <Button onClick={handleSaveChanges}>Save Changes</Button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="md:col-span-2"><FormInput label="Title*" name="title" value={contest.title} onChange={handleInputChange} required /></div>
+                            <div className="md:col-span-2"><FormTextarea label="Description" name="description" value={contest.description} onChange={handleInputChange} rows={4} /></div>
+                            <FormInput label="Start Time" name="startTime" type="datetime-local" value={contest.startTime} onChange={handleInputChange} />
+                            <FormInput label="Duration (minutes)" name="duration" type="number" value={contest.duration} onChange={handleInputChange} />
+                            <div>
+                                <label className="block text-base mb-1.5 font-bold">Contest Type</label>
+                                <select name="contestType" value={contest.contestType} onChange={handleInputChange} className={`w-full p-3 text-base border-2 ${retroThemeColors.panelBorder} ${retroThemeColors.inputBg} focus:outline-none`}>
+                                    <option value="ICPC">ICPC</option>
+                                    <option value="IOI">IOI</option>
+                                    <option value="CF">Codeforces</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center">
+                                <input type="checkbox" name="isPrivate" checked={contest.isPrivate} onChange={handleInputChange} id="isPrivateCheckbox" className="w-5 h-5" />
+                                <label htmlFor="isPrivateCheckbox" className="ml-2 flex items-center gap-2">{contest.isPrivate ? <FiLock /> : <FiUnlock />} Private Contest</label>
+                            </div>
+                        </div>
+                    </RetroCard>
+                )}
+                
+                {activeSection === "problems" && (
+                    <RetroCard className="p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold">Contest Problems</h2>
+                            <Button onClick={() => setShowProblemModal(true)}><FiPlus /> Add Problem</Button>
+                        </div>
+                        {problems.length === 0 ? (
+                            <div className="text-center py-8 text-stone-500">No problems added yet.</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full">
+                                    <thead className="bg-stone-200">
+                                        <tr>
+                                            <th className={`p-3 text-left border-b-2 border-r-2 ${retroThemeColors.panelBorder}`}>ID</th>
+                                            <th className={`p-3 text-left border-b-2 border-r-2 ${retroThemeColors.panelBorder}`}>Title</th>
+                                            <th className={`p-3 text-right border-b-2 ${retroThemeColors.panelBorder}`}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {problems.map(p => (
+                                            <tr key={p._id} className={`border-b ${retroThemeColors.panelBorder} last:border-b-0`}>
+                                                <td className={`p-3 border-r-2 ${retroThemeColors.panelBorder}`}>{p._id}</td>
+                                                <td className={`p-3 font-bold border-r-2 ${retroThemeColors.panelBorder}`}>{p.title}</td>
+                                                <td className="p-3 text-right"><Button onClick={() => handleRemoveProblem(p._id)} small type="danger" className={retroThemeColors.buttonDangerBg}><FiTrash2 /></Button></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </RetroCard>
+                )}
+            </main>
+
+            {/* Add Problem Modal */}
+            {showProblemModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <RetroCard className="p-6 w-full max-w-md">
+                        <h3 className="text-2xl font-bold mb-4">Add Problem to Contest</h3>
+                        <FormInput label="Problem ID" value={problemIdInput} onChange={(e) => setProblemIdInput(e.target.value)} placeholder="Enter problem ID..." autoFocus />
+                        <div className="flex justify-end gap-3 mt-6">
+                            <Button onClick={() => setShowProblemModal(false)} type="secondary">Cancel</Button>
+                            <Button onClick={handleAddProblem}>Add Problem</Button>
+                        </div>
+                    </RetroCard>
+                </div>
             )}
-          </div>
-        )}
-        
-        {/* Add Problem Modal */}
-        {showProblemModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700">
-              <h3 className="text-lg font-medium mb-4">Add Problem to Contest</h3>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-1">Problem ID</label>
-                <input
-                  type="text"
-                  value={problemIdInput}
-                  onChange={(e) => setProblemIdInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="Enter problem ID"
-                  autoFocus
-                />
-              </div>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowProblemModal(false)}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddProblem}
-                  className="px-4 py-2 bg-orange-600 hover:bg-orange-500 rounded-md"
-                >
-                  Add Problem
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
+        </div>
+    );
 }

@@ -5,21 +5,21 @@ const Output = new mongoose.Schema({
     type: String,
     default: "",
   },
-  stderr:{
-    type:String,
+  stderr: {
+    type: String,
     default: "",
   },
-  time:{
+  time: {
     type: Number,
   },
-  memory:{
+  memory: {
     type: Number
   },
   compile_output: {
     type: String,
     default: "",
   },
-  status_id:{
+  status_id: {
     type: String,
   },
   language_id: {
@@ -38,7 +38,7 @@ const testCaseSchema = new mongoose.Schema({
     type: Boolean,
     default: true, // Default to visible
   },
-  explanation:{
+  explanation: {
     type: String,
     default: "Explanation For Test Case."
   },
@@ -59,7 +59,7 @@ const testCaseSchema = new mongoose.Schema({
 
 
 const problemSchema = new mongoose.Schema({
-  slug:{
+  slug: {
     type: String,
     required: true,
     unique: true, // to ensure no duplicates
@@ -76,7 +76,7 @@ const problemSchema = new mongoose.Schema({
   },
   difficulty: {
     type: String,
-    enum: ["Easy", "Medium", "Hard","Not Specified"],
+    enum: ["Easy", "Medium", "Hard", "Not Specified"],
     // required: true,
   },
   inputFormat: {
@@ -105,7 +105,7 @@ const problemSchema = new mongoose.Schema({
     type: String,
     // required: true, // Assuming every problem has a code solution
   },
-  points:{
+  points: {
     type: Number,
     default: 100, // Default to 0 points
   },
@@ -124,7 +124,7 @@ const problemSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  solvedBy:{
+  solvedBy: {
     type: [mongoose.Schema.Types.ObjectId],
     ref: "User"
   },
@@ -132,10 +132,26 @@ const problemSchema = new mongoose.Schema({
     type: Boolean,
     default: false, // Default to false
   },
-  isGlobal:{
+
+  isGlobal: {
     type: Boolean,
     default: false, // Default to false
   },
+  //for potd
+  isPotd: {
+    type: Boolean,
+    default: false
+  },
+  hasBeenPotd: {
+    type: Boolean,
+
+    default: false
+  },
+  dateofPotd: {
+    type: Date,
+    default: null
+  },
+  
   createdAt: {
     type: Date,
     default: Date.now,

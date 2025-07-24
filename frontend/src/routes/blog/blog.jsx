@@ -4,8 +4,8 @@ import Navbar from "../../components/Navbar/navbar.jsx";
 const BlogPage = () => {
     return (
         <>
-            <Navbar activePage={"BlogPage"} />
-            <div > {/* Adjust this value to your navbar's height */}
+            <Navbar activePage={"Blogs"} />
+            <div className = "pt-15.5">
                 <Blog />
             </div>
         </>

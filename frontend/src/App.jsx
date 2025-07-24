@@ -56,7 +56,7 @@ export default function App() {
         <Route path="/admin/contests/:contestSlug" element={<ContestView/>} />
 
         
-        <Route path="/blogs" element={<BlogPage />} />
+        <Route path="/blogs" element={<BlogPage/>} />
         <Route path ="/create-blog" element={<CreateBlogForm/>} />
         <Route path="/blog/:id" element={<BlogDetails />} />
         <Route path ="/profile/u/:username" element={<ProfilePage/>} />

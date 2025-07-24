@@ -8,6 +8,7 @@ const { logActivity } = require('../activityController.js');
 
 const submitProblem = async (req, res) => {
     try {
+        console.log("Hello from submitProblem");
         const { problemId, solution, status, timeTaken, memoryTaken } = req.body;
 
         const problem = await Problem.findById(problemId);
@@ -30,10 +31,47 @@ const submitProblem = async (req, res) => {
             timeTaken,
             memoryTaken
         });
-        if (status == "Accepted") { await logActivity(user._id, problemId, "Problem", "PROBLEM_SOLVED", problem.title); }
+        if (status == "Accepted") { 
+            User.updateOne(
+                { _id: user._id },
+                {
+                    $inc: { solvedProblems: 1 },
+                    $push: { 
+                        ProblemHistory: {
+                            problemId: problem._id,
+                            status: "Solved",
+                            solvedAt: new Date(),
+                            lastTriedAt: new Date(),
+                        }
+                     },
+                }
+
+                
+            )
+            if(!problem.solvedBy.includes(user._id)){
+                problem.solvedBy.push(user._id);
+                problem.solvedCount = problem.solvedCount + 1;
+            }
+            await logActivity(user._id, problemId, "Problem", "PROBLEM_SOLVED", problem.title); }
         else {
+            User.updateOne(
+                { _id: user._id },
+                {
+                    $inc: { attemptedProblems: 1 },
+                    $push: { 
+                        ProblemHistory: {
+                            problemId: problem._id,
+                            status: "Attempted",
+                            lastTriedAt: new Date(),
+                        }
+                     },
+                }
+                
+            )
+            problem.attemptCount = problem.attemptCount + 1;
             await logActivity(user._id, problemId, "Problem", "PROBLEM_ATTEMPTED", problem.title);
         }
+        
 
         await problem.save();
         await problemStat.save();

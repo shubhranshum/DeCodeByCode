@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema({
     },
   profilePicture: {
     type: String,
-    default: 'data:image/png;base64,...' // Default avatar as before
+    default: 'https://i.ibb.co/ZRxg5RSS/decodebycode.png' // Default avatar as before
   },
   college: { type: String, default: '' },
   city: { type: String },
@@ -54,6 +54,7 @@ const userSchema = new mongoose.Schema({
 
   // ====== Social Links ======
   socialLinks: {
+    personalsite: { type: String },
     github: { type: String },
     twitter: { type: String },
     linkedin: { type: String },
@@ -101,6 +102,10 @@ const userSchema = new mongoose.Schema({
   type: String,
   enum: ['active', 'suspended', 'banned'],
   default: 'active'
+},
+achievements:{
+  type: [String],
+  default: []
 },
 notifications: [
   {

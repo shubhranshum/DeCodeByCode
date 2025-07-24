@@ -83,7 +83,7 @@ const updateProfile = async (req, res) => {
 
 
     console.log(profile.skills);
-    logActivity(userId, profile._id, 'User', 'PROFILE_UPDATED', "You Updated your Profile");
+    
 
     await profile.save();
     const updatedProfile = await User.findOne({ _id: userId });
@@ -128,7 +128,7 @@ const followProfile = async (req, res) => {
     console.log(connection);
 
     await connection.save();
-    // await logActivity(userId, recipient._id, 'Connection', 'FOLLOWED', "You Followed " + recipient.username);
+   
     //will create notification
     const notification = new Notification({
       sender: userId,
@@ -175,7 +175,7 @@ const unfollowProfile = async (req, res) => {
     }
 
     await Connection.deleteOne({ $and: [{ sender: userId }, { reciever: recipient._id }] });
-    // await logActivity(userId, recipient._id, 'Connection', 'UNFOLLOWED', "You Unfollowed " + recipient.username);
+    
     res.status(200).json({ message: 'Profile unfollowed successfully' });
   }
   catch (error) {
@@ -188,6 +188,9 @@ const getFollowers = async (req, res) => {
     console.log("Hello from getFollowers");
     const user = req.user._id;
     const followers = await Connection.find({ reciever: user }).populate('sender', '_id username email profilePicture firstName lastName age ' );
+    if(!followers){
+      return res.status(404).json({ message: 'No followers found' });
+    }
     res.json(followers);
   } catch (error) {
     console.error('Error fetching followers:', error);
@@ -199,6 +202,9 @@ const getFollowing = async (req, res) => {
     console.log("Hello from getFollowing");
     const user = req.user._id;
     const following = await Connection.find({ sender: user }).populate('reciever', '_id username email profilePicture firstName lastName age ');
+    if(!following) {
+      return res.status(404).json({ message: 'No following found' });
+    }
     
     res.json(following);
   } catch (error) {

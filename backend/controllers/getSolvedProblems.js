@@ -38,19 +38,23 @@ const getSolvedProblems = async (req, res) => {
 const getSolvedProblemsByUsername = async (req, res) => {
   try {
     const { username } = req.params;
-    console.log("Hello from getSolvedProblemByUsername")
+
+    console.log("Hello from getSolvedProblemByUsername ",username)
 
     // Find user by username
     const user = await User.findOne({ username });
-    if (!user) {
+   
+    if (user == null) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
     // Find profile by userId
-    const profile = await Profile.findOne({ userId: user._id }).populate({
+    const profile = await user.populate({
       path: 'ProblemHistory.problemId',
-      select: 'title difficulty',
+      select: 'title difficulty slug',
     });
+    console.log("Profile fetched successfully");
+    
 
     if (!profile) {
       return res.status(404).json({ success: false, message: 'Profile not found' });
@@ -62,6 +66,7 @@ const getSolvedProblemsByUsername = async (req, res) => {
       .map(entry => ({
         _id: entry.problemId._id,
         title: entry.problemId.title,
+        slug: entry.problemId.slug,
         difficulty: entry.problemId.difficulty,
         solvedAt: entry.solvedAt,
         lastTriedAt: entry.lastTriedAt

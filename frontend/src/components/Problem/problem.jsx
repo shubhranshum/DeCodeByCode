@@ -1,106 +1,100 @@
 import { useParams, useLocation } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import SubmissionCodeEditor from "../Tasks/submissionCodeEditor.jsx";
-import codeOutput from "../Tasks/output.jsx"; // Assuming this is an external utility for running code
-import MathjaxRenderer from "../MathjaxRenderer"; // Assuming this is an external utility for rendering MathJax
-import { getProblemBySlug } from '../Tasks/getProblemBySlug'; // Utility to fetch problem by slug
+import codeOutput from "../Tasks/output.jsx";
+import MathjaxRenderer from "../MathjaxRenderer";
+import { getProblemBySlug } from '../Tasks/getProblemBySlug';
 
-// --- Theme Colors (Defined outside to easily reference) ---
-const lightColors = {
-    bgPrimary: "bg-gray-50",
-    bgSecondary: "bg-white",
-    bgAccent: "bg-blue-50",
-    textPrimary: "text-gray-900",
-    textSecondary: "text-gray-700",
-    textAccent: "text-blue-700",
-    border: "border-gray-200",
-    buttonPrimaryBg: "bg-blue-600",
-    buttonPrimaryHover: "hover:bg-blue-700",
-    buttonSecondaryBg: "bg-gray-200",
-    buttonSecondaryHover: "hover:bg-gray-300",
-    acceptedBg: "bg-emerald-100",
-    acceptedText: "text-emerald-700",
-    attemptedBg: "bg-amber-100",
-    attemptedText: "text-amber-700",
-    errorBg: "bg-red-100",
-    errorText: "text-red-700",
-    codeBg: "bg-gray-100",
-    codeBorder: "border-gray-300",
-    inputBg: "bg-gray-100" // For textareas, etc.
+// --- ENHANCED RETRO COLOR PALETTE ---
+const pastelRetroColors = {
+    bgPrimary: "bg-[#f7f4ed]",
+    textPrimary: "text-[#2d2a26]",
+    textSecondary: "text-[#5a534a]",
+    textTitle: "text-[#e63946]",
+    panelBg: "bg-[#fffcf5]",
+    panelBorder: "border-[#3a3530]",
+    tabActiveBg: "bg-teal-400", // A vibrant color for the active tab
+    tabActiveText: "text-white",
+    tabInactiveBg: "bg-[#e9e3d5]",
+    tabInactiveText: "text-[#5a534a]",
+    buttonPrimaryBg: "bg-[#a8dadc] hover:bg-[#8ecacc]",
+    buttonSecondaryBg: "bg-[#e9e3d5] hover:bg-[#d6d0c3]",
+    buttonText: "text-[#2d2a26]",
+    acceptedBg: "bg-[#c7f9cc]",
+    acceptedText: "text-[#2a9d8f]",
+    attemptedBg: "bg-[#ffd6a5]",
+    attemptedText: "text-[#e76f51]",
+    errorBg: "bg-[#ffafcc]",
+    errorText: "text-[#e63946]",
+    unattemptedBg: "bg-[#e9e3d5]",
+    unattemptedText: "text-[#5a534a]",
+    codeBg: "bg-[#3a3530]",
+    codeText: "text-[#f1faee]",
+    inputBg: "bg-[#f1faee]",
+    sectionHeaderBg: "bg-[#caf0f8]",
 };
 
-const darkColors = {
-    bgPrimary: "bg-gray-900",
-    bgSecondary: "bg-gray-800",
-    bgAccent: "bg-gray-700",
-    textPrimary: "text-gray-50",
-    textSecondary: "text-gray-300",
-    textAccent: "text-teal-400",
-    border: "border-gray-700",
-    buttonPrimaryBg: "bg-teal-600",
-    buttonPrimaryHover: "hover:bg-teal-700",
-    buttonSecondaryBg: "bg-gray-700",
-    buttonSecondaryHover: "hover:bg-gray-600",
-    acceptedBg: "bg-emerald-900/30",
-    acceptedText: "text-emerald-400",
-    attemptedBg: "bg-amber-900/30",
-    attemptedText: "text-amber-400",
-    errorBg: "bg-red-900/30",
-    errorText: "text-red-400",
-    codeBg: "bg-gray-950",
-    codeBorder: "border-gray-600",
-    inputBg: "bg-gray-700" // For textareas, etc.
+// --- Reusable Components ---
+const Button = ({ children, onClick, disabled, className = '', type = 'primary', small = false }) => {
+    const colors = pastelRetroColors;
+    const sizeStyle = small ? 'px-4 py-1 text-sm' : 'px-5 py-2.5 text-base';
+    const baseStyle = `border-2 ${colors.panelBorder} shadow-chunky transition-all hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 font-bold`;
+    const typeStyle = type === 'primary' ? `${colors.buttonPrimaryBg} ${colors.buttonText}` : `${colors.buttonSecondaryBg} ${colors.buttonText}`;
+    return <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${typeStyle} ${sizeStyle} ${className}`}>{children}</button>;
+};
+// --- NEW RETRO TAB BUTTON ---
+const TabButton = ({ children, isActive, onClick }) => {
+    const colors = pastelRetroColors;
+    const baseStyle = `flex-1 p-3 text-base font-bold border-r-2 last:border-r-0 ${colors.panelBorder} transition-all duration-150`;
+    const activeStyle = `${colors.tabActiveBg} ${colors.tabActiveText} shadow-none translate-y-[4px]`;
+    const inactiveStyle = `${colors.tabInactiveBg} ${colors.tabInactiveText} shadow-[inset_0_-4px_0_0_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-y-[4px]`;
+    return <button onClick={onClick} className={`${baseStyle} ${isActive ? activeStyle : inactiveStyle}`}>{children}</button>;
 };
 
 
 // --- Loading and Error Components ---
-const LoadingSpinner = ({ isDark }) => {
-    const colors = isDark ? darkColors : lightColors;
+const LoadingSpinner = () => {
+    const colors = pastelRetroColors;
     return (
-        <div className={`flex items-center justify-center min-h-screen ${colors.bgPrimary}`}>
+        <div className={`flex items-center justify-center min-h-screen ${colors.bgPrimary} ${colors.textPrimary} font-retro`}>
             <div className="flex flex-col items-center">
-                <div className={`w-16 h-16 border-4 ${isDark ? "border-teal-500" : "border-blue-600"} border-t-transparent rounded-full animate-spin`}></div>
-                <p className={`mt-4 text-lg ${colors.textSecondary}`}>
-                    Loading problem...
-                </p>
+                <div className={`w-16 h-16 border-4 ${colors.panelBorder} border-t-transparent rounded-full animate-spin`}></div>
+                <p className={`mt-4 text-2xl animate-pulse`}>LOADING...</p>
             </div>
         </div>
     );
 };
 
-const ProblemNotFound = ({ isDark }) => {
-    const colors = isDark ? darkColors : lightColors;
+const ProblemNotFound = () => {
+    const colors = pastelRetroColors;
     return (
-        <div className={`flex items-center justify-center min-h-screen ${colors.bgPrimary}`}>
-            <div className={`p-8 rounded-xl shadow-lg text-center ${colors.bgSecondary} ${colors.border}`}>
-                <h2 className={`text-2xl font-bold mb-4 ${isDark ? "text-red-400" : "text-red-600"}`}>
-                    Problem Not Found
-                </h2>
-                <p className={colors.textSecondary}>
-                    The requested problem could not be loaded. Please check the URL.
-                </p>
+        <div className={`flex items-center justify-center min-h-screen ${colors.bgPrimary} ${colors.textPrimary} font-retro`}>
+            <div className={`p-10 border-4 ${colors.panelBorder} shadow-chunky text-center ${colors.panelBg}`}>
+                <h2 className={`text-3xl font-bold mb-4 ${colors.errorText}`}>ERROR 404</h2>
+                <p>PROBLEM NOT FOUND</p>
             </div>
         </div>
     );
 };
 
-// --- Utility Function ---
-function formatDuration(ms) {
-    const totalSeconds = Math.max(0, ms);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+// --- Utility Functions ---
+function formatToDDMMYYYY(isoDateStr) {
+    const date = new Date(isoDateStr);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
 }
 
-// Move STATUS_RANK outside the component to make it a true constant
+// --- Constants ---
 const STATUS_RANK = { Unattempted: 0, Attempted: 1, Accepted: 2 };
 
 // --- Main GlobalProblem Component ---
 export default function GlobalProblem() {
     const { problemSlug } = useParams();
     const location = useLocation();
-
+    
+    // State management hooks (logic is preserved)
     const [problemId, setProblemId] = useState(null);
     const STORAGE_KEY = useRef(null);
     const [problem, setProblem] = useState(null);
@@ -108,29 +102,22 @@ export default function GlobalProblem() {
     const [verdict, setVerdict] = useState(null);
     const [activeTab, setActiveTab] = useState("problem");
     const [isLoading, setIsLoading] = useState(true);
-
     const [submissions, setSubmissions] = useState([]);
     const [isSubmissionsLoading, setIsSubmissionsLoading] = useState(false);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
-
     const [solutions, setSolutions] = useState([]);
     const [isSolutionsLoading, setIsSolutionsLoading] = useState(false);
     const [selectedSolution, setSelectedSolution] = useState(null);
-
     const [customInput, setCustomInput] = useState("");
     const [customOutput, setCustomOutput] = useState(null);
     const [isRunning, setIsRunning] = useState(false);
-
     const [status, setStatus] = useState("Unattempted");
     const initialVerdict = useRef(location.state?.verdict);
-
-    const theme = "dark"; // This could be dynamic based on user preference
-    const isDark = theme === "dark";
-    const colors = isDark ? darkColors : lightColors;
-
+    const colors = pastelRetroColors;
+    
+    // Callback and effect hooks
     const updateStatus = useCallback((newStatus) => {
         if (!problemId || !STORAGE_KEY.current) return;
-
         const prev = localStorage.getItem(STORAGE_KEY.current) || "Unattempted";
         if (STATUS_RANK[newStatus] > STATUS_RANK[prev]) {
             localStorage.setItem(STORAGE_KEY.current, newStatus);
@@ -139,494 +126,178 @@ export default function GlobalProblem() {
     }, [problemId]);
 
     const fetchSubmissions = useCallback(async () => {
-        if (!problemId) {
-            console.warn("Cannot fetch submissions: problemId not available.");
-            return;
-        }
-
+        if (!problemId) return;
         setIsSubmissionsLoading(true);
         try {
-            const res = await fetch(
-                `http://localhost:3000/problems/${problemId}/submissions`,
-                { credentials: "include" }
-            );
+            const res = await fetch(`http://localhost:3000/problems/${problemId}/submissions`, { credentials: "include" });
             const data = await res.json();
-
-            if (!data.length) {
-                updateStatus("Unattempted");
-            } else if (data.some(s => s.verdict === "Accepted")) {
-                updateStatus("Accepted");
-            } else {
-                updateStatus("Attempted");
-            }
-
+            if (!data.length) updateStatus("Unattempted");
+            else if (data.some(s => s.verdict === "Accepted")) updateStatus("Accepted");
+            else updateStatus("Attempted");
             setSubmissions(data);
-        } catch (err) {
-            console.error("Failed to load submissions:", err);
-            setSubmissions([]);
-        } finally {
-            setIsSubmissionsLoading(false);
-        }
+        } catch (err) { console.error("Failed to load submissions:", err); setSubmissions([]); }
+        finally { setIsSubmissionsLoading(false); }
     }, [problemId, updateStatus]);
 
     const fetchAllSolutions = useCallback(async () => {
-        if (!problemId) {
-            console.warn("Cannot fetch solutions: problemId not available.");
-            return;
-        }
-
+        if (!problemId) return;
         setIsSolutionsLoading(true);
         try {
-            const res = await fetch(
-                `http://localhost:3000/problems/${problemId}/solutions`,
-                {
-                    method: "GET",
-                    credentials: "include"
-                }
-            );
+            const res = await fetch(`http://localhost:3000/problems/${problemId}/solutions`, { method: "GET", credentials: "include" });
             const data = await res.json();
             setSolutions(data);
-        } catch (err) {
-            console.error("Failed to load solutions:", err);
-            setSolutions([]);
-        } finally {
-            setIsSolutionsLoading(false);
-        }
+        } catch (err) { console.error("Failed to load solutions:", err); setSolutions([]); }
+        finally { setIsSolutionsLoading(false); }
     }, [problemId]);
-
 
     useEffect(() => {
         const fetchProblemData = async () => {
             setIsLoading(true);
-            setProblem(null);
-            setProblemId(null);
-            setStatus("Unattempted");
-            STORAGE_KEY.current = null;
-
             try {
                 const problemData = await getProblemBySlug(problemSlug);
-
-                if (!problemData || !problemData._id) {
-                    throw new Error("Problem not found.");
-                }
-
-                setProblemId(problemData._id);
-                setProblem(problemData);
-
-            } catch (err) {
-                console.error("Error loading problem:", err);
-                setProblem(null);
-                setIsLoading(false);
-            }
+                if (!problemData || !problemData._id) throw new Error("Problem not found.");
+                setProblemId(problemData._id); setProblem(problemData);
+            } catch (err) { console.error("Error loading problem:", err); setProblem(null); setIsLoading(false); }
         };
-
         fetchProblemData();
     }, [problemSlug]);
 
     useEffect(() => {
         if (problemId) {
             STORAGE_KEY.current = `status-${problemId}`;
-
             const savedStatus = localStorage.getItem(STORAGE_KEY.current) || "Unattempted";
             setStatus(savedStatus);
-
             if (initialVerdict.current) {
-                const prevRank = STATUS_RANK[savedStatus];
-                const newRank = STATUS_RANK[initialVerdict.current];
-
-                if (newRank > prevRank) {
+                if (STATUS_RANK[initialVerdict.current] > STATUS_RANK[savedStatus]) {
                     localStorage.setItem(STORAGE_KEY.current, initialVerdict.current);
                     setStatus(initialVerdict.current);
                 }
                 initialVerdict.current = null;
             }
-
             fetchSubmissions();
             setIsLoading(false);
         }
     }, [problemId, fetchSubmissions]);
 
-
     const handleCodeSubmit = useCallback(async (codeToSubmit) => {
-        if (!problemId || !problem) {
-            setVerdict("Error: Problem ID not available for submission.");
-            return;
-        }
-
-        let isCorrect = true;
-        let finalVerdict = "Accepted";
-        let maxTime = 0, maxMem = 0;
-
+        if (!problemId || !problem) return;
+        let isCorrect = true, finalVerdict = "Accepted", maxTime = 0, maxMem = 0;
+        setVerdict("Running...");
         for (let i = 0; i < problem.testCases.length; i++) {
-            setVerdict(`Running on test case ${i + 1}`);
             const tc = problem.testCases[i];
             const out = await codeOutput(codeToSubmit, tc.input, tc.output.stdout);
-            maxTime = Math.max(maxTime, Number(out.time || 0));
-            maxMem = Math.max(maxMem, Number(out.memory || 0));
-
+            maxTime = Math.max(maxTime, Number(out.time || 0)); maxMem = Math.max(maxMem, Number(out.memory || 0));
             if (out.status_id !== 3) {
                 isCorrect = false;
-                finalVerdict = out.stderr
-                    ? `Runtime Error on Test ${i + 1}: ${out.stderr}`
-                    : out.compile_output
-                        ? `Compilation Error on Test ${i + 1}: ${out.compile_output}`
-                        : `${out.status?.description || "Unknown Error"} on Test ${i + 1}`;
+                finalVerdict = out.stderr ? `Runtime Error` : out.compile_output ? `Compilation Error` : `${out.status?.description || "Wrong Answer"}`;
                 break;
             }
         }
-
         updateStatus(isCorrect ? "Accepted" : "Attempted");
         setVerdict(finalVerdict);
-
         try {
-            await fetch(
-                `http://localhost:3000/problems/${problemId}/submit`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        code: codeToSubmit,
-                        language: 52, // Example language ID (e.g., C++)
-                        verdict: finalVerdict,
-                        timeTaken: maxTime,
-                        memoryTaken: maxMem,
-                    })
-                }
-            );
+            await fetch(`http://localhost:3000/problems/${problemId}/submit`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+                body: JSON.stringify({ code: codeToSubmit, language: 52, verdict: finalVerdict, timeTaken: maxTime, memoryTaken: maxMem })
+            });
             fetchSubmissions();
-        } catch (error) {
-            console.error("Failed to submit code:", error);
-            setVerdict("Submission failed due to network error.");
-        }
+        } catch (error) { console.error("Failed to submit code:", error); setVerdict("Submission network error."); }
     }, [problemId, problem, updateStatus, fetchSubmissions]);
 
-
     const handleRunCustomInput = async () => {
-        if (!problem) {
-            setCustomOutput({ userOutput: "Error: Problem data not loaded." });
-            return;
-        }
-
+        if (!problem) return;
         setIsRunning(true);
         try {
             const userOut = await codeOutput(code, customInput);
             const expectedOut = await codeOutput(problem.codeSolution, customInput);
-
             setCustomOutput({
                 userOutput: userOut.stdout || userOut.stderr || userOut.compile_output || "No output",
                 expectedOutput: expectedOut.stdout || expectedOut.stderr || expectedOut.compile_output || "No expected output"
             });
-        } catch (error) {
-            console.error("Error running custom input:", error);
-            setCustomOutput({ userOutput: "Error running code.", expectedOutput: "Error running solution." });
-        } finally {
-            setIsRunning(false);
-        }
+        } catch (error) { setCustomOutput({ userOutput: "Error running code.", expectedOutput: "Error running solution." }); }
+        finally { setIsRunning(false); }
+    };
+    
+    if (isLoading) return <LoadingSpinner />;
+    if (!problem) return <ProblemNotFound />;
+
+     const getStatusColors = (v) => {
+        if (v === "Accepted") return `${colors.acceptedBg} ${colors.acceptedText}`;
+        if (v === "Attempted" || v?.includes("Error") || v?.includes("Wrong")) return `${colors.errorBg} ${colors.errorText}`;
+        return `${colors.unattemptedBg} ${colors.unattemptedText}`;
     };
 
-    if (isLoading) {
-        return <LoadingSpinner isDark={isDark} />;
-    }
-    if (!problem) {
-        return <ProblemNotFound isDark={isDark} />;
-    }
-
     return (
-        <div className={`min-h-screen ${colors.bgPrimary} ${colors.textPrimary} font-sans`}>
+        <div className={`min-h-screen ${colors.bgPrimary} ${colors.textPrimary} font-retro`}>
             {/* Header */}
-            <div className={`${colors.bgSecondary} ${colors.border} border-b px-6 py-4 shadow-md`}>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h1 className={`text-3xl font-extrabold ${colors.textAccent}`}>
-                            {problem.title}
-                        </h1>
-                        <div className="flex items-center mt-2 text-sm">
-                            <span className={`mr-4 ${colors.textSecondary}`}>
-                                Problem ID: {problemId}
-                            </span>
-                            <span className={`text-[11px] px-2.5 py-1 rounded-full font-semibold ${
-                                status === "Accepted"
-                                    ? `${colors.acceptedBg} ${colors.acceptedText} border ${isDark ? "border-emerald-700" : "border-emerald-300"}`
-                                    : status === "Attempted"
-                                        ? `${colors.attemptedBg} ${colors.attemptedText} border ${isDark ? "border-amber-700" : "border-amber-300"}`
-                                        : `${colors.bgAccent} ${colors.textSecondary} border ${colors.border}`
-                                }`}>
-                                {status}
-                            </span>
+            <div className={`${colors.panelBg} border-b-4 ${colors.panelBorder} px-6 py-3`}>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center max-w-8xl mx-auto gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className={`px-4 py-2 border-2 ${colors.panelBorder} ${colors.unattemptedBg}`}>
+                            <h1 className={`text-2xl md:text-3xl ${colors.textTitle} font-bold tracking-wide`}>{problem.title}</h1>
                         </div>
+                        <span className={`text-base md:text-lg px-3 py-1 border-2 ${colors.panelBorder} ${getStatusColors(status)}`}>
+                            {status.toUpperCase()}
+                        </span>
                     </div>
-                    <div className={`text-sm px-4 py-2 rounded-full font-medium ${colors.bgAccent} ${colors.textSecondary}`}>
-                        Difficulty:{" "}
-                        <span className={`font-semibold ${
-                            problem.difficulty === "Easy" ? "text-emerald-500"
-                                : problem.difficulty === "Medium" ? "text-amber-500"
-                                    : "text-red-500"
-                            }`}>
-                            {problem.difficulty || "Unknown"}
+                    <div className={`text-base md:text-lg px-4 py-2 border-2 ${colors.panelBorder} ${colors.unattemptedBg}`}>
+                        DIFFICULTY:{" "}
+                        <span className={`font-bold ${problem.difficulty === "Easy" ? "text-green-700" : problem.difficulty === "Medium" ? "text-amber-700" : "text-red-700"}`}>
+                            {problem.difficulty?.toUpperCase()}
                         </span>
                     </div>
                 </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row p-6 gap-6 max-w-8xl mx-auto h-[calc(100vh-130px)]">
-                {/* Left Panel - Problem Content, Submissions, and Run Code */}
-                <div className="lg:w-1/2 flex flex-col gap-6 h-full">
-                    <div className={`flex-1 rounded-xl border overflow-hidden flex flex-col shadow-lg ${colors.bgSecondary} ${colors.border}`}>
-                        {/* Tab Navigation */}
-                        <div className={`flex border-b ${colors.border} justify-around`}>
-                            <button
-                                className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
-                                    activeTab === "problem"
-                                        ? `${colors.textAccent} border-b-2 ${isDark ? "border-teal-500" : "border-blue-600"}`
-                                        : `${colors.textSecondary} ${isDark ? "hover:text-gray-200" : "hover:text-gray-900"}`
-                                    }`}
-                                onClick={() => setActiveTab("problem")}
-                            >
-                                Description
-                            </button>
-                            <button
-                                className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
-                                    activeTab === "submissions"
-                                        ? `${colors.textAccent} border-b-2 ${isDark ? "border-teal-500" : "border-blue-600"}`
-                                        : `${colors.textSecondary} ${isDark ? "hover:text-gray-200" : "hover:text-gray-900"}`
-                                    }`}
-                                onClick={() => setActiveTab("submissions")}
-                            >
-                                Submissions
-                            </button>
-                            <button
-                                className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
-                                    activeTab === "solutions"
-                                        ? `${colors.textAccent} border-b-2 ${isDark ? "border-teal-500" : "border-blue-600"}`
-                                        : `${colors.textSecondary} ${isDark ? "hover:text-gray-200" : "hover:text-gray-900"}`
-                                    }`}
+            {/* Main Content */}
+            <div className="flex flex-col lg:flex-row p-4 gap-4 max-w-8xl mx-auto min-h-[calc(100vh-112px)]">
+                {/* Left Panel */}
+                <div className={`lg:w-1/2 flex flex-col border-4 ${colors.panelBorder} shadow-chunky ${colors.panelBg} relative`}>
+                    {/* --- FIXED: Retro Tab Bar --- */}
+                    <div className={`flex border-b-4 ${colors.panelBorder} p-2 ${colors.tabInactiveBg}`}>
+                        {["problem", "submissions", "solutions", "run-code"].map(tabName => (
+                            <TabButton
+                                key={tabName}
+                                isActive={activeTab === tabName}
                                 onClick={() => {
-                                    setActiveTab("solutions");
-                                    if (solutions.length === 0 && !isSolutionsLoading) fetchAllSolutions();
+                                    setActiveTab(tabName);
+                                    if (tabName === "solutions" && solutions.length === 0 && !isSolutionsLoading) fetchAllSolutions();
                                 }}
                             >
-                                Solutions
-                            </button>
-                            <button
-                                className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
-                                    activeTab === "run-code"
-                                        ? `${colors.textAccent} border-b-2 ${isDark ? "border-teal-500" : "border-blue-600"}`
-                                        : `${colors.textSecondary} ${isDark ? "hover:text-gray-200" : "hover:text-gray-900"}`
-                                    }`}
-                                onClick={() => setActiveTab("run-code")}
-                            >
-                                Run Code
-                            </button>
-                        </div>
-
-                        {/* Tab Content */}
-                        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-gray-500 scrollbar-track-gray-700">
-                            {activeTab === "problem" && (
-                                <div className="space-y-8">
-                                    {/* Problem Statement */}
-                                    <section>
-                                        <h2 className="text-2xl font-bold mb-4">Problem Statement</h2>
-                                        <div className={`${colors.textSecondary} prose prose-lg max-w-none`}>
-                                            <MathjaxRenderer html={problem.statement} />
-                                        </div>
-                                    </section>
-
-                                    {/* Input/Output Sections */}
-                                    <section className="grid md:grid-cols-2 gap-6">
-                                        <div>
-                                            <h2 className="text-xl font-bold mb-3">Input Format</h2>
-                                            <div className={`p-4 rounded-lg font-mono text-sm ${colors.inputBg} ${colors.textPrimary}`}>
-                                                <MathjaxRenderer html={problem.inputFormat} />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h2 className="text-xl font-bold mb-3">Output Format</h2>
-                                            <div className={`p-4 rounded-lg font-mono text-sm ${colors.inputBg} ${colors.textPrimary}`}>
-                                                <MathjaxRenderer html={problem.outputFormat} />
-                                            </div>
-                                        </div>
-                                    </section>
-
-                                    {/* Sample Test Cases */}
-                                    {problem.testCases.filter(tc => tc.visible).length > 0 && (
-                                        <section className="space-y-4">
-                                            <h2 className="text-xl font-bold">Sample Test Cases</h2>
-                                            {problem.testCases.filter(tc => tc.visible).map((testCase, index) => (
-                                                <div key={index} className={`rounded-lg overflow-hidden ${colors.bgAccent}`}>
-                                                    <div className={`px-5 py-3 ${colors.bgAccent} border-b ${colors.border}`}>
-                                                        <h3 className="font-semibold">Sample {index + 1}</h3>
-                                                        {testCase.explanation && (
-                                                            <p className={`text-xs mt-1 ${colors.textSecondary}`}>
-                                                                {testCase.explanation}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                    <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <h4 className="text-sm font-medium mb-2">Input</h4>
-                                                            <pre className={`p-3 rounded-md font-mono text-sm whitespace-pre-wrap ${colors.codeBg} ${colors.textPrimary} border ${colors.codeBorder}`}>
-                                                                {testCase.input || "No input provided"}
-                                                            </pre>
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="text-sm font-medium mb-2">Output</h4>
-                                                            <pre className={`p-3 rounded-md font-mono text-sm whitespace-pre-wrap ${colors.codeBg} ${colors.textPrimary} border ${colors.codeBorder}`}>
-                                                                {testCase.output?.stdout || "No expected output"}
-                                                            </pre>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </section>
-                                    )}
-
-                                    {/* Notes */}
-                                    {problem.notes && (
-                                        <section>
-                                            <h2 className="text-xl font-bold mb-3">Notes</h2>
-                                            <div className={`p-4 rounded-lg ${colors.inputBg} ${colors.textPrimary}`}>
-                                                <MathjaxRenderer html={problem.notes} />
-                                            </div>
-                                        </section>
-                                    )}
-                                </div>
-                            )}
-
-                            {activeTab === "submissions" && (
-                                <ProblemSubmissionsTab
-                                    submissions={submissions}
-                                    isLoading={isSubmissionsLoading}
-                                    isDark={isDark}
-                                    onSelectSubmission={setSelectedSubmission}
-                                    selectedSubmission={selectedSubmission}
-                                />
-                            )}
-
-                            {activeTab === "solutions" && (
-                                <ProblemSolutionsTab
-                                    solutions={solutions}
-                                    isLoading={isSolutionsLoading}
-                                    isDark={isDark}
-                                    onSelectSolution={setSelectedSolution}
-                                    selectedSolution={selectedSolution}
-                                />
-                            )}
-                            {activeTab === "run-code" && (
-                                <div className="space-y-6">
-                                    <div>
-                                        <div className="flex justify-between items-center mb-3">
-                                            <label className="text-base font-medium">Custom Input</label>
-                                            <button
-                                                onClick={handleRunCustomInput}
-                                                disabled={isRunning}
-                                                className={`px-4 py-2 text-sm rounded-lg font-medium flex items-center transition-colors ${colors.buttonPrimaryBg} ${colors.buttonPrimaryHover} text-white ${isRunning ? "opacity-60 cursor-not-allowed" : ""}`}
-                                            >
-                                                {isRunning ? (
-                                                    <>
-                                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                        </svg>
-                                                        Running...
-                                                    </>
-                                                ) : "Run Code"}
-                                            </button>
-                                        </div>
-                                        <div className={`rounded-lg overflow-hidden border ${colors.border}`}>
-                                            <textarea
-                                                rows={6}
-                                                className={`w-full p-4 font-mono text-sm resize-none focus:outline-none ${colors.inputBg} ${colors.textPrimary}`}
-                                                value={customInput}
-                                                onChange={(e) => setCustomInput(e.target.value)}
-                                                placeholder="Enter your custom test case input here..."
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="text-base font-medium block mb-3">Your Output</label>
-                                            <div className={`rounded-lg overflow-hidden border ${colors.border} ${colors.inputBg}`}>
-                                                <pre className={`p-4 font-mono text-sm min-h-[120px] max-h-[250px] overflow-auto ${colors.textPrimary}`}>
-                                                    {customOutput?.userOutput
-                                                        ? customOutput.userOutput
-                                                        : "Run code to see your output"}
-                                                </pre>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="text-base font-medium block mb-3">Expected Output</label>
-                                            <div className={`rounded-lg overflow-hidden border ${colors.border} ${colors.inputBg}`}>
-                                                <pre className={`p-4 font-mono text-sm min-h-[120px] max-h-[250px] overflow-auto ${colors.textPrimary}`}>
-                                                    {customOutput?.expectedOutput
-                                                        ? customOutput.expectedOutput
-                                                        : "Run code to see Expected Output"}
-                                                </pre>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                                {tabName.replace('-', ' ').toUpperCase()}
+                            </TabButton>
+                        ))}
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4">
+                        {activeTab === "problem" && <ProblemDescriptionTab problem={problem} />}
+                        {activeTab === "submissions" && <ProblemSubmissionsTab submissions={submissions} isLoading={isSubmissionsLoading} onSelectSubmission={setSelectedSubmission} selectedSubmission={selectedSubmission} />}
+                        {activeTab === "solutions" && <ProblemSolutionsTab solutions={solutions} isLoading={isSolutionsLoading} onSelectSolution={setSelectedSolution} selectedSolution={selectedSolution} />}
+                        {activeTab === "run-code" && <RunCodeTab customInput={customInput} setCustomInput={setCustomInput} customOutput={customOutput} handleRun={handleRunCustomInput} isRunning={isRunning} />}
                     </div>
                 </div>
 
-                {/* Right Panel - Editor & Submit */}
-                <div className="lg:w-1/2 flex flex-col gap-6 h-full">
-                    {/* Code Editor */}
-                    <div className={`flex-1 rounded-xl border overflow-hidden flex flex-col shadow-lg ${colors.bgSecondary} ${colors.border}`}>
-                        <div className={`px-5 py-3 border-b ${colors.border} ${colors.bgSecondary}`}>
-                            <div className="flex justify-between items-center">
-                                <h2 className="font-semibold text-lg">Code Editor</h2>
-                                <div className="flex gap-3">
-                                    <button className={`px-3.5 py-1.5 text-xs rounded-md font-medium ${colors.buttonSecondaryBg} ${colors.buttonSecondaryHover} ${colors.textSecondary}`}>
-                                        C++
-                                    </button>
-                                    <button className={`px-3.5 py-1.5 text-xs rounded-md font-medium ${colors.buttonSecondaryBg} ${colors.buttonSecondaryHover} ${colors.textSecondary}`}>
-                                        Python
-                                    </button>
-                                </div>
-                            </div>
+                {/* Right Panel */}
+                <div className="lg:w-1/2 flex flex-col gap-4 h-full">
+                    <div className={`flex-1 border-4 ${colors.panelBorder} shadow-chunky overflow-hidden flex flex-col ${colors.panelBg}`}>
+                        <div className={`p-3 border-b-4 ${colors.panelBorder} flex justify-between items-center`}>
+                            <h2 className="text-xl font-bold">CODE EDITOR</h2>
+                            <div className={`text-sm px-2 py-1 border ${colors.panelBorder} ${colors.unattemptedBg}`}>C++</div>
                         </div>
-                        <div className="flex-1">
-                            <SubmissionCodeEditor
-                                initialCode={code}
-                                language="cpp"
-                                onCodeChange={setCode}
-                                theme={isDark ? "vs-dark" : "light"}
+                        <div className="flex-1 min-h-[300px]">
+                            <SubmissionCodeEditor 
+                                initialCode={code} 
+                                language="cpp" 
+                                onCodeChange={setCode} 
+                                theme={"light"} // Assuming a specific theme for the editor
                             />
                         </div>
                     </div>
-
-                    {/* Submit Panel */}
-                    <div className={`rounded-xl border overflow-hidden shadow-lg ${colors.bgSecondary} ${colors.border}`}>
-                        <div className={`px-5 py-3 border-b flex justify-between items-center ${colors.border} ${colors.bgSecondary}`}>
-                            <h2 className="font-semibold text-lg">Submit Solution</h2>
-                            <button
-                                onClick={() => handleCodeSubmit(code)}
-                                className={`px-5 py-2 rounded-lg font-semibold transition-all text-white ${colors.buttonPrimaryBg} ${colors.buttonPrimaryHover}`}
-                            >
-                                Submit
-                            </button>
+                    <div className={`border-4 ${colors.panelBorder} shadow-chunky flex flex-col sm:flex-row items-center justify-between p-3 gap-3 ${colors.panelBg}`}>
+                        <div className={`w-full sm:w-2/3 text-center p-2 border-2 ${colors.panelBorder} ${verdict ? getStatusColors(verdict) : colors.unattemptedBg}`}>
+                            <span className="font-bold">VERDICT: </span>
+                            {verdict ? verdict.toUpperCase() : "AWAITING SUBMISSION"}
                         </div>
-                        <div className={`p-5 font-mono text-sm min-h-28 flex items-center justify-center text-center ${colors.bgPrimary}`}>
-                            {verdict ? (
-                                <div className={`p-4 rounded-lg w-full ${
-                                    verdict === "Accepted"
-                                        ? `${colors.acceptedBg} ${colors.acceptedText}`
-                                        : verdict.includes("Wrong") || verdict.includes("Error") || verdict.includes("Limit Exceeded")
-                                            ? `${colors.errorBg} ${colors.errorText}`
-                                            : `${colors.bgAccent} ${colors.textSecondary}`
-                                    }`}>
-                                    {verdict}
-                                </div>
-                            ) : (
-                                <div className={`${colors.textSecondary} text-sm`}>
-                                    Submit your code to see the verdict...
-                                </div>
-                            )}
-                        </div>
+                        <Button onClick={() => handleCodeSubmit(code)} className="w-full sm:w-auto">SUBMIT</Button>
                     </div>
                 </div>
             </div>
@@ -634,283 +305,200 @@ export default function GlobalProblem() {
     );
 }
 
-// --- Submissions Tab Component ---
-function ProblemSubmissionsTab({ submissions, isLoading, isDark, onSelectSubmission, selectedSubmission }) {
-    const colors = isDark ? darkColors : lightColors;
+// --- Tab Components ---
 
-    if (isLoading) {
-        return <div className={`py-6 flex items-center justify-center ${colors.textSecondary}`}>Loading submissions...</div>;
-    }
+function ProblemDescriptionTab({ problem }) {
+    const colors = pastelRetroColors;
+    const SectionHeader = ({ children }) => (
+        <h3 className={`p-2 border-y-2 ${colors.panelBorder} ${colors.sectionHeaderBg} font-bold text-lg`}>{children}</h3>
+    );
+    
+    return (
+        <div className="space-y-5">
+            <div className="prose prose-stone max-w-none text-justify">
+                <MathjaxRenderer html={problem.statement} />
+            </div>
+            
+            <div className={`border-2 ${colors.panelBorder}`}>
+                <SectionHeader>INPUT / OUTPUT FORMAT</SectionHeader>
+                <div className="p-3 grid md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 className="font-bold mb-1">Input</h4>
+                        <div className={`p-3 border-2 ${colors.panelBorder} ${colors.inputBg} text-sm`}>
+                            <MathjaxRenderer html={problem.inputFormat} />
+                        </div>
+                    </div>
+                    <div>
+                        <h4 className="font-bold mb-1">Output</h4>
+                        <div className={`p-3 border-2 ${colors.panelBorder} ${colors.inputBg} text-sm`}>
+                            <MathjaxRenderer html={problem.outputFormat} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {problem.testCases.filter(tc => tc.visible).map((testCase, index) => (
+                <div key={index} className={`border-2 ${colors.panelBorder}`}>
+                    <SectionHeader>SAMPLE {index + 1}</SectionHeader>
+                    <div className="p-3">
+                        {testCase.explanation && (
+                            <p className="mb-3 italic text-sm bg-amber-50 p-2 border-l-4 border-amber-300">
+                                {testCase.explanation}
+                            </p>
+                        )}
+                        <div className="grid md:grid-cols-2 gap-3">
+                            <div>
+                                <h4 className="font-bold mb-1">Input</h4>
+                                <pre className={`p-3 text-sm whitespace-pre-wrap ${colors.codeBg} ${colors.codeText} border-2 ${colors.panelBorder}`}>
+                                    {testCase.input}
+                                </pre>
+                            </div>
+                            <div>
+                                <h4 className="font-bold mb-1">Output</h4>
+                                <pre className={`p-3 text-sm whitespace-pre-wrap ${colors.codeBg} ${colors.codeText} border-2 ${colors.panelBorder}`}>
+                                    {testCase.output?.stdout}
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
 
+function RunCodeTab({ customInput, setCustomInput, customOutput, handleRun, isRunning }) {
+    const colors = pastelRetroColors;
+    return (
+        <div className="space-y-4">
+            <div>
+                <label className="block mb-2 font-bold">CUSTOM INPUT</label>
+                <textarea 
+                    rows={4}
+                    className={`w-full p-3 border-2 ${colors.panelBorder} resize-none focus:outline-none ${colors.inputBg} text-sm font-mono`} 
+                    value={customInput} 
+                    onChange={(e) => setCustomInput(e.target.value)} 
+                    placeholder="Enter custom input here..." 
+                />
+            </div>
+            <div className="flex justify-end">
+                <Button 
+                    onClick={handleRun} 
+                    disabled={isRunning} 
+                    type="secondary"
+                    className="w-full md:w-auto"
+                >
+                    {isRunning ? "RUNNING..." : "RUN CODE"}
+                </Button>
+            </div>
+            {customOutput && (
+                <div className="space-y-4">
+                    <div>
+                        <label className="block mb-2 font-bold">YOUR OUTPUT</label>
+                        <pre className={`p-3 min-h-[100px] border-2 ${colors.panelBorder} ${colors.codeBg} ${colors.codeText} text-sm font-mono overflow-auto`}>
+                            {customOutput.userOutput}
+                        </pre>
+                    </div>
+                    <div>
+                        <label className="block mb-2 font-bold">EXPECTED OUTPUT</label>
+                        <pre className={`p-3 min-h-[100px] border-2 ${colors.panelBorder} ${colors.codeBg} ${colors.codeText} text-sm font-mono overflow-auto`}>
+                            {customOutput.expectedOutput}
+                        </pre>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function ProblemSubmissionsTab({ submissions, isLoading, onSelectSubmission, selectedSubmission }) {
+    const colors = pastelRetroColors;
+    const getStatusColors = (v) => v === "Accepted" ? `${colors.acceptedBg} ${colors.acceptedText}` : `${colors.errorBg} ${colors.errorText}`;
+
+    if (isLoading) return <div className="text-center p-6 text-xl">LOADING...</div>;
     if (selectedSubmission) {
         return (
-            <div className="p-4 space-y-4">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-semibold text-lg">Submission Details</h3>
-                    <button
-                        onClick={() => onSelectSubmission(null)}
-                        className={`text-sm px-4 py-1.5 rounded-md ${colors.buttonSecondaryBg} ${colors.buttonSecondaryHover} ${colors.textSecondary}`}
-                    >
-                        Back to list
-                    </button>
+            <div className="space-y-6">
+                <Button onClick={() => onSelectSubmission(null)} type="secondary" small>BACK TO LIST</Button>
+                <div className={`p-4 border-2 ${colors.panelBorder} ${getStatusColors(selectedSubmission.verdict)}`}>STATUS: {selectedSubmission.verdict.toUpperCase()}</div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className={`p-4 border-2 ${colors.panelBorder} ${colors.inputBg}`}>RUNTIME: {selectedSubmission.timeTaken} MS</div>
+                    <div className={`p-4 border-2 ${colors.panelBorder} ${colors.inputBg}`}>MEMORY: {selectedSubmission.memoryTaken} KB</div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className={`p-4 rounded-lg ${colors.bgAccent}`}>
-                        <div className={`text-xs ${colors.textSecondary} mb-1`}>Status</div>
-                        <div className={`font-bold text-lg ${
-                            selectedSubmission.verdict === "Accepted" ? "text-emerald-500" : "text-red-500"
-                            }`}>
-                            {selectedSubmission.verdict}
-                        </div>
-                    </div>
-
-                    <div className={`p-4 rounded-lg ${colors.bgAccent}`}>
-                        <div className={`text-xs ${colors.textSecondary} mb-1`}>Runtime</div>
-                        <div className="font-medium text-lg">
-                            {selectedSubmission.timetaken} ms
-                        </div>
-                    </div>
-
-                    <div className={`p-4 rounded-lg ${colors.bgAccent}`}>
-                        <div className={`text-xs ${colors.textSecondary} mb-1`}>Memory</div>
-                        <div className="font-medium text-lg">
-                            {selectedSubmission.memorytaken} KB
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <div className="text-base font-medium">Submitted Code</div>
-                    <pre className={`p-5 rounded-lg overflow-x-auto text-sm ${colors.codeBg} ${colors.textPrimary} border ${colors.codeBorder}`}>
-                        {selectedSubmission.code}
-                    </pre>
-                </div>
-
-                <div className={`text-xs ${colors.textSecondary}`}>
-                    Submitted at: {new Date(selectedSubmission.submissionTime).toLocaleString()}
-                </div>
+                <h3 className="font-bold text-lg">SUBMITTED CODE</h3>
+                <pre className={`p-4 overflow-x-auto border-2 ${colors.panelBorder} ${colors.codeBg} ${colors.codeText} text-sm`}>{selectedSubmission.code}</pre>
             </div>
         );
     }
-
-    if (submissions.length === 0) {
-        return (
-            <div className={`py-8 text-center ${colors.bgAccent} rounded-lg`}>
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${colors.bgSecondary} ${colors.border}`}>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={`h-6 w-6 ${colors.textSecondary}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                    </svg>
-                </div>
-                <h3 className="text-base font-semibold">No Submissions Yet</h3>
-                <p className={`text-sm mt-1 ${colors.textSecondary}`}>
-                    Submit your solution to see it here
-                </p>
-            </div>
-        );
-    }
+    if (submissions.length === 0) return <div className="text-center p-6 text-xl">NO SUBMISSIONS YET</div>;
 
     return (
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 250px)" }}>
-            <table className="w-full text-sm">
-                <thead>
-                    <tr className={`border-b ${colors.border} ${colors.textSecondary}`}>
-                        <th className="text-left py-3 px-4 font-semibold">Time</th>
-                        <th className="text-left py-3 px-4 font-semibold">Status</th>
-                        <th className="text-left py-3 px-4 font-semibold">Runtime</th>
-                        <th className="text-left py-3 px-4 font-semibold">Memory</th>
-                        <th className="text-left py-3 px-4 font-semibold">Action</th>
+        <table className="w-full text-left">
+            <thead className={`${colors.tabInactiveBg}`}>
+                <tr className={`border-b-2 ${colors.panelBorder}`}>
+                    <th className="p-3">TIME</th>
+                    <th className="p-3">STATUS</th>
+                    <th className="p-3">RUNTIME</th>
+                    <th className="p-3">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                {submissions.map((sub, i) => (
+                    <tr key={i} className={`border-b ${colors.panelBorder} last:border-b-0 hover:bg-amber-100`}>
+                        <td className="p-3 text-sm">{formatToDDMMYYYY(sub.submissionTime)}</td>
+                        <td className="p-3">
+                            <span className={`px-3 py-1 text-xs border ${colors.panelBorder} ${getStatusColors(sub.verdict)}`}>
+                                {sub.verdict.toUpperCase()}
+                            </span>
+                        </td>
+                        <td className="p-3 text-sm">{sub.timeTaken} MS</td>
+                        <td className="p-3">
+                            <Button onClick={() => onSelectSubmission(sub)} type="secondary" small>VIEW</Button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {submissions.map((sub, index) => (
-                        <tr
-                            key={index}
-                            className={`border-b ${colors.border} ${isDark ? "hover:bg-gray-700/40" : "hover:bg-gray-100"}`}
-                        >
-                            <td className="py-3 px-4">
-                                {sub.submissionTime
-                                    ? formatDuration(sub.timeFromStart)
-                                    : "N/A"}
-                            </td>
-                            <td className="py-3 px-4">
-                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                                    sub.verdict === "Accepted"
-                                        ? `${colors.acceptedBg} ${colors.acceptedText}`
-                                        : `${colors.errorBg} ${colors.errorText}`
-                                    }`}>
-                                    {sub.verdict || "Error"}
-                                </span>
-                            </td>
-                            <td className={`py-3 px-4 ${colors.textSecondary}`}>
-                                {sub.timetaken ? `${sub.timetaken} ms` : "N/A"}
-                            </td>
-                            <td className={`py-3 px-4 ${colors.textSecondary}`}>
-                                {sub.memorytaken ? `${sub.memorytaken} KB` : "N/A"}
-                            </td>
-                            <td className="py-3 px-4">
-                                <button
-                                    onClick={() => onSelectSubmission(sub)}
-                                    className={`text-xs px-3.5 py-1.5 rounded-md ${colors.buttonSecondaryBg} ${colors.buttonSecondaryHover} ${colors.textSecondary}`}
-                                >
-                                    View Code
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+                ))}
+            </tbody>
+        </table>
     );
 }
 
-// --- Solutions Tab Component ---
-function ProblemSolutionsTab({ solutions, isLoading, isDark, onSelectSolution, selectedSolution }) {
-    const colors = isDark ? darkColors : lightColors;
-
-    if (isLoading) {
-        return (
-            <div className={`py-6 flex items-center justify-center ${colors.textSecondary}`}>
-                <div className={`w-8 h-8 border-2 ${isDark ? "border-teal-500" : "border-blue-600"} border-t-transparent rounded-full animate-spin`}></div>
-            </div>
-        );
-    }
-
+function ProblemSolutionsTab({ solutions, isLoading, onSelectSolution, selectedSolution }) {
+    const colors = pastelRetroColors;
+    if (isLoading) return <div className="text-center p-6 text-xl">LOADING...</div>;
     if (selectedSolution) {
         return (
-            <div className="p-4 space-y-4">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-semibold text-lg">Solution Details</h3>
-                    <button
-                        onClick={() => onSelectSolution(null)}
-                        className={`text-sm px-4 py-1.5 rounded-md ${colors.buttonSecondaryBg} ${colors.buttonSecondaryHover} ${colors.textSecondary}`}
-                    >
-                        Back to list
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className={`p-4 rounded-lg ${colors.bgAccent}`}>
-                        <div className={`text-xs ${colors.textSecondary} mb-1`}>Status</div>
-                        <div className={`font-bold text-lg ${
-                            selectedSolution.verdict === "Accepted" ? "text-emerald-500" : "text-red-500"
-                            }`}>
-                            {selectedSolution.verdict}
-                        </div>
-                    </div>
-
-                    <div className={`p-4 rounded-lg ${colors.bgAccent}`}>
-                        <div className={`text-xs ${colors.textSecondary} mb-1`}>Runtime</div>
-                        <div className="font-medium text-lg">
-                            {selectedSolution.timeTaken} ms
-                        </div>
-                    </div>
-
-                    <div className={`p-4 rounded-lg ${colors.bgAccent}`}>
-                        <div className={`text-xs ${colors.textSecondary} mb-1`}>Memory</div>
-                        <div className="font-medium text-lg">
-                            {selectedSolution.memoryTaken} KB
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <div className="text-base font-medium">Solution Code</div>
-                    <pre className={`p-5 rounded-lg overflow-x-auto text-sm ${colors.codeBg} ${colors.textPrimary} border ${colors.codeBorder}`}>
-                        {selectedSolution.code}
-                    </pre>
-                </div>
-
-                <div className={`text-xs ${colors.textSecondary}`}>
-                    Submitted at: {new Date(selectedSolution.submissionTime).toLocaleString()}
-                </div>
+            <div className="space-y-6">
+                <Button onClick={() => onSelectSolution(null)} type="secondary" small>BACK TO LIST</Button>
+                <div className={`p-4 border-2 ${colors.panelBorder} ${colors.inputBg}`}>USER: {selectedSolution.userId?.username}</div>
+                <h3 className="font-bold text-lg">SOLUTION CODE</h3>
+                <pre className={`p-4 overflow-x-auto border-2 ${colors.panelBorder} ${colors.codeBg} ${colors.codeText} text-sm`}>{selectedSolution.code}</pre>
             </div>
         );
     }
-
-    if (solutions.length === 0) {
-        return (
-            <div className={`py-8 text-center ${colors.bgAccent} rounded-lg`}>
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${colors.bgSecondary} ${colors.border}`}>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={`h-6 w-6 ${colors.textSecondary}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                        />
-                    </svg>
-                </div>
-                <h3 className="text-base font-semibold">No Solutions Available</h3>
-                <p className={`text-sm mt-1 ${colors.textSecondary}`}>
-                    Be the first to solve this problem!
-                </p>
-            </div>
-        );
-    }
+    if (solutions.length === 0) return <div className="text-center p-6 text-xl">NO COMMUNITY SOLUTIONS</div>;
 
     return (
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 250px)" }}>
-            <table className="w-full text-sm">
-                <thead>
-                    <tr className={`border-b ${colors.border} ${colors.textSecondary}`}>
-                        <th className="text-left py-3 px-4 font-semibold">User</th>
-                        <th className="text-left py-3 px-4 font-semibold">Language</th>
-                        <th className="text-left py-3 px-4 font-semibold">Runtime</th>
-                        <th className="text-left py-3 px-4 font-semibold">Action</th>
+        <table className="w-full text-left">
+            <thead className={`${colors.tabInactiveBg}`}>
+                <tr className={`border-b-2 ${colors.panelBorder}`}>
+                    <th className="p-3">USER</th>
+                    <th className="p-3">LANGUAGE</th>
+                    <th className="p-3">RUNTIME</th>
+                    <th className="p-3">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                {solutions.map((sol, i) => (
+                    <tr key={i} className={`border-b ${colors.panelBorder} last:border-b-0 hover:bg-amber-100`}>
+                        <td className="p-3 text-sm">{sol.userId?.username || 'Anonymous'}</td>
+                        <td className="p-3 text-sm">{sol.language?.toUpperCase()}</td>
+                        <td className="p-3 text-sm">{sol.timeTaken} MS</td>
+                        <td className="p-3">
+                            <Button onClick={() => onSelectSolution(sol)} type="secondary" small>VIEW</Button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {solutions.map((solution, index) => (
-                        <tr
-                            key={index}
-                            className={`border-b ${colors.border} ${isDark ? "hover:bg-gray-700/40" : "hover:bg-gray-100"}`}
-                        >
-                            <td className="py-3 px-4">
-                                <div className="flex items-center">
-                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center mr-2 ${colors.bgAccent} ${colors.textSecondary}`}>
-                                        <span className="text-sm font-bold">
-                                            {solution.userId?.username?.charAt(0)?.toUpperCase() || 'U'}
-                                        </span>
-                                    </div>
-                                    <span className={colors.textPrimary}>{solution.userId?.username || 'Unknown User'}</span>
-                                </div>
-                            </td>
-                            <td className={`py-3 px-4 ${colors.textSecondary}`}>
-                                {solution.language}
-                            </td>
-                            <td className={`py-3 px-4 ${colors.textSecondary}`}>
-                                {solution.timeTaken} ms
-                            </td>
-                            <td className="py-3 px-4">
-                                <button
-                                    onClick={() => onSelectSolution(solution)}
-                                    className={`text-xs px-3.5 py-1.5 rounded-md ${colors.buttonSecondaryBg} ${colors.buttonSecondaryHover} ${colors.textSecondary}`}
-                                >
-                                    View Solution
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+                ))}
+            </tbody>
+        </table>
     );
 }

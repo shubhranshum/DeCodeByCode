@@ -21,8 +21,8 @@ exports.logActivity = async (
     });
 
 
-    const log = await activity.save();
-    console.log(log);
+    await activity.save();
+    
 
     console.log('Activity logged');
     
@@ -56,6 +56,9 @@ exports.getUserActivitiesByUsername = async (req, res) => {
   try {
    const username = req.params.username;
    const user = await User.findOne({ username });
+   if(user == null){
+    return res.status(404).json({ success: false, message: 'User not found' });
+   }
    const userId = user._id;
    
     const query = { user: userId };

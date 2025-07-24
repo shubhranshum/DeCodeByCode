@@ -6,7 +6,7 @@ const Admin = () => {
     return(
         <>
         <Navbar activePage="Admin"/>
-        <div className="mt-15"><AdminPage/></div>
+        <div className = "pt-22.5"><AdminPage/></div>
         </>
     );
 }

@@ -2,6 +2,7 @@ const passport = require('passport');
 const Community = require('../models/community/community');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../models/user'); // <-- your User model
+const Notification = require('../models/notification/notification');
 const GitHubStrategy = require('passport-github2').Strategy;
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -30,9 +31,26 @@ passport.use(new GoogleStrategy({
         accountStatus: 'active'
       });
      const community = await Community.findOne();
+     if(community == null){
+        Community.create(
+            {
+              name:"DecodeByCode"
+            }
+        );
+     }
      console.log(community);
+
       community.numberOfUsers += 1;
       await community.save();
+      //giving notification if user is new 
+
+      const notification = new Notification({
+      recipient: newUser._id,
+      type: "SYSTEM",
+      message: "Welcome to DecodeByCode Community",
+      link: "/profile"
+    });
+    await notification.save();
 
             
       await newUser.save();
@@ -74,6 +92,15 @@ passport.use(new GitHubStrategy({
       oauthId: profile.id,
       profilePicture: profile.photos?.[0]?.value || ''
     });
+    //giving notification if user is new 
+    const notification = new Notification({
+      recipient: newUser._id,
+      type: "SYSTEM",
+      message: "Welcome to DecodeByCode Community",
+      link: "/profile/u/"+newUser.username
+    });
+    await notification.save();
+
     const community = await Community.findOne();
     console.log(community);
     community.numberOfUsers += 1;

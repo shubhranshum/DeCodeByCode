@@ -45,8 +45,8 @@ exports.getBlogsByUserId = async (req, res) => {
 
 // Create a new blog post
 exports.createBlog = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  // const session = await mongoose.startSession();
+  // session.startTransaction();
 
   try {
     const { title, content, slug, summary, thumbnailUrl, tags, category, status, allowComments, isFeatured } = req.body;
@@ -66,26 +66,26 @@ exports.createBlog = async (req, res) => {
       author,
     });
 
-    const savedBlog = await blog.save({ session });
+    // const savedBlog = await blog.save({ session });
+    const savedBlog = await blog.save();
     const community = await Community.findOne();
     console.log(community);
     community.numberOfBlogs += 1;
     await community.save();
-    await session.commitTransaction();
-
+    // await session.commitTransaction();
     // Log activity outside transaction since it's non-critical
     await logActivity(author, savedBlog._id, "BlogPost", "BLOG_POSTED", savedBlog.title);
     
     res.status(201).json(savedBlog);
   } catch (err) {
-    await session.abortTransaction();
+    // await session.abortTransaction();
     console.error('Error saving blog:', err);
     res.status(500).json({
       error: 'Failed to create blog',
       details: err.message
     });
   } finally {
-    session.endSession();
+    // session.endSession();
   }
 };
 
@@ -168,7 +168,7 @@ exports.updateBlog = async (req, res) => {
     blog.isFeatured = isFeatured;
     const updatedBlog = await blog.save();
 
-    // await logActivity(author, updatedBlog._id, "BlogPost", "BLOG_EDITED", "Blog Edited with title : " + updatedBlog.title);
+    
 
 
     res.json(updatedBlog);
@@ -187,33 +187,13 @@ exports.deleteBlog = async (req, res) => {
     // 1. Find blog
     const blog = await Blog.findById(blogId);
     if (!blog) return res.status(404).json({ error: 'Blog not found' });
-
     // 2. Check ownership
     if (blog.author.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
-
-    // 3. Log activity BEFORE deleting
-    // await logActivity(
-    //   req.user._id,
-    //   blogId,
-    //   "BlogPost",
-    //   "BLOG_DELETED",
-    //   `Blog Deleted with title: ${blog.title}`
-    // );
-
-    // 4. Delete related comments (if any)
+    // 5. Delete comments
     await Comment.deleteMany({ blog: blogId });
-
-
-
-
-
-
-
-
-
-    // 6. Finally, delete the blog
+   // 6. Finally, delete the blog
     await blog.deleteOne();
 
     return res.json({ message: 'Blog and associated data deleted successfully' });
