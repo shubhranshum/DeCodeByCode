@@ -51,9 +51,9 @@ const getSolvedProblemsByUsername = async (req, res) => {
     // Find profile by userId
     const profile = await user.populate({
       path: 'ProblemHistory.problemId',
-      select: 'title difficulty',
+      select: 'title difficulty slug',
     });
-    console.log(profile)
+    console.log("Profile fetched successfully");
     
 
     if (!profile) {
@@ -66,6 +66,7 @@ const getSolvedProblemsByUsername = async (req, res) => {
       .map(entry => ({
         _id: entry.problemId._id,
         title: entry.problemId.title,
+        slug: entry.problemId.slug,
         difficulty: entry.problemId.difficulty,
         solvedAt: entry.solvedAt,
         lastTriedAt: entry.lastTriedAt

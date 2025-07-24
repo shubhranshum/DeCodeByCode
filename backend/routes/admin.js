@@ -11,8 +11,8 @@ const deleteAdminProblemById = require('../controllers/Admin/Problems/deleteAdmi
 const getProblemById = require('../controllers/Problems/getProblemById.js');
 const deleteTestCaseById = require('../controllers/Admin/Problems/deleteTestCaseById.js');
 const postToGlobalProblems = require('../controllers/Admin/Problems/postToGlobalProblems.js');
-
-
+const {getPotd} = require('../controllers/Admin/Problems/createPotd.js');
+const {createPotd} = require('../controllers/Admin/Problems/createPotd.js');
 
 // Contest
 const authMiddleware = require('../middlewares/auth.js');
@@ -72,5 +72,8 @@ router.post('/edit-announcement/:announcementId', authMiddleware, adminCheck, ed
 router.post('/postToGlobalAnnouncements/:announcementId', authMiddleware, adminCheck, postToGlobalAnnouncements);
 router.delete('/deleteAnnouncement/:announcementId',deleteAnnouncement);
 
+//for POTD
+router.get('/potd', getPotd);
+router.post('/createPotd', authMiddleware, createPotd);
 // Export the router to use in the main app
 module.exports = router;

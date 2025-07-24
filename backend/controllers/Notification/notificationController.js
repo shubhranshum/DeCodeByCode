@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const getNotification = async (req, res) => {
     try {
         console.log("Hello from getNotification");
-        const notifications = await Notification.find({recipient: req.user._id }).sort({ createdAt: -1 });
+        const notifications = await Notification.find({ recipient: req.user._id }).sort({ createdAt: -1 });
         res.status(200).json(notifications);
     } catch (error) {
         console.error(error);
@@ -19,7 +19,7 @@ const readNotification = async (req, res) => {
         if (!notification) {
             return res.status(404).json({ message: 'Notification not found' });
         }
-        if(notification.isRead === true){
+        if (notification.isRead === true) {
             return res.json({ message: 'Notification already read' });
         }
         notification.isRead = true;
@@ -30,6 +30,49 @@ const readNotification = async (req, res) => {
         res.status(500).json({ message: 'Error marking notification as read' });
     }
 };
+const createNotification = async (req, res) => {
+    try {
+        const {
+            recipient,
+            sender,
+            type,
+            message,
+            link
+        } = req.body;
+        if (!recipient || !message || !type) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        };
+        if(type == "SYSTEM"){
+            const users = await User.find({ role: 'user' });
+            for (let user of users) {
+                const notification = new Notification({
+                    recipient: user._id,
+                    type,
+                    message,
+                    link
+                });
+                await notification.save();
+            }
+        }
 
 
-module.exports = {getNotification,readNotification};
+        const notification = new Notification({
+            recipient,
+            sender,
+            type,
+            message,
+            link
+        });
+        await notification.save();
+        return res.status(200).json({ message: 'Notification created successfully' });
+
+
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error creating notification' });
+    }
+};
+
+
+module.exports = { getNotification, readNotification, createNotification };

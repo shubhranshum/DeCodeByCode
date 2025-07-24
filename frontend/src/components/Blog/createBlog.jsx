@@ -98,25 +98,31 @@ const FormTextarea = ({
   </div>
 );
 
-// This new FormToggle component correctly uses a hidden checkbox to ensure the original `handleChange` logic is preserved.
+// --- FIXED TOGGLE COMPONENT ---
+// This version uses the 'checked' prop directly to apply classes,
+// which is more reliable than the 'peer' variant.
 const FormToggle = ({ label, name, checked, onChange }) => (
-  <label className="flex items-center gap-4 cursor-pointer group">
-    <input
-      type="checkbox"
-      name={name}
-      checked={checked}
-      onChange={onChange}
-      className="sr-only peer"
-    />
-    <div
-      className={`w-14 h-8 flex items-center p-1 border-2 ${retroThemeColors.panelBorder} bg-stone-200 peer-checked:bg-purple-400 transition-colors`}
-    >
-      <div
-        className={`w-6 h-6 bg-white border-2 ${retroThemeColors.panelBorder} transition-transform peer-checked:translate-x-6`}
-      />
-    </div>
-    <span className="text-xl">{label}</span>
-  </label>
+    <label className="flex items-center gap-4 cursor-pointer group">
+        <input
+            type="checkbox"
+            name={name}
+            checked={checked}
+            onChange={onChange}
+            className="sr-only"
+        />
+        <div
+            className={`w-14 h-8 flex items-center p-1 border-2 ${retroThemeColors.panelBorder} transition-colors ${
+                checked ? 'bg-purple-400' : 'bg-stone-200'
+            }`}
+        >
+            <div
+                className={`w-6 h-6 bg-white border-2 ${retroThemeColors.panelBorder} transition-transform duration-300 ease-in-out ${
+                    checked ? 'translate-x-6' : ''
+                }`}
+            />
+        </div>
+        <span className="text-xl">{label}</span>
+    </label>
 );
 
 // --- Loading and Auth States ---
@@ -359,11 +365,11 @@ export default function CreateBlogForm({ blogId }) {
                       skin: "oxide",
                       content_css: "default",
                       content_style: `
-                                                body { font-family: 'Georgia', serif; font-size: 16px; background: #fdfdf2; color: #44403c; }
-                                                h1, h2, h3 { font-family: 'VT323', monospace; color: #1c1917; }
-                                                code { background: #e7e5e4; padding: 2px 4px; border-radius: 4px; }
-                                                pre { background: #292524; color: #f1f5f9; padding: 1rem; border-radius: 0; }
-                                            `,
+                                        body { font-family: 'Georgia', serif; font-size: 16px; background: #fdfdf2; color: #44403c; }
+                                        h1, h2, h3 { font-family: 'VT323', monospace; color: #1c1917; }
+                                        code { background: #e7e5e4; padding: 2px 4px; border-radius: 4px; }
+                                        pre { background: #292524; color: #f1f5f9; padding: 1rem; border-radius: 0; }
+                                    `,
                     }}
                   />
                 </div>
@@ -414,6 +420,7 @@ export default function CreateBlogForm({ blogId }) {
                   >
                     <option value="Draft">📝 Draft</option>
                     <option value="Published">🌟 Published</option>
+                    <option value="Archived">📦 Archived</option>
                   </select>
                 </div>
               </div>

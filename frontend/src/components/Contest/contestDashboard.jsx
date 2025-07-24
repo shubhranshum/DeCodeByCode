@@ -43,8 +43,17 @@ const RetroCard = ({ children, className = '', ...props }) => (
     </div>
 );
 
+// UPDATED: TabButton now has the "pressable" retro style
 const TabButton = ({ children, isActive, onClick }) => (
-    <button onClick={onClick} className={`flex-1 p-4 text-2xl border-r-4 last:border-r-0 ${retroThemeColors.panelBorder} transition-colors ${isActive ? `${retroThemeColors.panelBg} ${retroThemeColors.textAccent}` : `${retroThemeColors.buttonSecondaryBg} ${retroThemeColors.textPrimary} hover:bg-stone-300`}`}>
+    <button 
+        onClick={onClick} 
+        className={`flex-1 p-4 text-2xl border-2 ${retroThemeColors.panelBorder} transition-all duration-150 font-bold
+            ${isActive 
+                ? `bg-purple-400 text-white shadow-none translate-x-[4px] translate-y-[4px]` 
+                : `bg-stone-200 text-stone-800 shadow-chunky hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:bg-stone-300`
+            }
+        `}
+    >
         {children}
     </button>
 );
@@ -60,7 +69,6 @@ const ContestCard = ({ contest, status, onRegister, user }) => {
     const formatContestDate = (date) => format(new Date(date), 'MMM dd, yyyy - h:mm a');
     const getTimeRemaining = (targetDate) => formatDistanceToNow(new Date(targetDate), { addSuffix: true });
     
-    // **FIX**: The entire card is no longer a button. Navigation is handled by specific buttons.
     return (
         <RetroCard className="p-6 flex flex-col gap-4">
             <div>
@@ -94,7 +102,7 @@ const ContestCard = ({ contest, status, onRegister, user }) => {
 
                 {/* --- ACTION BUTTON LOGIC --- */}
                 {status === 'upcoming' && (
-                    <Button onClick={() => onRegister(contest._id)} disabled={isRegistered} small>
+                    <Button onClick={(e) => { e.stopPropagation(); onRegister(contest._id); }} disabled={isRegistered} small>
                         {isRegistered ? <><Check size={20} /> Registered</> : <><Edit3 size={20} /> Register</>}
                     </Button>
                 )}
@@ -102,12 +110,10 @@ const ContestCard = ({ contest, status, onRegister, user }) => {
                 {status === 'current' && (
                     <>
                         {isRegistered ? (
-                            // **FIX**: "Enter" button now handles navigation.
                             <Button onClick={() => navigate(`/contests/${contest.slug}`)} small>
                                 <LogIn size={20} /> Enter
                             </Button>
                         ) : contest.registrationOpen ? (
-                            // **FIX**: "Register" button is now shown for ongoing contests if open.
                             <Button onClick={() => onRegister(contest._id)} small>
                                 <Edit3 size={20} /> Register
                             </Button>
@@ -118,7 +124,6 @@ const ContestCard = ({ contest, status, onRegister, user }) => {
                 )}
 
                 {status === 'past' && (
-                    // **FIX**: "Results" button now handles navigation.
                     <Button onClick={() => navigate(`/contests/${contest.slug}`)} small type="secondary">
                         <Award size={20} /> Results
                     </Button>
@@ -171,7 +176,7 @@ export default function ContestDashboard() {
                 body: JSON.stringify({ userId: user._id }),
             });
             if (!response.ok) throw new Error('Registration failed');
-            await fetchContests(); // Re-fetch all data to ensure UI consistency
+            await fetchContests();
         } catch (err) {
             console.error('Registration failed:', err.message);
         }
@@ -185,13 +190,11 @@ export default function ContestDashboard() {
                 <h1 className={`text-6xl font-bold text-center mb-4 ${retroThemeColors.textPrimary}`}>Coding Contests</h1>
                 <p className={`text-xl text-center mb-10 ${retroThemeColors.textSecondary}`}>Test your skills. Compete with the best.</p>
 
-                <RetroCard className="p-2 mb-10">
-                    <div className="flex">
-                        <TabButton isActive={tab === 'upcoming'} onClick={() => setTab('upcoming')}>Upcoming</TabButton>
-                        <TabButton isActive={tab === 'current'} onClick={() => setTab('current')}>Ongoing</TabButton>
-                        <TabButton isActive={tab === 'past'} onClick={() => setTab('past')}>Past</TabButton>
-                    </div>
-                </RetroCard>
+                <div className="p-2 mb-10 flex gap-2">
+                    <TabButton isActive={tab === 'upcoming'} onClick={() => setTab('upcoming')}>Upcoming</TabButton>
+                    <TabButton isActive={tab === 'current'} onClick={() => setTab('current')}>Ongoing</TabButton>
+                    <TabButton isActive={tab === 'past'} onClick={() => setTab('past')}>Past</TabButton>
+                </div>
 
                 {loading ? <LoadingState /> :
                  error ? <EmptyState icon={Clock} title="Error" message={error} /> :

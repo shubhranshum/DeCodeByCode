@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns'; // We need this for grouping by month
 
 // --- RETRO THEME DEFINITIONS ---
 const retroThemeColors = {
@@ -10,7 +11,6 @@ const retroThemeColors = {
     buttonPrimaryBg: "bg-teal-400 hover:bg-teal-500",
     buttonSecondaryBg: "bg-stone-200 hover:bg-stone-300",
     buttonText: "text-stone-800",
-    accentBg: "bg-amber-100",
     unfollowButtonBg: "bg-rose-200 hover:bg-rose-300",
 };
 
@@ -32,55 +32,95 @@ const TabButton = ({ children, isActive, onClick }) => (
     </button>
 );
 
-// --- List Components ---
+// --- Helper Function to Group Connections by Month ---
+const groupConnectionsByMonth = (connections, userField) => {
+    if (!connections || connections.length === 0) return {};
+    // Sort connections by date before grouping
+    const sortedConnections = [...connections].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    return sortedConnections.reduce((acc, conn) => {
+        const date = new Date(conn.createdAt);
+        const monthYear = format(date, 'MMMM yyyy');
+        if (!acc[monthYear]) {
+            acc[monthYear] = [];
+        }
+        acc[monthYear].push(conn[userField]);
+        return acc;
+    }, {});
+};
+
+
+// --- List Components with View All/Less Feature ---
 const FollowerList = ({ followers, followingUsernames, onFollow, onProfileClick }) => {
+    const [showAll, setShowAll] = useState(false);
+    const summaryCount = 4;
+    const hasMore = followers.length > summaryCount;
+
     if (!followers?.length) {
         return <div className="p-8 text-center text-lg text-stone-500">No followers yet.</div>;
     }
+
+    const displayedFollowers = showAll ? followers : followers.slice(0, summaryCount);
+
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {followers.map(({ sender }) => (
-                <div key={sender._id} className={`flex items-center p-3 border-2 ${retroThemeColors.panelBorder} bg-stone-50`}>
-                    <img
-                        src={sender.profilePicture || `https://api.dicebear.com/7.x/initials/svg?seed=${sender.username}`}
-                        alt={sender.username}
-                        className={`w-12 h-12 border-2 ${retroThemeColors.panelBorder} cursor-pointer`}
-                        onClick={() => onProfileClick(sender.username)}
-                    />
-                    <div className="ml-3 flex-1 overflow-hidden cursor-pointer" onClick={() => onProfileClick(sender.username)}>
-                        <h3 className="font-bold truncate">{sender.username}</h3>
-                        <p className={`text-sm ${retroThemeColors.textSecondary} truncate`}>Rank: {sender.ranking || 'N/A'}</p>
+        <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {displayedFollowers.map(({ sender }) => (
+                    <div key={sender._id} className={`flex items-center p-3 border-2 ${retroThemeColors.panelBorder} bg-stone-50`}>
+                        <img src={sender.profilePicture || `https://api.dicebear.com/7.x/initials/svg?seed=${sender.username}`} alt={sender.username} className={`w-12 h-12 border-2 ${retroThemeColors.panelBorder} cursor-pointer`} onClick={() => onProfileClick(sender.username)} />
+                        <div className="ml-3 flex-1 overflow-hidden cursor-pointer" onClick={() => onProfileClick(sender.username)}>
+                            <h3 className="font-bold truncate">{sender.username}</h3>
+                            <p className={`text-sm ${retroThemeColors.textSecondary} truncate`}>Rank: {sender.ranking || 'N/A'}</p>
+                        </div>
+                        {!followingUsernames.includes(sender.username) && (
+                            <Button onClick={(e) => { e.stopPropagation(); onFollow(sender.username); }} small>Follow</Button>
+                        )}
                     </div>
-                    {!followingUsernames.includes(sender.username) && (
-                        <Button onClick={(e) => { e.stopPropagation(); onFollow(sender.username); }} small>Follow</Button>
-                    )}
+                ))}
+            </div>
+            {hasMore && (
+                <div className="text-center mt-4">
+                    <Button onClick={() => setShowAll(!showAll)} type="secondary" small>
+                        {showAll ? 'View Less' : `View All (${followers.length})`}
+                    </Button>
                 </div>
-            ))}
+            )}
         </div>
     );
 };
 
 const FollowingList = ({ following, onUnfollow, onProfileClick }) => {
+    const [showAll, setShowAll] = useState(false);
+    const summaryCount = 4;
+    const hasMore = following.length > summaryCount;
+
     if (!following?.length) {
         return <div className="p-8 text-center text-lg text-stone-500">Not following anyone.</div>;
     }
+    
+    const displayedFollowing = showAll ? following : following.slice(0, summaryCount);
+
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {following.map(({ reciever }) => (
-                <div key={reciever._id} className={`flex items-center p-3 border-2 ${retroThemeColors.panelBorder} bg-stone-50`}>
-                    <img
-                        src={reciever.profilePicture || `https://api.dicebear.com/7.x/initials/svg?seed=${reciever.username}`}
-                        alt={reciever.username}
-                        className={`w-12 h-12 border-2 ${retroThemeColors.panelBorder} cursor-pointer`}
-                        onClick={() => onProfileClick(reciever.username)}
-                    />
-                    <div className="ml-3 flex-1 overflow-hidden cursor-pointer" onClick={() => onProfileClick(reciever.username)}>
-                        <h3 className="font-bold truncate">{reciever.username}</h3>
-                        <p className={`text-sm ${retroThemeColors.textSecondary} truncate`}>Rank: {reciever.ranking || 'N/A'}</p>
+        <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {displayedFollowing.map(({ reciever }) => (
+                    <div key={reciever._id} className={`flex items-center p-3 border-2 ${retroThemeColors.panelBorder} bg-stone-50`}>
+                        <img src={reciever.profilePicture || `https://api.dicebear.com/7.x/initials/svg?seed=${reciever.username}`} alt={reciever.username} className={`w-12 h-12 border-2 ${retroThemeColors.panelBorder} cursor-pointer`} onClick={() => onProfileClick(reciever.username)} />
+                        <div className="ml-3 flex-1 overflow-hidden cursor-pointer" onClick={() => onProfileClick(reciever.username)}>
+                            <h3 className="font-bold truncate">{reciever.username}</h3>
+                            <p className={`text-sm ${retroThemeColors.textSecondary} truncate`}>Rank: {reciever.ranking || 'N/A'}</p>
+                        </div>
+                        <Button onClick={(e) => { e.stopPropagation(); onUnfollow(reciever.username); }} small type="secondary" className={retroThemeColors.unfollowButtonBg}>Unfollow</Button>
                     </div>
-                    <Button onClick={(e) => { e.stopPropagation(); onUnfollow(reciever.username); }} small type="secondary" className={retroThemeColors.unfollowButtonBg}>Unfollow</Button>
+                ))}
+            </div>
+             {hasMore && (
+                <div className="text-center mt-4">
+                    <Button onClick={() => setShowAll(!showAll)} type="secondary" small>
+                        {showAll ? 'View Less' : `View All (${following.length})`}
+                    </Button>
                 </div>
-            ))}
+            )}
         </div>
     );
 };
@@ -122,14 +162,14 @@ const ConnectionsSection = () => {
     const handleFollow = useCallback(async (username) => {
         try {
             await fetch(`http://localhost:3000/profile/follow/${username}`, { method: 'POST', credentials: 'include' });
-            fetchData(); // Re-fetch all data to update both lists
+            fetchData();
         } catch (error) { console.error("Error following user:", error); }
     }, [fetchData]);
 
     const handleUnfollow = useCallback(async (username) => {
         try {
             await fetch(`http://localhost:3000/profile/unfollow/${username}`, { method: 'POST', credentials: 'include' });
-            fetchData(); // Re-fetch all data to update both lists
+            fetchData();
         } catch (error) { console.error("Error unfollowing user:", error); }
     }, [fetchData]);
 
@@ -139,7 +179,7 @@ const ConnectionsSection = () => {
 
     return (
         <div>
-            <h2 className="text-3xl font-bold mb-6">Connections</h2>
+            <h2 className="text-2xl font-bold mb-4">Connections</h2>
             <div className={`border-4 ${retroThemeColors.panelBorder} bg-white shadow-chunky`}>
                 <div className="flex border-b-4 border-stone-800">
                     <TabButton isActive={activeTab === 'followers'} onClick={() => setActiveTab('followers')}>
@@ -150,7 +190,7 @@ const ConnectionsSection = () => {
                     </TabButton>
                 </div>
 
-                <div className="p-6 min-h-[24rem]">
+                <div className="p-4 min-h-[16rem]">
                     {isLoading ? (
                         <div className="flex justify-center py-10">
                             <div className={`animate-spin rounded-full h-12 w-12 border-b-4 ${retroThemeColors.panelBorder}`}></div>

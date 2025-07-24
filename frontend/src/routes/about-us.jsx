@@ -6,7 +6,10 @@ const About = () => {
     return (
         <>
             <Navbar activePage="About Us"/>
-            <AboutUs/>
+           
+            <div className="pt-15.5">
+                             <AboutUs/>
+                        </div>
         </>
     );
 }

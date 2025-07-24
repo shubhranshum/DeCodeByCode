@@ -60,10 +60,10 @@ const TabButton = ({ label, tabName, activeTab, setActiveTab }) => {
 // MAIN COMPONENT
 // ================
 export default function ProfilePage() {
-    const { user: currentUser } = useContext(UserContext);
-    const { username: urlUsername } = useParams();
-    const isOwnProfile = currentUser && currentUser.username === urlUsername;
-    
+     const { user: currentUser } = useContext(UserContext);
+  const { username: urlUsername } = useParams();
+  const isOwnProfile = currentUser && currentUser.username === urlUsername;
+  const isFollowingAllowed = currentUser != null;
     // --- State Management (Unchanged) ---
     const [profile, setProfile] = useState(null);
     const [blogs, setBlogs] = useState([]);
@@ -90,10 +90,62 @@ export default function ProfilePage() {
         } catch (err) { console.error("Error fetching profile:", err); }
     }, [urlUsername]);
     
-    const fetchBlogs = useCallback(async () => { /* Original logic preserved */ }, [urlUsername]);
-    const fetchRecentAttempts = useCallback(async () => { /* Original logic preserved */ }, [urlUsername]);
-    const fetchSolvedProblems = useCallback(async () => { /* Original logic preserved */ }, [urlUsername]);
-    const fetchActivities = useCallback(async () => { /* Original logic preserved */ }, [urlUsername]);
+     const fetchBlogs = useCallback(async () => {
+    try {
+      const url = `http://localhost:3000/blogs/${urlUsername}`;
+      const res = await fetch(url, { method: "GET", credentials: "include" });
+      const data = await res.json();
+      
+        setBlogs(data.blogs);
+      
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+    }
+  }, [urlUsername]);
+    const fetchRecentAttempts = useCallback(async () => {
+    try {
+      const url = `http://localhost:3000/profile/recent-attempts/${urlUsername}`;
+      const res = await fetch(url, { method: "GET", credentials: "include" });
+      const data = await res.json();
+     
+        setRecentAttempts(data.attemptedProblems);
+      
+    } catch (error) {
+      console.error("Error fetching recent attempts:", error);
+    }
+  }, [urlUsername]);
+     const fetchSolvedProblems = useCallback(async () => {
+    try {
+      const url = `http://localhost:3000/profile/solved-problems/${urlUsername}`;
+      const res = await fetch(url, { method: "GET", credentials: "include" });
+      const data = await res.json();
+      if ( data.success) {
+        setSolvedProblems(data.solvedProblems);
+      }
+    } catch (err) {
+      console.error("Error fetching solved problems:", err);
+    }
+  }, [urlUsername]);
+    const fetchActivities = useCallback(async () => {
+    try {
+      setActivityLoading(true);
+      const res = await fetch(`http://localhost:3000/profile/user-activities/${urlUsername}`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if ( data.success) {
+        const sortedActivities = data.activities.sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        );
+        setActivities(sortedActivities);
+      }
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+    } finally {
+       setActivityLoading(false);
+    }
+  }, [urlUsername]);
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -148,6 +200,7 @@ export default function ProfilePage() {
                         isFollowing={isFollowing}
                         setIsFollowing={setIsFollowing}
                         onEditClick={() => setIsEditModalOpen(true)}
+                        isFollowingAllowed = {isFollowingAllowed}
                     />
                 </RetroCard>
 

@@ -1,8 +1,8 @@
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaArrowUp, FaHeart, FaRegHeart, FaRegEye, FaSearch } from 'react-icons/fa';
 import { FiEdit2, FiTag } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
 
 // --- Blog data fetching hook (No changes needed) ---
 const useBlogData = () => {
@@ -49,7 +49,7 @@ const useBlogData = () => {
 
     useEffect(() => {
         fetchBlogs();
-    }, [page]); // Changed dependency to just page
+    }, [page, fetchBlogs]);
 
     return { blogs, loading, error, hasMore, setPage };
 };
@@ -131,26 +131,25 @@ const useBlogInteractions = () => {
 
 // --- Blog filtering logic (No changes needed) ---
 const useBlogFilters = (blogs, search, selectedTag) => {
-    const filteredBlogs = useMemo(() => {
-        return blogs.filter(blog => {
+    const { featuredBlog, remainingBlogs } = useMemo(() => {
+        const featured = blogs.filter(blog => blog.isFeatured && blog.status !== 'Draft').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0] || null;
+        
+        const filtered = blogs.filter(blog => {
+            if (featured && blog._id === featured._id) return false; // Exclude featured from main list
             const matchesSearch = blog.title.toLowerCase().includes(search.toLowerCase());
             const matchesTag = selectedTag ? (blog.tags || []).includes(selectedTag) : true;
             return matchesSearch && matchesTag && blog.status !== 'Draft';
         });
+
+        return { featuredBlog: featured, remainingBlogs: filtered };
     }, [blogs, search, selectedTag]);
 
     const allTags = useMemo(() => {
         const tags = new Set(blogs.flatMap(blog => blog.tags || []));
         return Array.from(tags).sort();
     }, [blogs]);
-    
-    const featuredBlog = useMemo(() => {
-        const featured = blogs.filter(blog => blog.isFeatured && blog.status !== 'Draft');
-        if (featured.length === 0) return null;
-        return featured.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-    }, [blogs]);
 
-    return { filteredBlogs, allTags, featuredBlog };
+    return { filteredBlogs: remainingBlogs, allTags, featuredBlog };
 };
 
 
@@ -165,10 +164,7 @@ const retroBlogColors = {
     buttonPrimaryBg: "bg-purple-400 hover:bg-purple-500",
     buttonSecondaryBg: "bg-stone-200 hover:bg-stone-300",
     buttonText: "text-stone-800",
-    tagActiveBg: "bg-amber-300",
-    tagActiveText: "text-amber-900",
     errorBg: "bg-rose-100",
-    errorBorder: "border-rose-300",
     errorText: "text-rose-700",
 };
 
@@ -176,100 +172,65 @@ const retroBlogColors = {
 // ==============
 // UI COMPONENTS
 // ==============
-const Button = ({ children, onClick, disabled, className = '', small = false, active = false }) => {
-    const colors = retroBlogColors;
-    const sizeStyle = small ? 'px-4 py-1 text-base' : 'px-8 py-4 text-lg';
-    const activeStyle = active ? 'shadow-none translate-x-[4px] translate-y-[4px]' : 'shadow-chunky hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]';
-    const baseStyle = `border-2 ${colors.panelBorder} transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0`;
+const Button = ({ children, onClick, className = '' }) => (
+    <button onClick={onClick} className={`px-6 py-3 text-lg border-2 ${retroBlogColors.panelBorder} shadow-chunky transition-all hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] ${className}`}>
+        {children}
+    </button>
+);
 
-    return (
-        <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${activeStyle} ${sizeStyle} ${className}`}>
-            {children}
-        </button>
-    );
-};
+const BlogHeader = ({ handleCreateBlog }) => (
+    <div className="text-center mb-16">
+        <h1 className={`text-5xl md:text-6xl mb-3 ${retroBlogColors.textPrimary}`}>
+            Stories & <span className={retroBlogColors.textAccent}>Insights</span>
+        </h1>
+        <p className={`text-xl font-light max-w-2xl mx-auto ${retroBlogColors.textSecondary}`}>
+            Your daily dose of code, creativity, and community thoughts.
+        </p>
+        <Button onClick={handleCreateBlog} className={`${retroBlogColors.buttonPrimaryBg} ${retroBlogColors.buttonText} mt-8`}>
+            <FiEdit2 className="inline-block w-6 h-6 mr-2" /> Write a Story
+        </Button>
+    </div>
+);
 
-
-const BlogHeader = ({ handleCreateBlog }) => {
-    const colors = retroBlogColors;
-    return (
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-16 text-center md:text-left">
-            <div>
-                <h1 className={`text-5xl md:text-6xl mb-3 ${colors.textPrimary}`}>
-                    Stories & <span className={colors.textAccent}>Insights</span>
-                </h1>
-                <p className={`text-xl font-light max-w-2xl ${colors.textSecondary}`}>
-                    Your daily dose of code, creativity, and community thoughts.
-                </p>
-            </div>
-            <Button onClick={handleCreateBlog} className={`${colors.buttonPrimaryBg} ${colors.buttonText} mt-8 md:mt-0`}>
-                <FiEdit2 className="inline-block w-6 h-6 mr-2" /> Write a Story
-            </Button>
-        </div>
-    );
-};
-
-const SearchAndFilter = ({ search, setSearch, allTags, selectedTag, setSelectedTag }) => {
-    const colors = retroBlogColors;
-    return (
-        <div className="flex flex-col md:flex-row gap-4 mb-12">
+const SearchAndFilter = ({ search, setSearch, allTags, selectedTag, setSelectedTag }) => (
+    <div className={`border-4 ${retroBlogColors.panelBorder} shadow-chunky bg-white p-4 md:p-6 mb-12`}>
+        <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-                <FaSearch className={`w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 ${colors.textSecondary}`} />
-                <input
-                    type="text"
-                    placeholder="Search articles..."
-                    className={`w-full pl-12 pr-4 py-4 text-lg border-2 ${colors.panelBorder} ${colors.panelBg} focus:outline-none`}
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
+                <FaSearch className={`w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 ${retroBlogColors.textSecondary}`} />
+                <input type="text" placeholder="Search articles..." className={`w-full pl-12 pr-4 py-3 text-lg border-2 ${retroBlogColors.panelBorder} ${retroBlogColors.panelBg} focus:outline-none`} value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             {allTags.length > 0 && (
-                 <div className="md:w-64 relative">
-                    <FiTag className={`w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 ${colors.textSecondary}`} />
-                    <select
-                        className={`w-full pl-12 pr-4 py-4 text-lg border-2 ${colors.panelBorder} ${colors.panelBg} focus:outline-none appearance-none`}
-                        value={selectedTag}
-                        onChange={e => setSelectedTag(e.target.value)}
-                    >
+                <div className="md:w-64 relative">
+                    <FiTag className={`w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 ${retroBlogColors.textSecondary}`} />
+                    <select className={`w-full pl-12 pr-4 py-3 text-lg border-2 ${retroBlogColors.panelBorder} ${retroBlogColors.panelBg} focus:outline-none appearance-none`} value={selectedTag} onChange={e => setSelectedTag(e.target.value)}>
                         <option value="">All Topics</option>
                         {allTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
                     </select>
                 </div>
             )}
         </div>
-    );
-};
-
+    </div>
+);
 
 const LoadingState = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {[...Array(6)].map((_, i) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {[...Array(4)].map((_, i) => (
             <div key={i} className={`border-4 ${retroBlogColors.panelBorder} bg-white shadow-chunky p-6 animate-pulse`}>
                 <div className="h-48 bg-stone-200 mb-4"></div>
                 <div className="h-6 w-3/4 bg-stone-200 mb-2"></div>
-                <div className="h-4 w-full bg-stone-200 mb-1"></div>
                 <div className="h-4 w-5/6 bg-stone-200"></div>
             </div>
         ))}
     </div>
 );
 
+const MessageState = ({ title, message }) => (
+    <div className={`text-center py-20 border-4 ${retroBlogColors.panelBorder} ${retroBlogColors.errorBg} shadow-chunky`}>
+        <h3 className={`text-3xl mb-3 ${retroBlogColors.errorText}`}>{title}</h3>
+        <p className={`max-w-lg mx-auto text-lg ${retroBlogColors.textSecondary}`}>{message}</p>
+    </div>
+);
 
-const MessageState = ({ title, message, onClear }) => {
-    return (
-        <div className={`text-center py-20 border-4 ${retroBlogColors.panelBorder} ${retroBlogColors.errorBg} shadow-chunky`}>
-            <h3 className={`text-3xl mb-3 ${retroBlogColors.errorText}`}>{title}</h3>
-            <p className={`mb-8 max-w-lg mx-auto text-lg ${retroBlogColors.textSecondary}`}>{message}</p>
-            {onClear && (
-                <Button onClick={onClear} className={`${retroBlogColors.buttonSecondaryBg} ${retroBlogColors.buttonText}`}>
-                    Clear Filters
-                </Button>
-            )}
-        </div>
-    );
-};
-
-// --- RETRO BLOG CARD (Self-contained) ---
 const RetroBlogCard = ({ blog, handleLike, handleViewCount }) => {
     const [likes, setLikes] = useState(blog.likesCount);
     const [isLiked, setIsLiked] = useState(blog.isLiked);
@@ -289,40 +250,27 @@ const RetroBlogCard = ({ blog, handleLike, handleViewCount }) => {
     };
 
     return (
-        <motion.div
-            onClick={onView}
-            className={`flex flex-col border-4 ${retroBlogColors.panelBorder} bg-white shadow-chunky cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_#27272a]`}
-            layout
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-        >
+        <motion.div onClick={onView} className={`flex flex-col border-4 ${retroBlogColors.panelBorder} bg-white shadow-chunky cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_#27272a]`} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className={`w-full h-48 border-b-4 ${retroBlogColors.panelBorder} overflow-hidden`}>
                 <img src={blog.thumbnailUrl} alt={blog.title} className="w-full h-full object-cover" />
             </div>
             <div className="p-6 flex flex-col flex-grow">
                 <div className="flex-grow">
-                    {blog.tags?.[0] && <p className={`mb-2 text-base ${retroBlogColors.textAccent}`}>{blog.tags[0]}</p>}
+                    <p className={`mb-2 text-base font-bold ${retroBlogColors.textAccent}`}>{blog.tags?.[0] || 'General'}</p>
                     <h3 className={`text-2xl mb-2 ${retroBlogColors.textPrimary}`}>{blog.title}</h3>
-                    <p className={`text-base font-light ${retroBlogColors.textSecondary}`}>{blog.summary}</p>
                 </div>
                 <div className="flex justify-between items-center pt-4 mt-4 border-t-2 border-dashed border-stone-300">
                     <div className="flex items-center gap-4 text-lg">
                         <span className="flex items-center gap-2"><FaRegEye /> {blog.viewsCount}</span>
-                        <button onClick={onLike} className="flex items-center gap-2 z-10">
-                            {isLiked ? <FaHeart className="text-rose-500" /> : <FaRegHeart />} {likes}
-                        </button>
+                        <button onClick={onLike} className="flex items-center gap-2 z-10">{isLiked ? <FaHeart className="text-rose-500" /> : <FaRegHeart />} {likes}</button>
                     </div>
-                    <span className={`text-sm ${retroBlogColors.textSecondary}`}>
-                        {new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </span>
+                    <span className={`text-sm ${retroBlogColors.textSecondary}`}>{new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 </div>
             </div>
         </motion.div>
     );
 };
 
-// --- RETRO FEATURED BLOG CARD (Self-contained) ---
 const RetroFeaturedBlogCard = ({ blog, handleViewCount }) => {
     const navigate = useNavigate();
     const onView = () => {
@@ -331,19 +279,13 @@ const RetroFeaturedBlogCard = ({ blog, handleViewCount }) => {
     };
     
     return (
-        <div className="max-w-7xl mx-auto px-6 mb-16">
-            <motion.div
-                onClick={onView}
-                className={`grid md:grid-cols-2 gap-4 border-4 ${retroBlogColors.panelBorder} bg-amber-100 shadow-chunky cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_#27272a]`}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-            >
+        <div className="mb-16">
+            <motion.div onClick={onView} className={`grid md:grid-cols-2 gap-0 border-4 ${retroBlogColors.panelBorder} bg-amber-100 shadow-chunky cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_#27272a]`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <div className={`w-full md:h-full h-64 border-b-4 md:border-b-0 md:border-r-4 ${retroBlogColors.panelBorder} overflow-hidden`}>
-                     <img src={blog.thumbnailUrl} alt={blog.title} className="w-full h-full object-cover" />
+                    <img src={blog.thumbnailUrl} alt={blog.title} className="w-full h-full object-cover" />
                 </div>
                 <div className="p-8 flex flex-col justify-center">
-                    <p className={`mb-2 text-lg ${retroBlogColors.textAccent}`}>✨ FEATURED STORY</p>
+                    <p className={`mb-2 text-lg font-bold ${retroBlogColors.textAccent}`}>✨ FEATURED STORY</p>
                     <h2 className={`text-4xl mb-3 ${retroBlogColors.textPrimary}`}>{blog.title}</h2>
                     <p className={`text-lg font-light mb-4 ${retroBlogColors.textSecondary}`}>{blog.summary}</p>
                     <div className="flex items-center gap-4 text-lg">
@@ -375,53 +317,35 @@ export default function Blog() {
         <div className={`min-h-screen pt-24 ${colors.textPrimary} ${colors.bgPrimary} font-retro`}> 
             <AnimatePresence>
                 {showScrollTop && (
-                    <motion.button
-                        onClick={scrollToTop}
-                        className={`fixed bottom-8 right-8 z-50 w-16 h-16 border-2 ${colors.panelBorder} ${colors.buttonPrimaryBg} shadow-chunky`}
-                        whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                        initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
-                        aria-label="Scroll to top"
-                    >
+                    <motion.button onClick={scrollToTop} className={`fixed bottom-8 right-8 z-50 w-16 h-16 border-2 ${colors.panelBorder} ${colors.buttonPrimaryBg} shadow-chunky`} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} aria-label="Scroll to top">
                         <FaArrowUp className="w-6 h-6 mx-auto text-white" />
                     </motion.button>
                 )}
             </AnimatePresence>
             
-            {featuredBlog && <RetroFeaturedBlogCard blog={featuredBlog} handleViewCount={handleViewCount} />}
-            
             <div className="max-w-7xl mx-auto px-6 py-16"> 
                 <BlogHeader handleCreateBlog={handleCreateBlog} />
-                <SearchAndFilter 
-                    search={search} setSearch={setSearch} 
-                    allTags={allTags} selectedTag={selectedTag} setSelectedTag={setSelectedTag} 
-                />
+                {featuredBlog && <RetroFeaturedBlogCard blog={featuredBlog} handleViewCount={handleViewCount} />}
+                <SearchAndFilter search={search} setSearch={setSearch} allTags={allTags} selectedTag={selectedTag} setSelectedTag={setSelectedTag} />
 
                 {error && <MessageState title="Oops! Something went wrong." message={error} />}
                 
                 {loading && blogs.length === 0 && <LoadingState />}
                 
                 {!loading && filteredBlogs.length > 0 && (
-                    <motion.div 
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                        variants={{ show: { transition: { staggerChildren: 0.07 } } }}
-                        initial="hidden" animate="show"
-                    >
+                    <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-8" variants={{ show: { transition: { staggerChildren: 0.07 } } }} initial="hidden" animate="show">
                         {filteredBlogs.map(blog => <RetroBlogCard key={blog._id} blog={blog} handleLike={handleLike} handleViewCount={handleViewCount} />)}
                     </motion.div>
                 )}
 
                 {!loading && blogs.length > 0 && filteredBlogs.length === 0 && (
-                    <MessageState 
-                        title="No articles found!"
-                        message="Your search or filter criteria didn't match any stories. Try adjusting them!"
-                        onClear={() => { setSearch(''); setSelectedTag(''); }}
-                    />
+                    <MessageState title="No articles found!" message="Your search or filter criteria didn't match any stories." onClear={() => { setSearch(''); setSelectedTag(''); }} />
                 )}
                 
                 {loading && blogs.length > 0 && <div className="text-center text-xl mt-12">LOADING MORE...</div>}
                 
                 {!hasMore && blogs.length > 0 && (
-                     <div className="text-center py-16 border-t-4 border-dashed border-stone-300 mt-12">
+                    <div className="text-center py-16 border-t-4 border-dashed border-stone-300 mt-12">
                         <p className={`text-xl mb-4 ${colors.textSecondary}`}>You've reached the end!</p>
                         <button onClick={scrollToTop} className={`text-lg ${colors.textAccent}`}>Back to Top</button>
                     </div>

@@ -7,29 +7,19 @@ import { getProblemBySlug } from '../Tasks/getProblemBySlug';
 
 // --- ENHANCED RETRO COLOR PALETTE ---
 const pastelRetroColors = {
-    // Backgrounds and Text
     bgPrimary: "bg-[#f7f4ed]",
     textPrimary: "text-[#2d2a26]",
     textSecondary: "text-[#5a534a]",
     textTitle: "text-[#e63946]",
-
-    // Panels and Containers
     panelBg: "bg-[#fffcf5]",
     panelBorder: "border-[#3a3530]",
-
-    // Tabs and Interactive Elements
-    tabActiveBg: "bg-[#fffcf5]",
-    tabActiveText: "text-[#e63946]",
+    tabActiveBg: "bg-teal-400", // A vibrant color for the active tab
+    tabActiveText: "text-white",
     tabInactiveBg: "bg-[#e9e3d5]",
     tabInactiveText: "text-[#5a534a]",
-    tabHoverBg: "hover:bg-[#d6d0c3]",
-
-    // Buttons
     buttonPrimaryBg: "bg-[#a8dadc] hover:bg-[#8ecacc]",
     buttonSecondaryBg: "bg-[#e9e3d5] hover:bg-[#d6d0c3]",
     buttonText: "text-[#2d2a26]",
-
-    // Status Indicators
     acceptedBg: "bg-[#c7f9cc]",
     acceptedText: "text-[#2a9d8f]",
     attemptedBg: "bg-[#ffd6a5]",
@@ -38,8 +28,6 @@ const pastelRetroColors = {
     errorText: "text-[#e63946]",
     unattemptedBg: "bg-[#e9e3d5]",
     unattemptedText: "text-[#5a534a]",
-
-    // Code and IO Blocks
     codeBg: "bg-[#3a3530]",
     codeText: "text-[#f1faee]",
     inputBg: "bg-[#f1faee]",
@@ -52,13 +40,17 @@ const Button = ({ children, onClick, disabled, className = '', type = 'primary',
     const sizeStyle = small ? 'px-4 py-1 text-sm' : 'px-5 py-2.5 text-base';
     const baseStyle = `border-2 ${colors.panelBorder} shadow-chunky transition-all hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 font-bold`;
     const typeStyle = type === 'primary' ? `${colors.buttonPrimaryBg} ${colors.buttonText}` : `${colors.buttonSecondaryBg} ${colors.buttonText}`;
-
-    return (
-        <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${typeStyle} ${sizeStyle} ${className}`}>
-            {children}
-        </button>
-    );
+    return <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${typeStyle} ${sizeStyle} ${className}`}>{children}</button>;
 };
+// --- NEW RETRO TAB BUTTON ---
+const TabButton = ({ children, isActive, onClick }) => {
+    const colors = pastelRetroColors;
+    const baseStyle = `flex-1 p-3 text-base font-bold border-r-2 last:border-r-0 ${colors.panelBorder} transition-all duration-150`;
+    const activeStyle = `${colors.tabActiveBg} ${colors.tabActiveText} shadow-none translate-y-[4px]`;
+    const inactiveStyle = `${colors.tabInactiveBg} ${colors.tabInactiveText} shadow-[inset_0_-4px_0_0_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-y-[4px]`;
+    return <button onClick={onClick} className={`${baseStyle} ${isActive ? activeStyle : inactiveStyle}`}>{children}</button>;
+};
+
 
 // --- Loading and Error Components ---
 const LoadingSpinner = () => {
@@ -102,7 +94,7 @@ export default function GlobalProblem() {
     const { problemSlug } = useParams();
     const location = useLocation();
     
-    // State management hooks
+    // State management hooks (logic is preserved)
     const [problemId, setProblemId] = useState(null);
     const STORAGE_KEY = useRef(null);
     const [problem, setProblem] = useState(null);
@@ -229,7 +221,7 @@ export default function GlobalProblem() {
     if (isLoading) return <LoadingSpinner />;
     if (!problem) return <ProblemNotFound />;
 
-    const getStatusColors = (v) => {
+     const getStatusColors = (v) => {
         if (v === "Accepted") return `${colors.acceptedBg} ${colors.acceptedText}`;
         if (v === "Attempted" || v?.includes("Error") || v?.includes("Wrong")) return `${colors.errorBg} ${colors.errorText}`;
         return `${colors.unattemptedBg} ${colors.unattemptedText}`;
@@ -237,7 +229,7 @@ export default function GlobalProblem() {
 
     return (
         <div className={`min-h-screen ${colors.bgPrimary} ${colors.textPrimary} font-retro`}>
-            {/* Enhanced Page Header */}
+            {/* Header */}
             <div className={`${colors.panelBg} border-b-4 ${colors.panelBorder} px-6 py-3`}>
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center max-w-8xl mx-auto gap-3">
                     <div className="flex items-center gap-3">
@@ -257,29 +249,26 @@ export default function GlobalProblem() {
                 </div>
             </div>
 
-            {/* Enhanced Main Content */}
+            {/* Main Content */}
             <div className="flex flex-col lg:flex-row p-4 gap-4 max-w-8xl mx-auto min-h-[calc(100vh-112px)]">
                 {/* Left Panel */}
                 <div className={`lg:w-1/2 flex flex-col border-4 ${colors.panelBorder} shadow-chunky ${colors.panelBg} relative`}>
-                    <div className={`flex flex-wrap border-b-4 ${colors.panelBorder}`}>
-                        {["problem", "submissions", "solutions", "run code"].map(tabName => (
-                            <button
+                    {/* --- FIXED: Retro Tab Bar --- */}
+                    <div className={`flex border-b-4 ${colors.panelBorder} p-2 ${colors.tabInactiveBg}`}>
+                        {["problem", "submissions", "solutions", "run-code"].map(tabName => (
+                            <TabButton
                                 key={tabName}
-                                className={`px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border-r-4 last:border-r-0 ${colors.panelBorder} transition-colors relative
-                                    ${activeTab === tabName.replace(' ', '-') 
-                                        ? `${colors.tabActiveBg} ${colors.tabActiveText} font-bold border-b-4 border-transparent` 
-                                        : `${colors.tabInactiveBg} ${colors.tabInactiveText} ${colors.tabHoverBg}`}`}
+                                isActive={activeTab === tabName}
                                 onClick={() => {
-                                    const formattedTabName = tabName.replace(' ', '-');
-                                    setActiveTab(formattedTabName);
-                                    if (formattedTabName === "solutions" && solutions.length === 0 && !isSolutionsLoading) fetchAllSolutions();
+                                    setActiveTab(tabName);
+                                    if (tabName === "solutions" && solutions.length === 0 && !isSolutionsLoading) fetchAllSolutions();
                                 }}
                             >
-                                {tabName.toUpperCase()}
-                            </button>
+                                {tabName.replace('-', ' ').toUpperCase()}
+                            </TabButton>
                         ))}
                     </div>
-                    <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-zinc-400 scrollbar-track-stone-200">
+                    <div className="flex-1 overflow-y-auto p-4">
                         {activeTab === "problem" && <ProblemDescriptionTab problem={problem} />}
                         {activeTab === "submissions" && <ProblemSubmissionsTab submissions={submissions} isLoading={isSubmissionsLoading} onSelectSubmission={setSelectedSubmission} selectedSubmission={selectedSubmission} />}
                         {activeTab === "solutions" && <ProblemSolutionsTab solutions={solutions} isLoading={isSolutionsLoading} onSelectSolution={setSelectedSolution} selectedSolution={selectedSolution} />}
@@ -299,12 +288,7 @@ export default function GlobalProblem() {
                                 initialCode={code} 
                                 language="cpp" 
                                 onCodeChange={setCode} 
-                                theme={"light"}
-                                editorStyle={{
-                                    fontFamily: '"Fira Code", monospace',
-                                    fontSize: '0.9rem',
-                                    lineHeight: '1.5'
-                                }}
+                                theme={"light"} // Assuming a specific theme for the editor
                             />
                         </div>
                     </div>

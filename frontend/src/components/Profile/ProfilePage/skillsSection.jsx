@@ -1,35 +1,54 @@
 import React from 'react';
+import { FiPlus } from 'react-icons/fi';
 
-const SkillsSection = ({ skills, onEditClick, allowEdit, theme }) => {
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-md p-6 transition-colors">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-slate-800 dark:text-gray-100">Skills & Expertise</h2>
-        {allowEdit && (
-          <button
-            className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-medium"
-            onClick={onEditClick}
-          >
-            + Add Skill
-          </button>
-        )}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {skills.length > 0 ? (
-          skills.map(skill => (
-            <span
-              key={skill}
-              className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full text-sm"
-            >
-              {skill}
-            </span>
-          ))
-        ) : (
-          <p className="text-slate-500 dark:text-gray-400">No skills added yet</p>
-        )}
-      </div>
-    </div>
-  );
+// --- RETRO THEME DEFINITIONS ---
+const retroThemeColors = {
+    textPrimary: "text-stone-800",
+    textSecondary: "text-stone-500",
+    panelBorder: "border-stone-800",
+    buttonSecondaryBg: "bg-stone-200 hover:bg-stone-300",
+    buttonText: "text-stone-800",
+    accentBg: "bg-teal-100", // Using the teal accent for skills
+    accentText: "text-teal-800",
+};
+
+// --- Reusable UI Component ---
+const Button = ({ children, onClick, className = '' }) => (
+    <button onClick={onClick} className={`px-3 py-1 text-sm border-2 ${retroThemeColors.panelBorder} ${retroThemeColors.buttonText} ${retroThemeColors.buttonSecondaryBg} shadow-chunky transition-all hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] flex items-center justify-center gap-2 font-bold ${className}`}>
+        {children}
+    </button>
+);
+
+// ================
+// MAIN COMPONENT
+// ================
+const SkillsSection = ({ skills, onEditClick, allowEdit }) => {
+    return (
+        <div>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Skills & Expertise</h2>
+                {allowEdit && (
+                    <Button onClick={onEditClick}>
+                        <FiPlus /> Add Skill
+                    </Button>
+                )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {skills && skills.length > 0 ? (
+                    skills.map(skill => (
+                        <span
+                            key={skill}
+                            className={`px-3 py-1 text-base font-bold border-2 ${retroThemeColors.panelBorder} ${retroThemeColors.accentBg} ${retroThemeColors.accentText}`}
+                        >
+                            {skill}
+                        </span>
+                    ))
+                ) : (
+                    <p className={`text-lg ${retroThemeColors.textSecondary}`}>No skills added yet.</p>
+                )}
+            </div>
+        </div>
+    );
 };
 
 export default SkillsSection;

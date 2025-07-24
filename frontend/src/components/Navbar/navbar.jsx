@@ -35,15 +35,11 @@ const themeColors = {
     logoText: 'text-stone-800',
     logoTextHover: 'group-hover:text-purple-600',
 
-    // Navigation Links
-    navLinkBase: 'border-2 border-transparent',
-    navLinkActiveBg: 'bg-amber-200',
-    navLinkActiveText: 'text-stone-800',
-    navLinkActiveBorder: 'border-stone-800',
-    navLinkInactiveText: 'text-stone-700',
-    navLinkHoverBg: 'hover:bg-stone-200',
-    navLinkHoverText: 'hover:text-stone-900',
-
+    // Navigation Links (Now Button-Styled)
+    navButtonBase: 'px-3 py-2 text-lg font-bold transition-all duration-150 border-2 border-stone-800',
+    navButtonActive: 'bg-amber-200 text-stone-800 shadow-none translate-x-[3px] translate-y-[3px]',
+    navButtonInactive: 'bg-stone-100 text-stone-700 shadow-[3px_3px_0px_#292524] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:bg-stone-200',
+    
     // User action buttons (shared style for a chunky, clickable feel)
     actionButtonBase: 'border-2 border-stone-800 bg-stone-100 shadow-[3px_3px_0px_#292524] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:bg-stone-200 transition-all duration-150',
     actionButtonText: 'text-stone-700',
@@ -180,7 +176,6 @@ const useNotifications = () => {
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
         try {
             const unreadIds = originalNotifications.filter(n => !n.isRead).map(n => n._id);
-            // Example of a potential bulk update endpoint (you'd need to implement this on your backend)
             await fetch(`http://localhost:3000/notifications/read/all`, { 
                 method: 'POST', 
                 credentials: 'include',
@@ -364,7 +359,6 @@ export default function Navbar({ activePage }) {
     const notificationsHook = useNotifications();
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     
-    // Only using the 'retro' theme now
     const colors = themeColors.retro;
 
     useEffect(() => {
@@ -378,8 +372,6 @@ export default function Navbar({ activePage }) {
                 if (res.ok) {
                     const userData = await res.json();
                     setUser(userData);
-                } else {
-                    console.log('User not logged in');
                 }
             } catch (error) {
                 console.error('Error fetching user:', error);
@@ -400,9 +392,8 @@ export default function Navbar({ activePage }) {
         }
     };
 
-    // Use a specific font class for the entire component
     return (
-        <Disclosure as="nav" className={`fixed w-full z-50 top-0 font-sans ${colors.navbarBg} ${colors.navbarBorder}`}>
+        <Disclosure as="nav" className={`fixed w-full z-50 top-0 font-retro ${colors.navbarBg} ${colors.navbarBorder}`}>
             {({ open }) => (
                 <>
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -410,15 +401,17 @@ export default function Navbar({ activePage }) {
                             <div className="flex items-center gap-6">
                                 <Logo />
                                 <div className="hidden md:block">
-                                    <div className="flex items-baseline space-x-1">
+                                    <div className="flex items-baseline space-x-2">
                                         {navigation.map((item) => (
                                             (!((item.name === "Problems" || item.name === "Admin") && !user) && !(item.name === "Admin" && user && !user.isAdmin)) && (
                                                 <a 
                                                     key={item.name} 
                                                     href={item.href} 
                                                     className={classNames(
-                                                        item.name === activePage ? `${colors.navLinkActiveBg} ${colors.navLinkActiveText} ${colors.navLinkActiveBorder}` : `${colors.navLinkInactiveText} ${colors.navLinkHoverBg} ${colors.navLinkHoverText} ${colors.navLinkBase}`,
-                                                        'px-3 py-2 text-lg font-bold transition-colors'
+                                                        colors.navButtonBase,
+                                                        item.name === activePage 
+                                                            ? colors.navButtonActive
+                                                            : colors.navButtonInactive
                                                     )} 
                                                     aria-current={item.name === activePage ? 'page' : undefined}
                                                 >
@@ -467,7 +460,7 @@ export default function Navbar({ activePage }) {
                     </div>
 
                     <DisclosurePanel className={`md:hidden border-t-2 ${colors.navbarBorder}`}>
-                        <div className="space-y-1 px-2 pt-2 pb-3 sm:px-3">
+                        <div className="space-y-2 px-2 pt-2 pb-3 sm:px-3">
                             {navigation.map((item) => (
                                 (!((item.name === "Problems" || item.name === "Admin") && !user) && !(item.name === "Admin" && user && !user.isAdmin)) && (
                                     <DisclosureButton 
@@ -475,8 +468,8 @@ export default function Navbar({ activePage }) {
                                         as="a" 
                                         href={item.href} 
                                         className={classNames(
-                                            item.name === activePage ? `${colors.navLinkActiveBg} ${colors.navLinkActiveText}` : `${colors.navLinkInactiveText} ${colors.navLinkHoverBg}`,
-                                            'block px-3 py-2 text-xl font-bold transition-colors'
+                                            'block px-3 py-3 text-xl font-bold transition-colors border-2 border-stone-800 text-center',
+                                            item.name === activePage ? `bg-amber-200 text-stone-800` : `bg-stone-100 text-stone-700 hover:bg-stone-200`
                                         )} 
                                         aria-current={item.name === activePage ? 'page' : undefined}
                                     >

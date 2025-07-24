@@ -4,11 +4,9 @@ import { FiEdit, FiUserPlus, FiCheck } from "react-icons/fi";
 // --- RETRO THEME DEFINITIONS ---
 // This theme is consistent with the other retro components.
 const retroThemeColors = {
-    bgPrimary: "bg-stone-100",
     textPrimary: "text-stone-800",
     textSecondary: "text-stone-500",
     textAccent: "text-teal-600",
-    panelBg: "bg-white",
     panelBorder: "border-stone-800",
     buttonPrimaryBg: "bg-teal-400 hover:bg-teal-500",
     buttonSecondaryBg: "bg-stone-200 hover:bg-stone-300",
@@ -19,7 +17,7 @@ const retroThemeColors = {
 // --- Reusable UI Components ---
 const Button = ({ children, onClick, disabled, className = '', small = false, type = 'primary' }) => {
     const sizeStyle = small ? 'px-4 py-2 text-base' : 'px-5 py-2.5 text-lg';
-    const baseStyle = `border-2 ${retroThemeColors.panelBorder} ${retroThemeColors.buttonText} shadow-chunky transition-all hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 flex items-center justify-center gap-2`;
+    const baseStyle = `border-2 ${retroThemeColors.panelBorder} ${retroThemeColors.buttonText} shadow-chunky transition-all hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 flex items-center justify-center gap-2 font-bold`;
     const typeStyle = disabled ? "bg-stone-300" : (type === 'primary' ? retroThemeColors.buttonPrimaryBg : retroThemeColors.buttonSecondaryBg);
     return (
         <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${sizeStyle} ${typeStyle} ${className}`}>

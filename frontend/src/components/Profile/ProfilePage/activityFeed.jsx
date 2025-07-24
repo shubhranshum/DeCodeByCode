@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiFileText, FiMessageSquare, FiCheckCircle, FiXCircle, FiUserPlus, FiActivity } from 'react-icons/fi';
@@ -19,14 +19,14 @@ const retroThemeColors = {
     commentText: "text-sky-700",
     problemBg: "bg-emerald-200",
     problemText: "text-emerald-700",
-    dangerBg: "bg-rose-200", // FIX: Added missing theme color
-    dangerText: "text-rose-700", // FIX: Added missing theme color
+    dangerBg: "bg-rose-200",
+    dangerText: "text-rose-700",
     followBg: "bg-rose-200",
     followText: "text-rose-700",
 };
 
 // --- Reusable UI Component ---
-const Button = ({ children, onClick, className = '', small = false }) => { // FIX: Added 'small' prop
+const Button = ({ children, onClick, className = '', small = false }) => {
     const sizeStyle = small ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-base';
     return (
         <button onClick={onClick} className={`border-2 ${retroThemeColors.panelBorder} ${retroThemeColors.buttonText} ${retroThemeColors.buttonSecondaryBg} shadow-chunky transition-all hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] flex items-center justify-center gap-2 font-bold ${sizeStyle} ${className}`}>
@@ -86,16 +86,14 @@ const ActivityFeed = ({ activities, loading = false, mode = 'summary' }) => {
 
     const getActivityText = (activity) => {
         switch (activity.type) {
-            case 'BLOG_POSTED': return { title: "Posted a Blog", summary: `"${activity.details?.title}"` };
-            case 'PROBLEM_SOLVED': return { title: "Solved a Problem", summary: `"${activity.details?.problemTitle}"` };
-            case 'COMMENT_ADDED': return { title: "Commented on", summary: `"${activity.details?.blogTitle}"` };
-            // Add other cases as needed
-            default: return { title: activity.type.replace('_', ' '), summary: 'Made an update' };
+            case 'BLOG_POSTED': return { title: "Posted a Blog", summary: `"${activity.details}"` };
+            case 'PROBLEM_SOLVED': return { title: "Solved a Problem", summary: `"${activity.details}"` };
+            case 'COMMENT_ADDED': return { title: "Commented on", summary: `"${activity.details}"` };
+            default: return { title: activity.type.replace(/_/g, ' '), summary: 'Made an update' };
         }
     };
 
     const handleActivityClick = (activity) => {
-        // Navigation logic remains the same
         if (activity.refId) {
             if (activity.type.includes('BLOG') || activity.type.includes('COMMENT')) navigate(`/blog/${activity.refId}`);
             if (activity.type.includes('PROBLEM')) navigate(`/problems/${activity.refId}`);
