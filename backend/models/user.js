@@ -13,6 +13,16 @@ const userSchema = new mongoose.Schema({
     unique: true,
     index: true
   },
+  //for verification of email
+  isEmailVerified: { type: Boolean, default: false },
+  verificationToken: {
+    type: String,
+    required: false
+  },
+  verificationTokenExpires: {
+    type: Date,
+    required: false
+  },
   password: {
     type: String,
     required: false // optional for OAuth users
@@ -54,12 +64,23 @@ const userSchema = new mongoose.Schema({
 
   // ====== Social Links ======
   socialLinks: {
-    personalsite: { type: String },
-    github: { type: String },
-    twitter: { type: String },
-    linkedin: { type: String },
-    instagram: { type: String },
-    facebook: { type: String }
+    personalsite: { type: String , default: ''},
+    github: { type: String , default: ''},
+    linkedin: { type: String, default: '' },
+    leetcode:{
+        type: String,
+        default: ''
+    },
+    codechef: {
+        type: String,
+        default: ''
+    },
+    codeforces: {
+        type: String,
+        default: ''
+    },
+   
+    
   },
 
   // ====== Stats ======

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence, useSpring, useInView, useTransform } from "framer-motion";
-import { ArrowRightIcon, MegaphoneIcon, TrophyIcon, BookOpenIcon, SparklesIcon } from '@heroicons/react/24/solid';
+import { motion, useSpring, useInView, useTransform } from "framer-motion";
+import { TrophyIcon, BookOpenIcon, MegaphoneIcon } from '@heroicons/react/24/solid';
+import Navbar from "../Navbar/navbar.jsx"; // Assuming Navbar is in the correct path
 
 // --- RETRO THEME DEFINITIONS ---
 const retroThemeColors = {
@@ -15,7 +16,6 @@ const retroThemeColors = {
     buttonSecondaryBg: "bg-stone-200 hover:bg-stone-300",
     buttonText: "text-stone-800",
     accentBg: "bg-amber-100",
-    decorativePanelBg: "bg-sky-100",
 };
 
 // --- Reusable Retro UI Components ---
@@ -35,7 +35,15 @@ const RetroCard = ({ children, className = '', ...props }) => (
 );
 
 const TabButton = ({ children, isActive, onClick }) => (
-    <button onClick={onClick} className={`flex-1 p-3 text-xl border-r-2 last:border-r-0 ${retroThemeColors.panelBorder} transition-colors ${isActive ? `${retroThemeColors.panelBg} ${retroThemeColors.textAccent}` : `${retroThemeColors.buttonSecondaryBg} ${retroThemeColors.textPrimary} hover:bg-stone-300`}`}>
+    <button
+        onClick={onClick}
+        className={`flex-1 p-3 text-xl border-r-2 last:border-r-0 ${retroThemeColors.panelBorder} font-bold transition-all
+            ${isActive
+                ? `bg-white ${retroThemeColors.textAccent} shadow-none translate-y-[4px]`
+                : `bg-stone-200 text-stone-700 shadow-[inset_0_-4px_0_0_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-y-[4px]`
+            }
+        `}
+    >
         {children}
     </button>
 );
@@ -54,38 +62,31 @@ const SectionHeader = ({ title, actionText, actionLink }) => (
 // --- Custom Hooks for Data Fetching (Logic Unchanged) ---
 const useFeaturedBlogs = () => {
     const [blogs, setBlogs] = useState([]);
-    const [loading, setLoading] = useState(true);
     useEffect(() => {
         fetch("http://localhost:3000/featured-blogs", { credentials: "include" })
             .then(res => res.json()).then(data => setBlogs(data.blogs || []))
-            .catch(err => console.error("Failed to fetch blogs", err))
-            .finally(() => setLoading(false));
+            .catch(err => console.error("Failed to fetch blogs", err));
     }, []);
-    return { blogs, loading };
+    return { blogs };
 };
 const useUpcomingContests = () => {
     const [contests, setContests] = useState([]);
-    const [loading, setLoading] = useState(true);
     useEffect(() => {
         fetch("http://localhost:3000/contests", { credentials: "include" })
             .then(res => res.json()).then(data => setContests(data || []))
-            .catch(err => console.error("Failed to fetch contests", err))
-            .finally(() => setLoading(false));
+            .catch(err => console.error("Failed to fetch contests", err));
     }, []);
-    return { contests, loading };
+    return { contests };
 };
 const useAnnouncements = () => {
     const [announcements, setAnnouncements] = useState([]);
-    const [loading, setLoading] = useState(true);
     useEffect(() => {
         fetch("http://localhost:3000/announcements", { credentials: "include" })
             .then(res => res.json()).then(data => setAnnouncements(data || []))
-            .catch(err => console.error("Failed to fetch announcements", err))
-            .finally(() => setLoading(false));
+            .catch(err => console.error("Failed to fetch announcements", err));
     }, []);
-    return { announcements, loading };
+    return { announcements };
 };
-
 
 // --- Page-Specific Components (Restyled) ---
 const ContestCard = ({ contest }) => (
@@ -144,13 +145,14 @@ const CommunityStatCard = ({ value, label }) => (
 // --- Main HomePage Component ---
 export default function HomePage() {
     const navigate = useNavigate();
-    const { blogs, loading: blogsLoading } = useFeaturedBlogs();
-    const { contests, loading: contestsLoading } = useUpcomingContests();
-    const { announcements, loading: announcementsLoading } = useAnnouncements();
+    const { blogs } = useFeaturedBlogs();
+    const { contests } = useUpcomingContests();
+    const { announcements } = useAnnouncements();
     const [activeTab, setActiveTab] = useState("contests");
 
     return (
         <div className={`min-h-screen ${retroThemeColors.bgPrimary} text-stone-800 font-retro`}>
+            <Navbar activePage="Home" />
             <section className="py-20 px-6">
                 <RetroCard className="max-w-5xl mx-auto text-center p-8 md:p-12">
                     <h1 className="text-5xl md:text-6xl font-bold text-stone-800 mb-6">
@@ -171,13 +173,13 @@ export default function HomePage() {
                     {/* Left Column */}
                     <div className="lg:col-span-2">
                         <RetroCard>
-                            <div className="flex border-b-4 border-stone-800">
+                            <div className={`flex border-b-4 ${retroThemeColors.panelBorder} p-2 ${retroThemeColors.buttonSecondaryBg}`}>
                                 <TabButton isActive={activeTab === "contests"} onClick={() => setActiveTab("contests")}>Contests</TabButton>
                                 <TabButton isActive={activeTab === "announcements"} onClick={() => setActiveTab("announcements")}>Announcements</TabButton>
                             </div>
                             <div className="p-6 space-y-4">
-                                {activeTab === "contests" && (contestsLoading ? <p>Loading...</p> : contests.map(c => <ContestCard key={c.id || c._id} contest={c} />))}
-                                {activeTab === "announcements" && (announcementsLoading ? <p>Loading...</p> : announcements.map(a => <AnnouncementCard key={a.id || a._id} announcement={a} />))}
+                                {activeTab === "contests" && (contests.length > 0 ? contests.map(c => <ContestCard key={c.id || c._id} contest={c} />) : <p>No upcoming contests.</p>)}
+                                {activeTab === "announcements" && (announcements.length > 0 ? announcements.map(a => <AnnouncementCard key={a.id || a._id} announcement={a} />) : <p>No announcements.</p>)}
                             </div>
                         </RetroCard>
                     </div>
@@ -187,7 +189,7 @@ export default function HomePage() {
                         <RetroCard>
                             <SectionHeader title="Featured Blogs" actionLink="/blogs" actionText="View All" />
                             <div className="p-6 space-y-4">
-                                {blogsLoading ? <p>Loading...</p> : blogs.map(b => <BlogCard key={b.id || b._id} blog={b} />)}
+                                {blogs.length > 0 ? blogs.map(b => <BlogCard key={b.id || b._id} blog={b} />) : <p>No featured blogs.</p>}
                             </div>
                         </RetroCard>
                         <RetroCard>

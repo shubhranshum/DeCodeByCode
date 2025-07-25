@@ -10,7 +10,6 @@ import ConnectionsSection from "./ProfilePage/connectionsSections";
 import ContributionGraph from "./ProfilePage/contributionGraph";
 import EditProfileModal from "./ProfilePage/editProfileModal";
 import ProfileHeader from "./ProfilePage/profileHeader";
-import SettingsTab from "./ProfilePage/settingPage/UI/settingsTab";
 import SkillsSection from "./ProfilePage/skillsSection";
 import RecentAttempts from "./ProfilePage/recentAttempts";
 import RecentSolvedProblems from "./ProfilePage/recentSolvedProblems";
@@ -262,11 +261,7 @@ export default function ProfilePage() {
                     </RetroCard>
                 )}
 
-                {activeTab === "settings" && isOwnProfile && (
-                     <RetroCard className="p-6">
-                        <SettingsTab profile={profile} />
-                    </RetroCard>
-                )}
+                
                 
                 {isOwnProfile && (
                     <div className="mt-8">

@@ -64,7 +64,7 @@ async function submitProblem(req, res) {
                 submissionId: submission._id,
 
             });
-            //loggin activity
+            //logging activity
             await log.logActivity(req.user._id, problem._id, "Problem", "PROBLEM_SOLVED", "Problem Solved :"+problem.title);
             console.log('Problem solved successfully');
         }

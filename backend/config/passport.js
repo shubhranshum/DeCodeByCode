@@ -23,7 +23,9 @@ passport.use(new GoogleStrategy({
       const newUser = new User({
         oauthProvider: 'google',
         oauthId: profile.id,
+
         email: profile.emails?.[0]?.value,
+        isEmailVerified: true,
         firstName: profile.name?.givenName || '',
         lastName: profile.name?.familyName || '',
         username: profile.emails?.[0]?.value?.split('@')[0], // fallback username
@@ -87,6 +89,9 @@ passport.use(new GitHubStrategy({
 
     const newUser = await User.create({
       email,
+      isEmailVerified: true,
+      firstName: profile.name?.givenName || '',
+      lastName: profile.name?.familyName || '',
       username: profile.username,
       oauthProvider: 'github',
       oauthId: profile.id,

@@ -2,9 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from 'framer-motion';
 
-// --- Child Component Imports (Assuming they exist) ---
-import MathjaxRenderer from "../MathjaxRenderer";
-
 // --- RETRO THEME DEFINITIONS ---
 const retroThemeColors = {
     bgPrimary: "bg-stone-100",
@@ -82,7 +79,6 @@ export default function BlogDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
     
-    // --- State Management ---
     const [blog, setBlog] = useState(null);
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState('');
@@ -142,7 +138,7 @@ export default function BlogDetails() {
 
     useEffect(() => { fetchBlogAndComments(); }, [fetchBlogAndComments]);
     
-    const handleLike = async () => {
+   const handleLike = async () => {
         if (!isLoggedIn) return navigate('/login');
         try {
             const res = await fetch(`http://localhost:3000/blog/${id}/like`, { method: 'POST', credentials: 'include' });
@@ -191,10 +187,45 @@ export default function BlogDetails() {
     const handleDeleteReply = async (replyId) => { /* Original logic preserved */ };
     const toggleRepliesVisibility = (commentId) => { setShowRepliesState(prev => ({ ...prev, [commentId]: !prev[commentId] })); };
 
+    // --- Effects for UI enhancements ---
+    useEffect(() => {
+        const scriptId = 'mathjax-script';
+        if (!document.getElementById(scriptId)) {
+            const script = document.createElement('script');
+            script.id = scriptId;
+            script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
+            script.async = true;
+            document.head.appendChild(script);
+            
+            window.MathJax = {
+              tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+              }
+            };
+        }
+    }, []);
+
+    useEffect(() => {
+        if (loading || !blog) return;
+
+        const typeset = () => {
+            if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                window.MathJax.typesetPromise([contentRef.current]);
+            } else {
+                // If MathJax isn't fully ready, try again in a moment.
+                setTimeout(typeset, 100);
+            }
+        };
+        typeset();
+    }, [loading, blog, comments]);
+
     useEffect(() => {
         const handleScroll = () => {
             const totalHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            setReadingProgress((window.scrollY / totalHeight) * 100);
+            if (totalHeight > 0) {
+                setReadingProgress((window.scrollY / totalHeight) * 100);
+            }
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
@@ -225,7 +256,6 @@ export default function BlogDetails() {
         }
     };
 
-    // **FIX: Added the renderComments function back into the component.**
     const renderComments = (commentList, level = 0) => {
         return commentList.map(comment => (
             <motion.div key={comment._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`mt-4 ${level > 0 ? 'ml-6' : ''}`}>
@@ -269,6 +299,7 @@ export default function BlogDetails() {
             </motion.div>
         ));
     };
+
 
     if (loading) return <LoadingState />;
     if (!blog) return <NotFoundState />;

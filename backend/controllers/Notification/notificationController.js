@@ -32,18 +32,23 @@ const readNotification = async (req, res) => {
 };
 const createNotification = async (req, res) => {
     try {
+        console.log("Hello from create Notification ")
         const {
             recipient,
-            sender,
             type,
             message,
             link
         } = req.body;
-        if (!recipient || !message || !type) {
+        console.log(req.body);
+        const sender = req.user._id;
+        if (!message || !type) {
             return res.status(400).json({ message: 'Missing required fields' });
         };
         if(type == "SYSTEM"){
-            const users = await User.find({ role: 'user' });
+
+            
+            const users = await User.find({  });
+            console.log(users.length);
             for (let user of users) {
                 const notification = new Notification({
                     recipient: user._id,
@@ -53,6 +58,7 @@ const createNotification = async (req, res) => {
                 });
                 await notification.save();
             }
+            return res.status(200).json({ message: 'Notification created successfully' });
         }
 
 

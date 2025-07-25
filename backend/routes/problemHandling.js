@@ -8,7 +8,6 @@ const {getProblemSubmissionsByUser, getProblemSolvedSubmissions} = require('../c
 
 
 const submitProblemByShubhranshu = require('../controllers/Problems/submitProblem');
-const submitProblemByOmVrit = require('../controllers/Problems/submitProblemController');
 
 
 router.get('/problems', getGlobalProblems);
@@ -18,7 +17,7 @@ router.get('/problems/slug/:problemSlug', getProblemBySlug); // Assuming this is
 
 
 //by om vrit and shubhranshu
-router.post('/problems/:problemId/submit',[submitProblemByShubhranshu,submitProblemByOmVrit]);
+router.post('/problems/:problemId/submit',[submitProblemByShubhranshu]);
 
 
 

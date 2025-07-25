@@ -386,6 +386,7 @@ export default function Navbar({ activePage }) {
         try {
             await fetch("http://localhost:3000/logout", { method: "GET", credentials: "include" });
             setUser(null);
+            localStorage.removeItem("user");
             window.location.href = "/login";
         } catch (err) {
             console.error("Logout failed:", err);

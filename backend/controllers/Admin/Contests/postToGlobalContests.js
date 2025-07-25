@@ -23,24 +23,8 @@ async function postToGlobalContests(req, res) {
         }, { new: true })
 
 
-        //this is logic to send notification upon contest publish
-        const users = await User.find({});
         
-        for (let user of users) {
-            
-                const notification = new Notification({
-                    sender: req.user._id,
-                    recipient: user._id,
-                    type: 'SYSTEM',
-                    message: 'A new contest has been published. Register now!',
-                    isRead: false,
-                    link: `/contests/${contest._id}`
-
-
-                });
-                await notification.save();
-            
-        }
+       
 
          // Return the updated document
         res.status(200).json(contest);

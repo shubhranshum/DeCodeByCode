@@ -56,7 +56,7 @@ const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     console.log("Hello from updateProfile");
-    const { profilePicture, about, city, state, country, college, skills, firstName, lastName, age } = req.body;
+    const { profilePicture, about, city, state, country, socialLinks, college, skills, firstName, lastName, age } = req.body;
 
 
 
@@ -76,9 +76,14 @@ const updateProfile = async (req, res) => {
     profile.state = state;
     profile.country = country;
     profile.college = college;
-    console.log(skills.length);
-
     profile.skills = skills;
+
+    profile.socialLinks.personalsite = socialLinks.personalsite;
+    profile.socialLinks.github = socialLinks.github;
+    profile.socialLinks.linkedin = socialLinks.linkedin;
+    profile.socialLinks.leetcode = socialLinks.leetcode;
+    profile.socialLinks.codechef = socialLinks.codechef;
+    profile.socialLinks.codeforces = socialLinks.codeforces;
 
 
 

@@ -71,6 +71,7 @@ export default function ContestEditSection() {
         return local.toISOString().slice(0, 16);
     };
 
+    
     useEffect(() => {
         const fetchContest = async () => {
             try {

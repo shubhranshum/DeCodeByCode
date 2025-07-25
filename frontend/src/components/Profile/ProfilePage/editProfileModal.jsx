@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { FiEdit, FiPlus, FiTrash2 } from "react-icons/fi";
 
 // --- RETRO THEME DEFINITIONS ---
 const retroThemeColors = {
@@ -77,19 +78,37 @@ export default function EditProfileModal({ profile, onClose, onUpdate }) {
         firstName: profile.firstName || "",
         lastName: profile.lastName || "",
         age: profile.age || "",
-        title: profile.title || "",
-        company: profile.company || "",
-        website: profile.website || ""
+        // Initialize socialLinks with all possible fields
+        socialLinks: {
+            personalsite: profile.socialLinks?.personalsite || "",
+            github: profile.socialLinks?.github || "",
+            linkedin: profile.socialLinks?.linkedin || "",
+            leetcode: profile.socialLinks?.leetcode || "",
+            codechef: profile.socialLinks?.codechef || "",
+            codeforces: profile.socialLinks?.codeforces || "",
+        },
     });
 
     const [newSkill, setNewSkill] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedTab, setSelectedTab] = useState("basic");
 
-    // --- LOGIC (Functionality Unchanged) ---
+    // --- LOGIC ---
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setEditFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    // New handler for nested socialLinks object
+    const handleSocialLinkChange = (e) => {
+        const { name, value } = e.target;
+        setEditFormData(prev => ({
+            ...prev,
+            socialLinks: {
+                ...prev.socialLinks,
+                [name]: value
+            }
+        }));
     };
 
     const handleAddSkill = () => {
@@ -125,18 +144,22 @@ export default function EditProfileModal({ profile, onClose, onUpdate }) {
         }
     };
 
+    const tabOrder = ["basic", "personal", "socials", "skills"];
+    const currentTabIndex = tabOrder.indexOf(selectedTab);
+
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-retro">
             <div className={`border-4 ${retroThemeColors.panelBorder} bg-white shadow-chunky w-full max-w-3xl max-h-[90vh] flex flex-col`}>
                 <div className={`p-4 border-b-4 ${retroThemeColors.panelBorder} flex justify-between items-center`}>
                     <h2 className="text-2xl font-bold">Edit Profile</h2>
-                    <button onClick={onClose} className="text-stone-500 hover:text-stone-800">&times;</button>
+                    <button onClick={onClose} className="text-stone-500 hover:text-stone-800 text-2xl">&times;</button>
                 </div>
 
                 <div className={`flex border-b-4 ${retroThemeColors.panelBorder}`}>
-                    <TabButton label="Basic Info" isActive={selectedTab === 'basic'} onClick={() => setSelectedTab('basic')} />
-                    <TabButton label="Personal Details" isActive={selectedTab === 'personal'} onClick={() => setSelectedTab('personal')} />
-                    <TabButton label="Skills & About" isActive={selectedTab === 'skills'} onClick={() => setSelectedTab('skills')} />
+                    <TabButton label="Basic" isActive={selectedTab === 'basic'} onClick={() => setSelectedTab('basic')} />
+                    <TabButton label="Personal" isActive={selectedTab === 'personal'} onClick={() => setSelectedTab('personal')} />
+                    <TabButton label="Socials" isActive={selectedTab === 'socials'} onClick={() => setSelectedTab('socials')} />
+                    <TabButton label="Skills" isActive={selectedTab === 'skills'} onClick={() => setSelectedTab('skills')} />
                 </div>
 
                 <form onSubmit={handleSubmitEdit} className="p-6 overflow-y-auto flex-grow">
@@ -168,6 +191,17 @@ export default function EditProfileModal({ profile, onClose, onUpdate }) {
                         </div>
                     )}
 
+                    {selectedTab === "socials" && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormInput label="Personal Site" name="personalsite" value={editFormData.socialLinks.personalsite} onChange={handleSocialLinkChange} placeholder="https://your-site.com" />
+                            <FormInput label="GitHub" name="github" value={editFormData.socialLinks.github} onChange={handleSocialLinkChange} placeholder="https://github.com/username" />
+                            <FormInput label="LinkedIn" name="linkedin" value={editFormData.socialLinks.linkedin} onChange={handleSocialLinkChange} placeholder="https://linkedin.com/in/username" />
+                            <FormInput label="LeetCode" name="leetcode" value={editFormData.socialLinks.leetcode} onChange={handleSocialLinkChange} placeholder="https://leetcode.com/username" />
+                            <FormInput label="CodeChef" name="codechef" value={editFormData.socialLinks.codechef} onChange={handleSocialLinkChange} placeholder="https://codechef.com/users/username" />
+                            <FormInput label="Codeforces" name="codeforces" value={editFormData.socialLinks.codeforces} onChange={handleSocialLinkChange} placeholder="https://codeforces.com/profile/username" />
+                        </div>
+                    )}
+
                     {selectedTab === "skills" && (
                         <div className="space-y-4">
                             <FormTextarea label="About Me" name="about" value={editFormData.about} onChange={handleInputChange} rows="4" placeholder="Tell others about yourself..." />
@@ -191,17 +225,13 @@ export default function EditProfileModal({ profile, onClose, onUpdate }) {
                 </form>
                 
                 <div className={`p-4 border-t-4 ${retroThemeColors.panelBorder} flex justify-between items-center`}>
-                    <p className="text-sm text-stone-500">
-                        {selectedTab === "basic" && "Step 1 of 3"}
-                        {selectedTab === "personal" && "Step 2 of 3"}
-                        {selectedTab === "skills" && "Step 3 of 3"}
-                    </p>
+                    <p className="text-sm text-stone-500">Step {currentTabIndex + 1} of {tabOrder.length}</p>
                     <div className="flex gap-2">
                         {selectedTab !== "basic" && (
-                            <Button type="button" onClick={() => setSelectedTab(selectedTab === "skills" ? "personal" : "basic")}  small>Back</Button>
+                            <Button type="button" onClick={() => setSelectedTab(tabOrder[currentTabIndex - 1])}  small>Back</Button>
                         )}
                         {selectedTab !== "skills" ? (
-                            <Button type="button" onClick={() => setSelectedTab(selectedTab === "basic" ? "personal" : "skills")} small>Next</Button>
+                            <Button type="button" onClick={() => setSelectedTab(tabOrder[currentTabIndex + 1])} small>Next</Button>
                         ) : (
                             <Button onClick={handleSubmitEdit} isSubmit disabled={isSubmitting} small>
                                 {isSubmitting ? "Saving..." : "Save Changes"}
