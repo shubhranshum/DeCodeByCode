@@ -8,21 +8,25 @@ async function userLogin(req, res) {
 
     const { email, password } = req.body;
     try {
+        console.log("Hello from userLogin");
         const user = await User.findOne({ email });
-        console.log("User found:", user);
+        console.log(user.password);
         if (!user) {
             return res.status(400).json({ message: 'User Not found with this email' });
         }
         if (user.isEmailVerified === false) {
             return res.status(400).json({ message: 'Please verify your email first' });
         }
-        if (user.password === undefined) {
+        if (user.password === "") {
             return res.status(400).json({ message: 'User found but the signup was done with google' });
         }
-        const isMatch = bcrypt.compare(password, user.password);
+        
+        
+        const isMatch = await bcrypt.compare(password, user.password);
+        console.log("ismatch"+isMatch);
         if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
         const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '2d' });
-        // req._id = token;
+        
         console.log('Token generated:', token);
         await res.cookie('token', token,
             {

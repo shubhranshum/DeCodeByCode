@@ -37,7 +37,7 @@ const themeColors = {
 
     // Navigation Links (Now Button-Styled)
     navButtonBase: 'px-3 py-2 text-lg font-bold transition-all duration-150 border-2 border-stone-800',
-    navButtonActive: 'bg-amber-200 text-stone-800 shadow-none translate-x-[3px] translate-y-[3px]',
+    navButtonActive: 'bg-teal-200 text-stone-800 shadow-none translate-x-[3px] translate-y-[3px]',
     navButtonInactive: 'bg-stone-100 text-stone-700 shadow-[3px_3px_0px_#292524] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:bg-stone-200',
     
     // User action buttons (shared style for a chunky, clickable feel)
@@ -57,7 +57,7 @@ const themeColors = {
     notifTabUnderline: 'border-b-4 border-purple-500',
     notifListItemHover: 'hover:bg-stone-200',
     notifIconBg: {
-        new_badge: 'bg-amber-200 text-amber-800',
+        new_badge: 'bg-teal-200 text-teal-800',
         post_comment: 'bg-sky-200 text-sky-800',
         system_update: 'bg-purple-200 text-purple-800',
         default: 'bg-stone-300 text-stone-800',
@@ -470,7 +470,7 @@ export default function Navbar({ activePage }) {
                                         href={item.href} 
                                         className={classNames(
                                             'block px-3 py-3 text-xl font-bold transition-colors border-2 border-stone-800 text-center',
-                                            item.name === activePage ? `bg-amber-200 text-stone-800` : `bg-stone-100 text-stone-700 hover:bg-stone-200`
+                                            item.name === activePage ? `bg-teal-300 text-stone-800` : `bg-stone-100 text-stone-700 hover:bg-stone-200`
                                         )} 
                                         aria-current={item.name === activePage ? 'page' : undefined}
                                     >

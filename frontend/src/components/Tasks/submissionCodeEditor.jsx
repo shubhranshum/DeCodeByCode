@@ -194,9 +194,7 @@ export default function SubmissionCodeEditor({
       smoothScrolling: true,
       accessibilitySupport: "auto",
       scrollBeyondLastLine: true,
-      minimap: {
-        enabled: false,
-      },
+      
       lineNumbersMinChars: 3,
       scrollbar: {
         verticalScrollbarSize: 8,
@@ -219,7 +217,7 @@ export default function SubmissionCodeEditor({
       
       <div className="relative h-full">
         <Editor
-          height="75vh"
+          height="80vh"
           language={language}
           value={code}
           theme={editorThemes[theme].themeName}
@@ -240,8 +238,7 @@ export default function SubmissionCodeEditor({
             fontLigatures: true,
             lineHeight: 24,
             letterSpacing: 0.3,
-            minimap: { enabled: true },
-            scrollBeyondLastLine: false,
+            scrollBeyondLastLine: true,
             automaticLayout: true,
             renderWhitespace: "boundary",
             renderLineHighlight: "all",
@@ -275,13 +272,13 @@ export default function SubmissionCodeEditor({
             },
             suggestOnTriggerCharacters: true,
             acceptSuggestionOnEnter: "on",
-            tabCompletion: "on",
+            
             wordBasedSuggestions: true,
             parameterHints: { enabled: true },
             hover: { enabled: true, delay: 300, sticky: true },
             autoClosingBrackets: "always",
             autoClosingQuotes: "always",
-            autoIndent: "full",
+            
             formatOnPaste: true,
             formatOnType: true,
             suggest: {
