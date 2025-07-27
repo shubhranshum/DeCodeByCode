@@ -75,6 +75,7 @@ export default function ProfilePage() {
     const [isFollowing, setIsFollowing] = useState(false);
     const [recentAttempts, setRecentAttempts] = useState([]);
     const [solvedProblems, setSolvedProblems] = useState([]);
+    const [problems, setProblems] = useState([]);
     const [stats, setStats] = useState({});
     
     // --- Logic Hooks (Functionality Unchanged) ---
@@ -200,6 +201,7 @@ export default function ProfilePage() {
                         setIsFollowing={setIsFollowing}
                         onEditClick={() => setIsEditModalOpen(true)}
                         isFollowingAllowed = {isFollowingAllowed}
+                        solvedProblems={solvedProblems}
                     />
                 </RetroCard>
 

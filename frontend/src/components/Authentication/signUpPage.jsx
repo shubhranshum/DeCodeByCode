@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiUser, FiMail, FiLock, FiBook, FiEye, FiEyeOff } from "react-icons/fi";
+import { set } from "date-fns";
 
 // --- RETRO THEME DEFINITIONS (Matching Login Page) ---
 const retroThemeColors = {
@@ -115,6 +116,7 @@ export default function SignUpPage() {
     // --- STATE MANAGEMENT (Unchanged) ---
     const [formData, setFormData] = useState({ username: "", email: "", password: "", confirmPassword: "", college: "" });
     const [errors, setErrors] = useState({});
+    const [successMessage, setSuccessMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -163,7 +165,14 @@ export default function SignUpPage() {
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Sign up failed. Please try again.");
             }
-            navigate("/login");
+            else{
+                setSuccessMessage("Account created successfully. Please Verify your email using the link sent to you Automatic redirect .");
+                setTimeout(() => {
+                    setSuccessMessage("");
+                     navigate("/login");
+                }, 10000);
+            }
+           
         } catch (error) {
             setErrors({ general: error.message });
         } finally {
@@ -183,7 +192,7 @@ export default function SignUpPage() {
 
                     <form onSubmit={handleSignUp} className="space-y-5">
                         {errors.general && <div className={`p-3 border-2 ${retroThemeColors.panelBorder} bg-rose-100 text-rose-700 text-sm`}>{errors.general}</div>}
-
+                        {successMessage && <div className={`p-3 border-2 ${retroThemeColors.panelBorder} bg-rose-100 text-rose-700 text-sm`}>{successMessage}</div>}
                         <div>
                             <FormInput id="username" name="username" type="text" value={formData.username} onChange={handleChange} placeholder="Username" icon={FiUser} />
                             {errors.username && <p className={`text-sm mt-1 ${retroThemeColors.errorText}`}>{errors.username}</p>}

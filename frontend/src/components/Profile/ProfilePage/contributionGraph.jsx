@@ -120,7 +120,7 @@ const ContributionGraph = ({ data = [] }) => {
     return (
         <div className="font-retro" onMouseLeave={handleMouseLeave}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <StatDisplay label="Total Contributions" value={stats.total} icon={<BookOpenIcon className="w-6 h-6" />} />
+                <StatDisplay label="Total Activity" value={stats.total} icon={<BookOpenIcon className="w-6 h-6" />} />
                 <StatDisplay label="Longest Streak" value={`${stats.longestStreak} days`} icon={<FireIcon className="w-6 h-6" />} />
                 <StatDisplay label="Current Streak" value={`${stats.currentStreak} days`} icon={<FireIcon className="w-6 h-6" />} />
             </div>
@@ -147,7 +147,7 @@ const ContributionGraph = ({ data = [] }) => {
                         style={{ left: tooltip.x - 70, top: tooltip.y + 25 }}
                     >
                         <p className="font-bold text-sm mb-1">{new Date(tooltip.data.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-                        <p className="text-sm font-bold mb-2">{tooltip.data.data.count} contributions</p>
+                        <p className="text-sm font-bold mb-2">{tooltip.data.data.count} Activities</p>
                         
                         {/* FIX: Added the detailed breakdown to the tooltip */}
                         <div className="border-t-2 border-dashed border-stone-300 pt-2 space-y-1">
