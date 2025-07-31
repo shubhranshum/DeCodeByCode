@@ -20,6 +20,7 @@ module.exports = async function (req, res) {
     if (!problem) {
       return res.status(404).json({ error: "Problem not found" });
     }
+    console.log(problem);
     
     if(problem.isVerified) {
       return res.status(400).json({ error: "Problem already verified" });
@@ -37,7 +38,7 @@ module.exports = async function (req, res) {
       const testCase = problem.testCases[i];
       console.log("running test case", i + 1);
       const result = await codeOutput(problem.codeSolution, testCase.input);
-      
+      console.log(result);
       testCase.output = {
         stdout: result.stdout,
         stderr: result.stderr,

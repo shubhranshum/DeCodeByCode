@@ -136,6 +136,7 @@ const ContestCard = ({
   onToggleGlobal,
   onSendNotification,
 }) => {
+  
   const now = new Date();
   const startTime = new Date(contest.startTime);
   const endTime = new Date(contest.endTime);
@@ -199,6 +200,7 @@ const ProblemCard = ({
   onDelete,
   onToggleGlobal,
 }) => (
+
   <RetroCard className="flex flex-col">
     <div className="p-4 flex-grow">
       <div className="flex justify-between items-start mb-2">
@@ -300,6 +302,8 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState(
     () => localStorage.getItem("adminDashboardActiveTab") || "problems"
   );
+  const[isVerifying, setIsVerifying] = useState(false);
+  const[isSettingGlobal, setIsSettingGlobal] = useState(false);
   const [currentPotd, setCurrentPotd] = useState(null);
   const [potdIdInput, setPotdIdInput] = useState("");
   const [isPotdLoading, setIsPotdLoading] = useState(false);
@@ -426,6 +430,7 @@ export default function AdminDashboard() {
 
   const toggleProblemGlobalStatus = async (id, currentStatus) => {
     try {
+      setIsSettingGlobal(true);
       const endpoint = `http://localhost:3000/admin/postToGlobalProblems/${id}`;
       const response = await fetch(endpoint, {
         method: "POST",
@@ -437,6 +442,8 @@ export default function AdminDashboard() {
           p._id === id ? { ...p, isGlobal: !currentStatus } : p
         )
       );
+      setIsSettingGlobal(false);
+      console.log("Problems is set to global")
       toast.success(
         `Problem ${
           currentStatus ? "removed from" : "added to"
@@ -444,6 +451,7 @@ export default function AdminDashboard() {
       );
     } catch (error) {
       console.error("Error updating global status:", error);
+      setIsSettingGlobal(false);
       toast.error("Failed to update problem status");
     }
   };
@@ -702,8 +710,9 @@ export default function AdminDashboard() {
         ) : filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredItems.map((item) => {
-              if (activeTab === "problems")
+              if (activeTab === "problems" )
                 return (
+                  
                   <ProblemCard
                     key={item._id}
                     problem={item}

@@ -119,6 +119,16 @@ const userSchema = new mongoose.Schema({
       lastTriedAt: { type: Date, required: true }
     }
   ],
+  ContestHistory: [
+    {
+      contestId: { type: mongoose.Schema.Types.ObjectId, ref: 'Contest' },
+      rank: { type: Number },
+      score: { type: Number },
+      totalQuestion: { type: Number },
+      solvedQuestion: { type: Number },
+      date: { type: Date },
+    }
+  ],
   accountStatus: {
   type: String,
   enum: ['active', 'suspended', 'banned'],
